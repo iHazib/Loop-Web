@@ -1,0 +1,6 @@
+{
+  "name": "LoopRetail",
+  "description": "A polished dark and light themed presentation deck landing page featuring bento grids, connected node diagrams, and high-contrast statistical data visualizations.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
