@@ -1,8 +1,4 @@
-import dotenv from 'dotenv';
-// Load .env.local first (Vite convention), then .env — without overriding already-set vars.
-dotenv.config({ path: '.env.local' });
-dotenv.config();
-
+import './env'; // MUST be first — populates process.env before auth/storage initialise
 import express from 'express';
 import fs from 'node:fs';
 import path from 'node:path';
