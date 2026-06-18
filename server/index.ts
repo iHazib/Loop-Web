@@ -8,6 +8,16 @@ import * as auth from './auth';
 const app = express();
 app.use(express.json({ limit: '1mb' }));
 
+// Wrap async handlers so DB errors return 500 JSON instead of hanging the request.
+const ah =
+  (fn: (req: express.Request, res: express.Response) => Promise<void>) =>
+  (req: express.Request, res: express.Response) => {
+    fn(req, res).catch((e) => {
+      console.error(e);
+      if (!res.headersSent) res.status(500).json({ error: 'Server error' });
+    });
+  };
+
 /* ─────────── Auth ─────────── */
 app.post('/api/auth/google', async (req, res) => {
   if (!auth.configured()) {
@@ -52,50 +62,50 @@ app.post('/api/auth/logout', (req, res) => {
 });
 
 /* ─────────── Posts ─────────── */
-app.get('/api/posts', (req, res) => {
+app.get('/api/posts', ah(async (req, res) => {
   const authed = auth.sessionFromReq(req) !== null;
-  res.json(store.listPosts(authed));
-});
-app.post('/api/posts', auth.requireAuth, (req, res) => {
-  res.json(store.createPost(req.body ?? {}));
-});
-app.put('/api/posts/:id', auth.requireAuth, (req, res) => {
-  const updated = store.updatePost(req.params.id, req.body ?? {});
+  res.json(await store.listPosts(authed));
+}));
+app.post('/api/posts', auth.requireAuth, ah(async (req, res) => {
+  res.json(await store.createPost(req.body ?? {}));
+}));
+app.put('/api/posts/:id', auth.requireAuth, ah(async (req, res) => {
+  const updated = await store.updatePost(req.params.id, req.body ?? {});
   if (!updated) {
     res.status(404).json({ error: 'Post not found' });
     return;
   }
   res.json(updated);
-});
-app.delete('/api/posts/:id', auth.requireAuth, (req, res) => {
-  store.deletePost(req.params.id);
+}));
+app.delete('/api/posts/:id', auth.requireAuth, ah(async (req, res) => {
+  await store.deletePost(req.params.id);
   res.status(204).end();
-});
+}));
 
 /* ─────────── Queries ─────────── */
-app.post('/api/queries', (req, res) => {
+app.post('/api/queries', ah(async (req, res) => {
   const body = req.body ?? {};
   if (!body.name || !body.email || !body.message) {
     res.status(400).json({ error: 'Name, email and message are required.' });
     return;
   }
-  res.json(store.createQuery(body));
-});
-app.get('/api/queries', auth.requireAuth, (_req, res) => {
-  res.json(store.listQueries());
-});
-app.patch('/api/queries/:id', auth.requireAuth, (req, res) => {
-  const updated = store.updateQuery(req.params.id, req.body ?? {});
+  res.json(await store.createQuery(body));
+}));
+app.get('/api/queries', auth.requireAuth, ah(async (_req, res) => {
+  res.json(await store.listQueries());
+}));
+app.patch('/api/queries/:id', auth.requireAuth, ah(async (req, res) => {
+  const updated = await store.updateQuery(req.params.id, req.body ?? {});
   if (!updated) {
     res.status(404).json({ error: 'Query not found' });
     return;
   }
   res.json(updated);
-});
-app.delete('/api/queries/:id', auth.requireAuth, (req, res) => {
-  store.deleteQuery(req.params.id);
+}));
+app.delete('/api/queries/:id', auth.requireAuth, ah(async (req, res) => {
+  await store.deleteQuery(req.params.id);
   res.status(204).end();
-});
+}));
 
 /* ─────────── Serve built frontend in production ─────────── */
 const dist = path.resolve('dist');
@@ -110,5 +120,6 @@ if (fs.existsSync(dist)) {
 const PORT = Number(process.env.PORT) || 8787;
 app.listen(PORT, () => {
   console.log(`\n  Loop Retail API  →  http://localhost:${PORT}`);
-  console.log(`  Auth configured  →  ${auth.configured() ? 'yes' : 'NO (set GOOGLE_CLIENT_ID)'}\n`);
+  console.log(`  Auth configured  →  ${auth.configured() ? 'yes' : 'NO (set GOOGLE_CLIENT_ID)'}`);
+  void store.seedIfEmpty().then(() => console.log('  Supabase connected.\n')).catch((e) => console.error('  Supabase error:', e.message, '\n'));
 });
