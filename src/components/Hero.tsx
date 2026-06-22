@@ -43,7 +43,7 @@ export function Hero() {
               className="font-display text-5xl md:text-7xl lg:text-[5.5rem] font-medium tracking-tighter text-brand-dark leading-[1.05] max-w-3xl"
             >
               For brands building<br />dominance in
-              <span className="block overflow-hidden h-[1.1em] mt-1">
+              <span className="block overflow-hidden h-[2.35em] mt-1">
                 <AnimatePresence mode="wait">
                   <motion.span
                     key={wordIndex}

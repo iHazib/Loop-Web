@@ -5,10 +5,10 @@ import { BarChart3, Activity, Globe, Zap, ChevronRight, ArrowUpRight, RefreshCw,
 const navItems = ['Overview', 'Retail', 'Logistics', 'Distribution', 'Protection'];
 
 const metrics = [
-  { label: 'GMV', value: '£4.87M', change: '+18.4%', up: true, icon: Globe },
-  { label: 'Margin', value: '31.2%', change: '+2.1pp', up: true, icon: Activity },
-  { label: 'Sell-Through', value: '82%', change: '+4.7pp', up: true, icon: Zap },
-  { label: 'Risk Index', value: 'Low', change: '2 alerts', up: true, icon: Database },
+  { label: 'GMV', value: '£4.87M', change: '+18.4%', up: true, icon: Globe, spark: [30, 38, 35, 48, 52, 60, 72, 85] },
+  { label: 'Margin', value: '31.2%', change: '+2.1pp', up: true, icon: Activity, spark: [50, 52, 49, 55, 58, 60, 63, 68] },
+  { label: 'Sell-Through', value: '82%', change: '+4.7pp', up: true, icon: Zap, spark: [60, 64, 62, 70, 74, 78, 80, 86] },
+  { label: 'Risk Index', value: 'Low', change: '2 alerts', up: true, icon: Database, spark: [44, 40, 43, 36, 38, 32, 30, 26] },
 ];
 
 const activityFeed = [
@@ -21,6 +21,43 @@ const activityFeed = [
 
 const chartData = [40, 55, 50, 70, 65, 80, 75, 88, 85, 95, 90, 100];
 const weeks = ['W1', 'W2', 'W3', 'W4', 'W5', 'W6', 'W7', 'W8', 'W9', 'W10', 'W11', 'W12'];
+
+/* ── Smooth line-chart geometry (Catmull-Rom → bézier) ── */
+const CW = 100;
+const CH = 40;
+const chartPoints = chartData.map((v, i) => ({
+  x: (i / (chartData.length - 1)) * CW,
+  y: CH - 4 - (v / 100) * (CH - 8),
+}));
+function smoothPath(p: { x: number; y: number }[]): string {
+  if (p.length < 2) return '';
+  let d = `M ${p[0].x} ${p[0].y}`;
+  for (let i = 0; i < p.length - 1; i++) {
+    const p0 = p[i - 1] ?? p[i];
+    const p1 = p[i];
+    const p2 = p[i + 1];
+    const p3 = p[i + 2] ?? p2;
+    const cp1x = p1.x + (p2.x - p0.x) / 6;
+    const cp1y = p1.y + (p2.y - p0.y) / 6;
+    const cp2x = p2.x - (p3.x - p1.x) / 6;
+    const cp2y = p2.y - (p3.y - p1.y) / 6;
+    d += ` C ${cp1x.toFixed(2)} ${cp1y.toFixed(2)}, ${cp2x.toFixed(2)} ${cp2y.toFixed(2)}, ${p2.x.toFixed(2)} ${p2.y.toFixed(2)}`;
+  }
+  return d;
+}
+const LINE_PATH = smoothPath(chartPoints);
+const AREA_PATH = `${LINE_PATH} L ${CW} ${CH} L 0 ${CH} Z`;
+const ptLeft = (i: number) => (i / (chartData.length - 1)) * 100;
+const ptTop = (v: number) => ((CH - 4 - (v / 100) * (CH - 8)) / CH) * 100;
+
+/* ── Mini sparkline path (normalised to its own range) ── */
+function sparkPath(vals: number[]): string {
+  const max = Math.max(...vals);
+  const min = Math.min(...vals);
+  const range = max - min || 1;
+  const pts = vals.map((v, i) => ({ x: (i / (vals.length - 1)) * 100, y: 28 - ((v - min) / range) * 26 }));
+  return smoothPath(pts);
+}
 
 export function DashboardSection() {
   const [activeTab, setActiveTab] = useState('Overview');
@@ -161,6 +198,10 @@ export function DashboardSection() {
                           </div>
                           <p className="font-display text-xl font-semibold text-white tracking-tight">{m.value}</p>
                           <p className="text-[10px] text-gray-500 mt-1">{m.label}</p>
+                          {/* sparkline */}
+                          <svg viewBox="0 0 100 30" preserveAspectRatio="none" className="w-full h-6 mt-3 overflow-visible text-gray-600 group-hover:text-brand-red transition-colors">
+                            <path d={sparkPath(m.spark)} fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+                          </svg>
                         </motion.div>
                       );
                     })}
@@ -168,43 +209,95 @@ export function DashboardSection() {
 
                   {/* Chart + Feed */}
                   <div className="grid md:grid-cols-5 gap-3">
-                    {/* Bar chart */}
-                    <div className="md:col-span-3 bg-white/3 border border-white/5 rounded-2xl p-5">
-                      <div className="flex items-center justify-between mb-5">
-                        <p className="text-xs font-medium text-white">Channel growth velocity</p>
-                        <span className="text-[9px] font-mono text-gray-500">12-week rolling · indexed to week 1</span>
-                      </div>
-                      <div className="flex items-end gap-1.5 h-28">
-                        {chartData.map((val, i) => (
-                          <div
-                            key={i}
-                            className="flex-1 flex flex-col items-center gap-1 cursor-pointer group"
-                            onMouseEnter={() => setHoveredBar(i)}
-                            onMouseLeave={() => setHoveredBar(null)}
-                          >
-                            <AnimatePresence>
-                              {hoveredBar === i && (
-                                <motion.span
-                                  initial={{ opacity: 0, y: 4 }}
-                                  animate={{ opacity: 1, y: 0 }}
-                                  exit={{ opacity: 0 }}
-                                  className="text-[8px] font-mono text-white"
-                                >
-                                  {val}%
-                                </motion.span>
-                              )}
-                            </AnimatePresence>
-                            <motion.div
-                              initial={{ scaleY: 0 }}
-                              animate={{ scaleY: 1 }}
-                              transition={{ delay: i * 0.04, duration: 0.5, ease: 'easeOut' }}
-                              style={{ height: `${val}%`, originY: 1 }}
-                              className={`w-full rounded-t-sm transition-colors ${
-                                hoveredBar === i ? 'bg-brand-red' : 'bg-white/10 group-hover:bg-white/20'
-                              }`}
-                            />
-                            <span className="text-[7px] font-mono text-gray-600">{weeks[i].replace('W', '')}</span>
+                    {/* Line / area chart */}
+                    <div className="md:col-span-3 bg-gradient-to-b from-white/[0.04] to-white/[0.01] border border-white/5 rounded-2xl p-5">
+                      <div className="flex items-start justify-between mb-4">
+                        <div>
+                          <p className="text-xs font-medium text-white">Channel growth velocity</p>
+                          <div className="flex items-baseline gap-2 mt-1.5">
+                            <span className="font-display text-2xl font-semibold text-white tracking-tight">+150%</span>
+                            <span className="text-[9px] font-mono text-green-400">▲ vs week 1</span>
                           </div>
+                        </div>
+                        <span className="text-[9px] font-mono text-gray-500">12-week rolling</span>
+                      </div>
+
+                      {/* Plot */}
+                      <div className="relative h-28">
+                        <svg viewBox={`0 0 ${CW} ${CH}`} preserveAspectRatio="none" className="w-full h-full overflow-visible">
+                          <defs>
+                            <linearGradient id="lr-area" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="0%" stopColor="rgba(230,25,43,0.38)" />
+                              <stop offset="100%" stopColor="rgba(230,25,43,0)" />
+                            </linearGradient>
+                            <linearGradient id="lr-line" x1="0" y1="0" x2="1" y2="0">
+                              <stop offset="0%" stopColor="#ff5d6c" />
+                              <stop offset="100%" stopColor="#e6192b" />
+                            </linearGradient>
+                          </defs>
+                          {/* gridlines */}
+                          {[4, 14, 24, 34].map((y) => (
+                            <line key={y} x1="0" y1={y} x2={CW} y2={y} stroke="rgba(255,255,255,0.05)" strokeWidth="0.5" vectorEffect="non-scaling-stroke" />
+                          ))}
+                          {/* area */}
+                          <motion.path
+                            d={AREA_PATH}
+                            fill="url(#lr-area)"
+                            initial={{ opacity: 0 }}
+                            whileInView={{ opacity: 1 }}
+                            viewport={{ once: true }}
+                            transition={{ duration: 0.9, delay: 0.35 }}
+                          />
+                          {/* line */}
+                          <motion.path
+                            d={LINE_PATH}
+                            fill="none"
+                            stroke="url(#lr-line)"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            vectorEffect="non-scaling-stroke"
+                            initial={{ pathLength: 0 }}
+                            whileInView={{ pathLength: 1 }}
+                            viewport={{ once: true }}
+                            transition={{ duration: 1.3, ease: [0.16, 1, 0.3, 1] }}
+                          />
+                        </svg>
+
+                        {/* hover columns */}
+                        <div className="absolute inset-0 flex">
+                          {chartData.map((_, i) => (
+                            <div key={i} className="flex-1" onMouseEnter={() => setHoveredBar(i)} onMouseLeave={() => setHoveredBar(null)} />
+                          ))}
+                        </div>
+
+                        {/* live pulse on the latest point */}
+                        {hoveredBar === null && (
+                          <div className="absolute -translate-x-1/2 -translate-y-1/2 pointer-events-none"
+                            style={{ left: `${ptLeft(chartData.length - 1)}%`, top: `${ptTop(chartData[chartData.length - 1])}%` }}>
+                            <span className="block w-2 h-2 rounded-full bg-brand-red" />
+                            <span className="absolute inset-0 w-2 h-2 rounded-full bg-brand-red animate-ping" />
+                          </div>
+                        )}
+
+                        {/* hover guide + dot + tooltip */}
+                        {hoveredBar !== null && (
+                          <div className="absolute inset-0 pointer-events-none">
+                            <div className="absolute top-0 bottom-0 w-px bg-white/15" style={{ left: `${ptLeft(hoveredBar)}%` }} />
+                            <div className="absolute w-2.5 h-2.5 rounded-full bg-brand-red ring-4 ring-brand-red/25 -translate-x-1/2 -translate-y-1/2"
+                              style={{ left: `${ptLeft(hoveredBar)}%`, top: `${ptTop(chartData[hoveredBar])}%` }} />
+                            <div className="absolute -translate-x-1/2 -translate-y-[calc(100%+10px)] bg-white text-brand-dark text-[9px] font-mono font-bold px-2 py-1 rounded-md shadow-lg whitespace-nowrap"
+                              style={{ left: `${ptLeft(hoveredBar)}%`, top: `${ptTop(chartData[hoveredBar])}%` }}>
+                              idx {chartData[hoveredBar]}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* week axis */}
+                      <div className="flex justify-between mt-3">
+                        {weeks.map((w, i) => (
+                          <span key={i} className="text-[7px] font-mono text-gray-600">{w.replace('W', '')}</span>
                         ))}
                       </div>
                     </div>

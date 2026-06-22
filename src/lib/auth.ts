@@ -29,6 +29,15 @@ export async function loginWithGoogle(credential: string, passcode: string): Pro
   return user;
 }
 
+/* Email path: verify the address is on the allowlist, then sign in with the passcode. */
+export async function checkEmail(email: string): Promise<void> {
+  await api.authEmailCheck(email); // throws if not authorised
+}
+export async function loginWithEmail(email: string, passcode: string): Promise<SessionUser> {
+  const { user } = await api.authEmail(email, passcode);
+  return user;
+}
+
 export async function logout(): Promise<void> {
   try {
     await api.logout();

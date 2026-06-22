@@ -48,6 +48,40 @@ app.post('/api/auth/google', async (req, res) => {
   res.json({ user });
 });
 
+/* ─────────── Email + passcode path (no Google account required) ─────────── */
+app.post('/api/auth/email/check', (req, res) => {
+  if (!auth.emailAuthReady()) {
+    res.status(500).json({ error: 'Server admin auth is not configured (set ADMIN_PASSCODE and ADMIN_EMAILS).' });
+    return;
+  }
+  const email = String((req.body ?? {}).email ?? '').trim();
+  if (!email || !auth.isAllowed(email)) {
+    res.status(403).json({ error: 'This email is not authorised for admin access.' });
+    return;
+  }
+  res.json({ ok: true });
+});
+
+app.post('/api/auth/email', (req, res) => {
+  if (!auth.emailAuthReady()) {
+    res.status(500).json({ error: 'Server admin auth is not configured (set ADMIN_PASSCODE and ADMIN_EMAILS).' });
+    return;
+  }
+  const { email, passcode } = req.body ?? {};
+  const addr = String(email ?? '').trim();
+  if (!addr || !auth.isAllowed(addr)) {
+    res.status(403).json({ error: 'This email is not authorised for admin access.' });
+    return;
+  }
+  if (!auth.checkPasscode(passcode)) {
+    res.status(403).json({ error: 'Incorrect passcode.' });
+    return;
+  }
+  const user = { email: addr, name: addr.split('@')[0], picture: '' };
+  auth.setSessionCookie(res, user);
+  res.json({ user });
+});
+
 app.get('/api/auth/me', (req, res) => {
   const user = auth.sessionFromReq(req);
   if (!user) {

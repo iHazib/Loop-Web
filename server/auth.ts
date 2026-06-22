@@ -36,8 +36,13 @@ export const COOKIE_NAME = 'loop_session';
 const MAX_AGE = 7 * 86_400_000; // 7 days
 
 export function configured(): boolean {
-  // All three must be present for admin login to be possible.
+  // All three must be present for Google admin login to be possible.
   return CLIENT_ID.length > 0 && PASSCODE.length > 0 && ALLOWED.size > 0;
+}
+
+// The email + passcode path doesn't need a Google Client ID — just passcode + allowlist.
+export function emailAuthReady(): boolean {
+  return PASSCODE.length > 0 && ALLOWED.size > 0;
 }
 
 export interface SessionUser {

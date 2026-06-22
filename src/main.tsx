@@ -9,6 +9,7 @@ import DTCGrowth from './pages/DTCGrowth.tsx';
 import Blog from './pages/Blog.tsx';
 import BlogPost from './pages/BlogPost.tsx';
 import Contact from './pages/Contact.tsx';
+import About from './pages/About.tsx';
 import AdminLayout from './admin/AdminLayout.tsx';
 import AdminDashboard from './admin/AdminDashboard.tsx';
 import AdminPosts from './admin/AdminPosts.tsx';
@@ -28,6 +29,7 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/blog" element={<Blog />} />
         <Route path="/blog/:slug" element={<BlogPost />} />
         <Route path="/contact" element={<Contact />} />
+        <Route path="/about" element={<About />} />
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<AdminDashboard />} />
           <Route path="posts" element={<AdminPosts />} />

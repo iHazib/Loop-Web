@@ -32,9 +32,9 @@ const services = [
   },
 ];
 
-const navLinks = ['Services', 'Channels', 'Blog', 'Contact'];
+const navLinks = ['Services', 'About', 'Blog', 'Contact'];
 const navRoutes: Record<string, string> = {
-  Channels: '/',
+  About: '/about',
   Blog: '/blog',
   Contact: '/contact',
 };
@@ -269,7 +269,7 @@ export function NavBar({ darkHero = false }: { darkHero?: boolean }) {
 
               <div className="h-px bg-black/6 my-2" />
 
-              {['Channels', 'Blog', 'Contact'].map((link) => (
+              {['About', 'Blog', 'Contact'].map((link) => (
                 <Link key={link} to={navRoutes[link] ?? '/'} onClick={() => setMenuOpen(false)}
                   className="text-brand-dark/60 text-sm font-medium hover:text-brand-red transition-colors px-2 py-2.5">
                   {link}

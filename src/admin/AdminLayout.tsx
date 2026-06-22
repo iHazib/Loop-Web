@@ -1,35 +1,38 @@
 import { useState, useEffect, useRef, type FormEvent } from 'react';
 import { NavLink, Outlet, Link, useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { LayoutDashboard, FileText, Inbox, LogOut, ArrowUpRight, Lock, ShieldCheck, AlertTriangle, Loader2 } from 'lucide-react';
+import { LayoutDashboard, FileText, Inbox, LogOut, ArrowUpRight, Lock, ShieldCheck, AtSign, Mail, Loader2 } from 'lucide-react';
 import { Logo } from '../components/Logo';
 import { useQueries, refresh, type ContactQuery } from '../lib/store';
 import {
-  GOOGLE_CLIENT_ID, fetchSession, loginWithGoogle, logout, loadGsi, decodeIdToken,
+  GOOGLE_CLIENT_ID, fetchSession, loginWithGoogle, checkEmail, loginWithEmail, logout, loadGsi, decodeIdToken,
   type SessionUser, type GoogleProfile,
 } from '../lib/auth';
 
 /* ─────────────────────────  Login  ───────────────────────── */
 function LoginScreen({ onAuthed }: { onAuthed: (u: SessionUser) => void }) {
-  const [step, setStep] = useState<'google' | 'passcode'>('google');
+  const [step, setStep] = useState<'choose' | 'passcode'>('choose');
+  const [mode, setMode] = useState<'google' | 'email'>('google');
   const [credential, setCredential] = useState('');
   const [profile, setProfile] = useState<GoogleProfile | null>(null);
+  const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
   const [err, setErr] = useState('');
   const [busy, setBusy] = useState(false);
+  const [emailBusy, setEmailBusy] = useState(false);
   const btnRef = useRef<HTMLDivElement>(null);
 
+  // Render the Google button on the choose step
   useEffect(() => {
-    if (step !== 'google' || !GOOGLE_CLIENT_ID) return;
+    if (step !== 'choose' || !GOOGLE_CLIENT_ID) return;
     let cancelled = false;
-
     const onCredential = (resp: { credential: string }) => {
+      setMode('google');
       setCredential(resp.credential);
       setProfile(decodeIdToken(resp.credential)); // display only
       setErr('');
       setStep('passcode');
     };
-
     loadGsi()
       .then(() => {
         if (cancelled || !window.google) return;
@@ -40,17 +43,34 @@ function LoginScreen({ onAuthed }: { onAuthed: (u: SessionUser) => void }) {
           });
         }
       })
-      .catch(() => setErr('Could not load Google Sign-In. Check your connection.'));
-
+      .catch(() => setErr('Could not load Google Sign-In.'));
     return () => { cancelled = true; };
   }, [step]);
+
+  const submitEmail = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!email.includes('@')) { setErr('Enter a valid email address.'); return; }
+    setEmailBusy(true);
+    setErr('');
+    try {
+      await checkEmail(email.trim()); // 403 if not on the allowlist
+      setMode('email');
+      setStep('passcode');
+    } catch (e2) {
+      setErr(e2 instanceof Error ? e2.message : 'This email is not authorised.');
+    } finally {
+      setEmailBusy(false);
+    }
+  };
 
   const submitPasscode = async (e: FormEvent) => {
     e.preventDefault();
     setBusy(true);
     setErr('');
     try {
-      const user = await loginWithGoogle(credential, code);
+      const user = mode === 'google'
+        ? await loginWithGoogle(credential, code)
+        : await loginWithEmail(email.trim(), code);
       await refresh(); // re-hydrate posts (incl. drafts) + queries with the new session
       onAuthed(user);
     } catch (e2) {
@@ -60,6 +80,8 @@ function LoginScreen({ onAuthed }: { onAuthed: (u: SessionUser) => void }) {
       setBusy(false);
     }
   };
+
+  const reset = () => { setStep('choose'); setMode('google'); setCredential(''); setProfile(null); setCode(''); setErr(''); };
 
   return (
     <div className="w-full min-h-screen bg-brand-dark flex items-center justify-center px-6 font-sans relative overflow-hidden">
@@ -76,42 +98,55 @@ function LoginScreen({ onAuthed }: { onAuthed: (u: SessionUser) => void }) {
           <span className="ml-auto font-mono text-[10px] tracking-widest text-brand-red uppercase">Admin</span>
         </div>
 
-        {!GOOGLE_CLIENT_ID ? (
-          <div>
-            <div className="w-11 h-11 rounded-full bg-brand-red/15 border border-brand-red/25 flex items-center justify-center mb-5">
-              <AlertTriangle size={17} className="text-brand-red" />
-            </div>
-            <h1 className="font-display font-bold tracking-tight text-white text-xl mb-2">Google Sign-In not configured</h1>
-            <p className="text-white/45 font-light text-sm mb-4 leading-relaxed">
-              Add a Google OAuth Client ID and start the API server to enable admin login.
-            </p>
-            <ol className="text-white/55 text-xs font-light space-y-2 list-decimal pl-4 mb-2">
-              <li>Create an OAuth Client ID (type: Web) in Google Cloud Console.</li>
-              <li>Add this site's URL under <span className="font-mono text-white/70">Authorised JavaScript origins</span>.</li>
-              <li>Put it in <span className="font-mono text-white/70">.env</span> as <span className="font-mono text-white/70">VITE_GOOGLE_CLIENT_ID</span> + <span className="font-mono text-white/70">GOOGLE_CLIENT_ID</span>, then run <span className="font-mono text-white/70">npm run dev:full</span>.</li>
-            </ol>
-            <Link to="/" className="block mt-6 text-center font-mono text-[10px] tracking-widest text-white/30 hover:text-white/60 uppercase transition-colors">← Back to site</Link>
-          </div>
-        ) : step === 'google' ? (
+        {step === 'choose' ? (
           <div>
             <div className="w-11 h-11 rounded-full bg-brand-red/15 border border-brand-red/25 flex items-center justify-center mb-5">
               <ShieldCheck size={17} className="text-brand-red" />
             </div>
             <h1 className="font-display font-bold tracking-tight text-white text-2xl mb-1">Admin access</h1>
-            <p className="text-white/45 font-light text-sm mb-7">Sign in with an authorised Google account to continue.</p>
-            <div ref={btnRef} className="flex justify-center [color-scheme:light]" />
+            <p className="text-white/45 font-light text-sm mb-6">Sign in with an authorised account to continue.</p>
+
+            {GOOGLE_CLIENT_ID && (
+              <>
+                <div ref={btnRef} className="flex justify-center [color-scheme:light]" />
+                <div className="flex items-center gap-3 my-5">
+                  <span className="flex-1 h-px bg-white/10" />
+                  <span className="font-mono text-[9px] tracking-widest text-white/30 uppercase">or</span>
+                  <span className="flex-1 h-px bg-white/10" />
+                </div>
+              </>
+            )}
+
+            <form onSubmit={submitEmail}>
+              <div className="relative">
+                <AtSign size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/30" />
+                <input type="email" value={email} onChange={(e) => { setEmail(e.target.value); setErr(''); }}
+                  placeholder="Admin email"
+                  className="w-full bg-white/5 border border-white/12 rounded-xl pl-10 pr-4 py-3 text-sm text-white placeholder:text-white/25 focus:outline-none focus:border-brand-red/50 transition-colors" />
+              </div>
+              <button type="submit" disabled={emailBusy}
+                className="w-full mt-3 border border-white/15 text-white py-3 rounded-xl font-semibold text-sm hover:bg-white/5 transition-colors disabled:opacity-60 flex items-center justify-center gap-2">
+                {emailBusy ? <Loader2 size={15} className="animate-spin" /> : <Mail size={15} />} Continue with email
+              </button>
+            </form>
+
             {err && <p className="text-brand-red text-xs mt-4 text-center">{err}</p>}
-            <p className="mt-7 text-center font-mono text-[9px] tracking-widest text-white/25 uppercase">Step 1 of 2 · Google identity</p>
+            <p className="mt-6 text-center font-mono text-[9px] tracking-widest text-white/25 uppercase">Step 1 of 2 · Identity</p>
           </div>
         ) : (
           <div>
+            {/* Verified identity */}
             <div className="flex items-center gap-3 mb-6 bg-white/5 border border-white/10 rounded-xl p-3">
-              {profile?.picture
-                ? <img src={profile.picture} alt="" className="w-9 h-9 rounded-full" referrerPolicy="no-referrer" />
-                : <div className="w-9 h-9 rounded-full bg-brand-red/20 flex items-center justify-center text-white text-xs font-bold">{profile?.name.slice(0, 1) || '?'}</div>}
+              {mode === 'google' && profile?.picture ? (
+                <img src={profile.picture} alt="" className="w-9 h-9 rounded-full" referrerPolicy="no-referrer" />
+              ) : (
+                <div className="w-9 h-9 rounded-full bg-brand-red/20 flex items-center justify-center text-white text-xs font-bold">
+                  {mode === 'google' ? (profile?.name.slice(0, 1) || '?') : <Mail size={15} className="text-brand-red" />}
+                </div>
+              )}
               <div className="min-w-0">
-                <p className="text-sm font-semibold text-white truncate">{profile?.name || 'Google account'}</p>
-                <p className="text-[11px] text-white/40 truncate">{profile?.email}</p>
+                <p className="text-sm font-semibold text-white truncate">{mode === 'google' ? (profile?.name || 'Google account') : 'Email authorised'}</p>
+                <p className="text-[11px] text-white/40 truncate">{mode === 'google' ? profile?.email : email}</p>
               </div>
               <ShieldCheck size={15} className="text-green-400 ml-auto shrink-0" />
             </div>
@@ -120,7 +155,9 @@ function LoginScreen({ onAuthed }: { onAuthed: (u: SessionUser) => void }) {
               <Lock size={17} className="text-brand-red" />
             </div>
             <h1 className="font-display font-bold tracking-tight text-white text-2xl mb-1">Enter passcode</h1>
-            <p className="text-white/45 font-light text-sm mb-6">The server will verify your account and passcode.</p>
+            <p className="text-white/45 font-light text-sm mb-6">
+              {mode === 'google' ? 'The server will verify your account and passcode.' : 'Email authorised. Enter the admin passcode to finish.'}
+            </p>
 
             <form onSubmit={submitPasscode}>
               <input type="password" autoFocus value={code} onChange={(e) => { setCode(e.target.value); setErr(''); }}
@@ -132,9 +169,9 @@ function LoginScreen({ onAuthed }: { onAuthed: (u: SessionUser) => void }) {
                 {busy && <Loader2 size={15} className="animate-spin" />} Enter dashboard
               </button>
             </form>
-            <button onClick={() => { setStep('google'); setProfile(null); setCredential(''); setCode(''); setErr(''); }}
+            <button onClick={reset}
               className="block mt-5 mx-auto font-mono text-[10px] tracking-widest text-white/30 hover:text-white/60 uppercase transition-colors">
-              ← Use a different account
+              ← Use a different method
             </button>
           </div>
         )}

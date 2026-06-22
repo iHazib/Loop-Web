@@ -48,6 +48,10 @@ export const api = {
   // auth
   authGoogle: (credential: string, passcode: string) =>
     req<{ user: SessionUser }>('/auth/google', { method: 'POST', body: JSON.stringify({ credential, passcode }) }),
+  authEmailCheck: (email: string) =>
+    req<{ ok: true }>('/auth/email/check', { method: 'POST', body: JSON.stringify({ email }) }),
+  authEmail: (email: string, passcode: string) =>
+    req<{ user: SessionUser }>('/auth/email', { method: 'POST', body: JSON.stringify({ email, passcode }) }),
   me: () => req<{ user: SessionUser }>('/auth/me'),
   logout: () => req<null>('/auth/logout', { method: 'POST' }),
 };

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { RefreshCw, Users, Globe, Award } from 'lucide-react';
+import { RefreshCw, Users, Globe, Award, ArrowRight } from 'lucide-react';
 
 const stats = [
   { value: "£9B", label: "Annual UK cost of\ncounterfeit goods", icon: RefreshCw },
@@ -110,6 +110,31 @@ export function ImpactSection() {
                 )}
               </motion.div>
             ))}
+          </div>
+
+          {/* Day axis under the bars */}
+          <div className="mt-5 flex justify-between text-[9px] font-mono tracking-widest uppercase text-gray-500 border-t border-white/10 pt-3">
+            <span>Day 1</span>
+            <span className="hidden sm:inline">Day 7</span>
+            <span>Day 14</span>
+            <span className="hidden sm:inline">Day 28</span>
+            <span className="text-brand-red">Day 30 · Live</span>
+          </div>
+
+          {/* Closing block — guarantees + CTA */}
+          <div className="mt-12">
+            <div className="flex flex-wrap gap-2 mb-7">
+              {['Fully managed', 'No long contracts', 'One monthly fee', 'Full reporting'].map((t) => (
+                <span key={t} className="text-[10px] font-mono tracking-widest text-gray-300 border border-white/12 rounded-full px-3.5 py-1.5">
+                  {t}
+                </span>
+              ))}
+            </div>
+            <a href="/contact"
+              className="inline-flex items-center gap-2 bg-brand-red text-white text-sm font-semibold px-6 py-3.5 rounded-full hover:bg-[#c0001f] transition-colors group">
+              Start your 30-day onboarding
+              <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
+            </a>
           </div>
         </div>
 
