@@ -19,10 +19,10 @@ const PASSCODE = (process.env.ADMIN_PASSCODE || '').trim();
 
 const RAW_SECRET = (process.env.JWT_SECRET || '').trim();
 if (!RAW_SECRET && process.env.NODE_ENV === 'production') {
-  throw new Error('JWT_SECRET must be set in production (used to sign admin session cookies).');
+  // Warn rather than throw — throwing at import crashes the whole serverless function.
+  console.warn('[auth] JWT_SECRET is not set in production — admin sessions will not persist across instances.');
 }
-// In development, fall back to a random per-boot secret — never a constant shipped in source.
-// (Sessions reset when the dev server restarts, which is fine.)
+// Fall back to a random per-boot secret if unset — never a constant shipped in source.
 const SECRET = RAW_SECRET || crypto.randomBytes(32).toString('hex');
 
 // Allowlist comes from the ADMIN_EMAILS env var only — no emails are hard-coded in source.

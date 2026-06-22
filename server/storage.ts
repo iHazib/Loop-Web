@@ -11,13 +11,20 @@ import { createClient } from '@supabase/supabase-js';
 const SUPABASE_URL = (process.env.SUPABASE_URL || '').trim();
 const SERVICE_KEY = (process.env.SUPABASE_SERVICE_ROLE_KEY || '').trim();
 
-if (!SUPABASE_URL || !SERVICE_KEY) {
-  throw new Error('SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set (see .env).');
+// Lazily create the client so a missing env var produces a clear request-time
+// error instead of crashing the whole serverless function at import.
+function makeClient() {
+  return createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSession: false, autoRefreshToken: false } });
 }
-
-const supabase = createClient(SUPABASE_URL, SERVICE_KEY, {
-  auth: { persistSession: false, autoRefreshToken: false },
-});
+let _client: ReturnType<typeof makeClient> | null = null;
+function sb() {
+  if (_client) return _client;
+  if (!SUPABASE_URL || !SERVICE_KEY) {
+    throw new Error('Database is not configured — set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.');
+  }
+  _client = makeClient();
+  return _client;
+}
 
 export type PostStatus = 'draft' | 'published';
 export type QueryStatus = 'new' | 'read' | 'replied' | 'archived';
@@ -105,7 +112,7 @@ function toQuery(r: any): ContactQuery {
 
 /* ── Posts ── */
 export async function listPosts(includeUnpublished: boolean): Promise<BlogPost[]> {
-  let q = supabase.from('posts').select('*');
+  let q = sb().from('posts').select('*');
   if (!includeUnpublished) q = q.eq('status', 'published');
   const { data, error } = await q;
   if (error) throw error;
@@ -135,13 +142,13 @@ export async function createPost(input: Partial<BlogPost>): Promise<BlogPost> {
     updated_at: ts,
     published_at: status === 'published' ? ts : null,
   };
-  const { data, error } = await supabase.from('posts').insert(row).select('*').single();
+  const { data, error } = await sb().from('posts').insert(row).select('*').single();
   if (error) throw error;
   return toPost(data);
 }
 
 export async function updatePost(id: string, input: Partial<BlogPost>): Promise<BlogPost | null> {
-  const { data: prev, error: getErr } = await supabase.from('posts').select('*').eq('id', id).maybeSingle();
+  const { data: prev, error: getErr } = await sb().from('posts').select('*').eq('id', id).maybeSingle();
   if (getErr) throw getErr;
   if (!prev) return null;
 
@@ -164,19 +171,19 @@ export async function updatePost(id: string, input: Partial<BlogPost>): Promise<
     updated_at: now(),
     published_at: status === 'published' ? prev.published_at ?? now() : status === 'draft' ? null : prev.published_at,
   };
-  const { data, error } = await supabase.from('posts').update(patch).eq('id', id).select('*').single();
+  const { data, error } = await sb().from('posts').update(patch).eq('id', id).select('*').single();
   if (error) throw error;
   return toPost(data);
 }
 
 export async function deletePost(id: string): Promise<void> {
-  const { error } = await supabase.from('posts').delete().eq('id', id);
+  const { error } = await sb().from('posts').delete().eq('id', id);
   if (error) throw error;
 }
 
 /* ── Queries ── */
 export async function listQueries(): Promise<ContactQuery[]> {
-  const { data, error } = await supabase.from('queries').select('*').order('created_at', { ascending: false });
+  const { data, error } = await sb().from('queries').select('*').order('created_at', { ascending: false });
   if (error) throw error;
   return (data ?? []).map(toQuery);
 }
@@ -192,7 +199,7 @@ export async function createQuery(input: Partial<ContactQuery>): Promise<Contact
     status: 'new' as QueryStatus,
     created_at: now(),
   };
-  const { data, error } = await supabase.from('queries').insert(row).select('*').single();
+  const { data, error } = await sb().from('queries').insert(row).select('*').single();
   if (error) throw error;
   return toQuery(data);
 }
@@ -207,16 +214,16 @@ export async function updateQuery(id: string, patch: Partial<ContactQuery>): Pro
   if (patch.subject !== undefined) row.subject = patch.subject;
   if (patch.message !== undefined) row.message = patch.message;
   if (Object.keys(row).length === 0) {
-    const { data } = await supabase.from('queries').select('*').eq('id', id).maybeSingle();
+    const { data } = await sb().from('queries').select('*').eq('id', id).maybeSingle();
     return data ? toQuery(data) : null;
   }
-  const { data, error } = await supabase.from('queries').update(row).eq('id', id).select('*').maybeSingle();
+  const { data, error } = await sb().from('queries').update(row).eq('id', id).select('*').maybeSingle();
   if (error) throw error;
   return data ? toQuery(data) : null;
 }
 
 export async function deleteQuery(id: string): Promise<void> {
-  const { error } = await supabase.from('queries').delete().eq('id', id);
+  const { error } = await sb().from('queries').delete().eq('id', id);
   if (error) throw error;
 }
 
@@ -273,7 +280,7 @@ const seedPosts: Array<Partial<BlogPost>> = [
 ];
 
 export async function seedIfEmpty(): Promise<void> {
-  const { count, error } = await supabase.from('posts').select('id', { count: 'exact', head: true });
+  const { count, error } = await sb().from('posts').select('id', { count: 'exact', head: true });
   if (error) {
     console.error('  Supabase seed check failed:', error.message);
     return;

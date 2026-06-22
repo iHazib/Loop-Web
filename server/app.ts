@@ -15,7 +15,8 @@ const ah =
   (req: express.Request, res: express.Response) => {
     fn(req, res).catch((e) => {
       console.error(e);
-      if (!res.headersSent) res.status(500).json({ error: 'Server error' });
+      const msg = e instanceof Error ? e.message : 'Server error';
+      if (!res.headersSent) res.status(500).json({ error: msg });
     });
   };
 
