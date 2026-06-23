@@ -2,14 +2,15 @@ import '../server/env'; // load env (no-op on Vercel; reads .env locally)
 import * as store from '../server/storage';
 import * as auth from '../server/auth';
 
-/* Native Vercel serverless function — handles ALL /api/* requests itself
-   (no Express), reusing the shared auth + storage logic. This avoids the
-   fragile "export an Express app" pattern that crashed on Vercel's runtime.
-   Local development still uses the Express server in server/index.ts. */
+/* Single native Vercel serverless function handling ALL /api/* requests.
+   vercel.json rewrites `/api/(.*)` → `/api?p=$1`, so the real sub-path
+   arrives as the `p` query param (no dependence on how Vercel sets req.url).
+   No Express in the serverless path. Local dev still uses server/index.ts. */
 
 interface VReq {
   method?: string;
   url?: string;
+  query?: Record<string, string | string[] | undefined>;
   headers: Record<string, string | string[] | undefined>;
   body?: unknown;
 }
@@ -23,20 +24,23 @@ interface VRes {
 function parseBody(raw: unknown): Record<string, unknown> {
   if (raw && typeof raw === 'object') return raw as Record<string, unknown>;
   if (typeof raw === 'string') {
-    try {
-      return JSON.parse(raw) as Record<string, unknown>;
-    } catch {
-      return {};
-    }
+    try { return JSON.parse(raw) as Record<string, unknown>; } catch { return {}; }
   }
   return {};
 }
 
+function resolvePath(req: VReq): string {
+  const q = req.query?.p;
+  const p = Array.isArray(q) ? q[0] : q;
+  if (typeof p === 'string') return ('/api/' + p.replace(/^\/+/, '')).replace(/\/+$/, '') || '/api';
+  const u = (req.url ?? '').split('?')[0];
+  return u.replace(/\/+$/, '') || '/';
+}
+
 export default async function handler(req: VReq, res: VRes): Promise<void> {
   const method = req.method ?? 'GET';
-  const path = (req.url ?? '').split('?')[0].replace(/\/+$/, '') || '/';
-  const cookieHeader = req.headers.cookie as string | undefined;
-  const user = auth.userFromCookieHeader(cookieHeader);
+  const path = resolvePath(req);
+  const user = auth.userFromCookieHeader(req.headers.cookie as string | undefined);
   const body = parseBody(req.body);
 
   const json = (code: number, data: unknown) => { res.status(code).json(data); };
@@ -96,10 +100,7 @@ export default async function handler(req: VReq, res: VRes): Promise<void> {
         const updated = await store.updatePost(id, body);
         return updated ? json(200, updated) : json(404, { error: 'Post not found' });
       }
-      if (method === 'DELETE') {
-        await store.deletePost(id);
-        return noContent();
-      }
+      if (method === 'DELETE') { await store.deletePost(id); return noContent(); }
     }
 
     /* ── Queries ── */
@@ -119,13 +120,10 @@ export default async function handler(req: VReq, res: VRes): Promise<void> {
         const updated = await store.updateQuery(id, body);
         return updated ? json(200, updated) : json(404, { error: 'Query not found' });
       }
-      if (method === 'DELETE') {
-        await store.deleteQuery(id);
-        return noContent();
-      }
+      if (method === 'DELETE') { await store.deleteQuery(id); return noContent(); }
     }
 
-    return json(404, { error: 'Not found' });
+    return json(404, { error: `No route for ${method} ${path}` });
   } catch (e) {
     console.error(e);
     return json(500, { error: e instanceof Error ? e.message : 'Server error' });
