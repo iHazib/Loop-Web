@@ -1,6 +1,9 @@
-import '../server/env'; // load env (no-op on Vercel; reads .env locally)
-import * as store from '../server/storage';
-import * as auth from '../server/auth';
+// NOTE: explicit .js extensions are required — Vercel runs this with Node's
+// native ESM loader, which (unlike tsx/bundlers) does not resolve extensionless
+// relative imports. The .js paths resolve to the compiled server/*.js files.
+import '../server/env.js'; // load env (no-op on Vercel; reads .env locally)
+import * as store from '../server/storage.js';
+import * as auth from '../server/auth.js';
 
 /* Single native Vercel serverless function handling ALL /api/* requests.
    vercel.json rewrites `/api/(.*)` → `/api?p=$1`, so the real sub-path
