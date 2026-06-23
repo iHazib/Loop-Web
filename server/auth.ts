@@ -122,6 +122,22 @@ export function clearSessionCookie(res: Response): void {
   res.clearCookie(COOKIE_NAME, { path: '/' });
 }
 
+/* ── Framework-agnostic helpers (used by the native Vercel function) ── */
+export function buildSessionCookie(user: SessionUser): string {
+  const attrs = [`${COOKIE_NAME}=${signSession(user)}`, 'Path=/', 'HttpOnly', 'SameSite=Lax', `Max-Age=${Math.floor(MAX_AGE / 1000)}`];
+  if (process.env.NODE_ENV === 'production') attrs.push('Secure');
+  return attrs.join('; ');
+}
+export function buildClearCookie(): string {
+  const attrs = [`${COOKIE_NAME}=`, 'Path=/', 'HttpOnly', 'SameSite=Lax', 'Max-Age=0'];
+  if (process.env.NODE_ENV === 'production') attrs.push('Secure');
+  return attrs.join('; ');
+}
+export function userFromCookieHeader(cookieHeader: string | undefined): SessionUser | null {
+  const token = parseCookies(cookieHeader)[COOKIE_NAME];
+  return token ? verifySession(token) : null;
+}
+
 export function requireAuth(req: Request, res: Response, next: NextFunction): void {
   const user = sessionFromReq(req);
   if (!user) {
