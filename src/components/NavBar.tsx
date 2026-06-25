@@ -72,7 +72,7 @@ export function NavBar({ darkHero = false }: { darkHero?: boolean }) {
       transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
         scrolled
-          ? 'bg-white/90 backdrop-blur-xl border-b border-black/5 shadow-sm'
+          ? 'bg-white/70 backdrop-blur-2xl backdrop-saturate-150 border-b border-black/[0.06] shadow-[0_8px_30px_-12px_rgba(0,0,0,0.12)]'
           : 'bg-transparent'
       }`}
     >
@@ -88,7 +88,9 @@ export function NavBar({ darkHero = false }: { darkHero?: boolean }) {
 
         {/* Center pill nav */}
         <div className={`hidden md:flex items-center rounded-full px-2 py-1.5 gap-1 border transition-all duration-500 ${
-          isLight ? 'bg-black/5 border-black/8' : 'bg-white shadow-lg border-transparent'
+          isLight
+            ? 'bg-white/50 backdrop-blur-md border-white/60 shadow-[0_4px_24px_-8px_rgba(0,0,0,0.12),inset_0_1px_0_rgba(255,255,255,0.7)]'
+            : 'bg-white/85 backdrop-blur-md border-white/30 shadow-[0_10px_30px_-8px_rgba(0,0,0,0.45)]'
         }`}>
           {navLinks.map((link) => {
             const isServices = link === 'Services';
@@ -216,23 +218,21 @@ export function NavBar({ darkHero = false }: { darkHero?: boolean }) {
 
         {/* Right CTA */}
         <div className="hidden md:flex items-center gap-3 shrink-0">
-          <a
-            href="/"
-            className={`flex items-center gap-1.5 text-sm font-semibold px-4 py-2 rounded-full transition-colors duration-300 group ${
-              isLight
-                ? 'bg-brand-dark text-white hover:bg-brand-red'
-                : 'bg-white text-brand-dark hover:bg-brand-red hover:text-white shadow-md'
-            }`}
+          <Link
+            to="/contact"
+            className="group relative flex items-center gap-1.5 text-sm font-semibold px-5 py-2.5 rounded-full text-white overflow-hidden bg-gradient-to-b from-[#ff3346] to-brand-red ring-1 ring-white/15 shadow-[0_8px_22px_-8px_rgba(230,25,43,0.65)] hover:shadow-[0_14px_34px_-8px_rgba(230,25,43,0.9)] hover:-translate-y-0.5 transition-all duration-300"
           >
-            Get Started
-            <ArrowUpRight size={13} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
-          </a>
+            {/* glossy sheen */}
+            <span className="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/30 to-transparent opacity-60 group-hover:opacity-90 transition-opacity pointer-events-none" />
+            <span className="relative">Get Started</span>
+            <ArrowUpRight size={13} className="relative group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+          </Link>
         </div>
 
         {/* Mobile toggle */}
         <button
-          className={`md:hidden w-9 h-9 flex items-center justify-center rounded-xl border transition-colors ${
-            isLight ? 'bg-black/5 border-black/8 text-brand-dark' : 'bg-white border-white/0 text-brand-dark'
+          className={`md:hidden w-9 h-9 flex items-center justify-center rounded-xl border backdrop-blur-md transition-all ${
+            isLight ? 'bg-white/60 border-black/8 text-brand-dark shadow-sm' : 'bg-white/90 border-white/20 text-brand-dark shadow-md'
           }`}
           onClick={() => setMenuOpen((v) => !v)}
         >
@@ -276,9 +276,10 @@ export function NavBar({ darkHero = false }: { darkHero?: boolean }) {
                 </Link>
               ))}
 
-              <a href="/" className="mt-3 flex items-center justify-center gap-1.5 bg-brand-dark text-white text-sm font-semibold px-4 py-3 rounded-full hover:bg-brand-red transition-colors">
+              <Link to="/contact" onClick={() => setMenuOpen(false)}
+                className="mt-3 flex items-center justify-center gap-1.5 bg-gradient-to-b from-[#ff3346] to-brand-red text-white text-sm font-semibold px-4 py-3 rounded-full ring-1 ring-white/15 shadow-[0_10px_24px_-10px_rgba(230,25,43,0.7)] hover:-translate-y-0.5 transition-all">
                 Get Started <ArrowUpRight size={13} />
-              </a>
+              </Link>
             </div>
           </motion.div>
         )}

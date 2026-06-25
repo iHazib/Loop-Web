@@ -84,7 +84,7 @@ export function FeatureCards() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0 }}
-            className="relative rounded-2xl bg-[#111] border border-white/5 p-7 flex flex-col justify-between min-h-[280px] overflow-hidden group"
+            className="relative rounded-2xl bg-[#111] border border-white/5 p-7 flex flex-col justify-between min-h-[280px] transition-transform duration-300 hover:-translate-y-1.5 overflow-hidden group"
           >
             <div className="absolute inset-0 bg-[repeating-linear-gradient(45deg,transparent,transparent_8px,rgba(255,255,255,0.012)_8px,rgba(255,255,255,0.012)_9px)] pointer-events-none" />
             <div className="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-t from-brand-red/10 to-transparent pointer-events-none" />
@@ -113,7 +113,7 @@ export function FeatureCards() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.05 }}
-            className="relative rounded-2xl overflow-hidden min-h-[280px] flex flex-col justify-center items-center"
+            className="relative rounded-2xl overflow-hidden min-h-[280px] transition-transform duration-300 hover:-translate-y-1.5 flex flex-col justify-center items-center"
             style={{ background: 'linear-gradient(135deg, #1a0000 0%, #3d0000 40%, #000 100%)' }}
           >
             <div className="absolute inset-0 bg-[repeating-linear-gradient(135deg,transparent,transparent_12px,rgba(255,255,255,0.018)_12px,rgba(255,255,255,0.018)_13px)]" />
@@ -143,7 +143,7 @@ export function FeatureCards() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.1 }}
-            className="relative rounded-2xl bg-[#0d0000] border border-brand-red/15 p-7 flex flex-col justify-between min-h-[280px] overflow-hidden"
+            className="relative rounded-2xl bg-[#0d0000] border border-brand-red/15 p-7 flex flex-col justify-between min-h-[280px] transition-transform duration-300 hover:-translate-y-1.5 overflow-hidden"
             style={{ background: 'radial-gradient(circle at top right, rgba(139,0,0,0.25) 0%, #0a0000 60%)' }}
           >
             <div className="absolute inset-0 bg-[repeating-linear-gradient(45deg,transparent,transparent_8px,rgba(255,255,255,0.01)_8px,rgba(255,255,255,0.01)_9px)] pointer-events-none" />
@@ -171,7 +171,7 @@ export function FeatureCards() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.15 }}
-            className="relative rounded-2xl overflow-hidden min-h-[280px] flex flex-col justify-end p-7"
+            className="relative rounded-2xl overflow-hidden min-h-[280px] transition-transform duration-300 hover:-translate-y-1.5 flex flex-col justify-end p-7"
             style={{ background: 'linear-gradient(160deg, #3d0000 0%, #1a0000 50%, #000 100%)' }}
           >
             <div className="absolute inset-0 bg-[repeating-linear-gradient(45deg,transparent,transparent_8px,rgba(255,255,255,0.018)_8px,rgba(255,255,255,0.018)_9px)]" />
@@ -200,7 +200,7 @@ export function FeatureCards() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.2 }}
-            className="relative rounded-2xl bg-brand-red p-7 flex flex-col justify-between min-h-[280px] overflow-hidden"
+            className="relative rounded-2xl bg-brand-red p-7 flex flex-col justify-between min-h-[280px] transition-transform duration-300 hover:-translate-y-1.5 overflow-hidden"
             style={{ background: 'radial-gradient(circle at bottom left, #8b0000 0%, #e6192b 60%, #c0001f 100%)' }}
           >
             <div className="absolute inset-0 bg-[repeating-linear-gradient(45deg,transparent,transparent_8px,rgba(0,0,0,0.04)_8px,rgba(0,0,0,0.04)_9px)]" />
@@ -226,7 +226,7 @@ export function FeatureCards() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.25 }}
-            className="relative rounded-2xl bg-[#111] border border-white/5 p-7 flex flex-col justify-between min-h-[280px] overflow-hidden"
+            className="relative rounded-2xl bg-[#111] border border-white/5 p-7 flex flex-col justify-between min-h-[280px] transition-transform duration-300 hover:-translate-y-1.5 overflow-hidden"
           >
             <div className="absolute inset-0 bg-[repeating-linear-gradient(45deg,transparent,transparent_8px,rgba(255,255,255,0.012)_8px,rgba(255,255,255,0.012)_9px)]" />
             <div className="relative z-10 flex justify-between items-start">
