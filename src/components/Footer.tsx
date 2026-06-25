@@ -29,6 +29,18 @@ const socials = [
   { icon: FaInstagram,  label: 'Instagram' },
 ];
 
+// Footer label → in-app route. Labels not listed have no page yet.
+const routeMap: Record<string, string> = {
+  'Marketplace Control': '/marketplace-control',
+  'Brand Protection': '/brand-protection',
+  'Retail Expansion': '/retail-expansion',
+  'DTC': '/dtc-growth',
+  'About Us': '/about',
+  'Blog': '/blog',
+  'The Loop': '/blog',
+  'Contact': '/contact',
+};
+
 export function Footer() {
   return (
     <footer className="w-full bg-brand-dark relative overflow-hidden">
@@ -77,25 +89,26 @@ export function Footer() {
             <div key={col.heading}>
               <p className="text-[9px] font-mono tracking-widest text-brand-red uppercase mb-5">{col.heading}</p>
               <ul className="space-y-3">
-                {col.links.map((link) => (
-                  <li key={link}>
-                    {link === 'Marketplace Control' ? (
-                      <Link
-                        to="/marketplace-control"
-                        className="text-sm text-gray-400 hover:text-white transition-colors font-light"
-                      >
-                        {link}
-                      </Link>
-                    ) : (
-                      <a
-                        href="#"
-                        className="text-sm text-gray-400 hover:text-white transition-colors font-light"
-                      >
-                        {link}
-                      </a>
-                    )}
-                  </li>
-                ))}
+                {col.links.map((link) => {
+                  const to = routeMap[link];
+                  return (
+                    <li key={link}>
+                      {to ? (
+                        <Link
+                          to={to}
+                          onClick={() => window.scrollTo({ top: 0 })}
+                          className="text-sm text-gray-400 hover:text-white transition-colors font-light"
+                        >
+                          {link}
+                        </Link>
+                      ) : (
+                        <span className="text-sm text-gray-500/70 font-light cursor-default" title="Coming soon">
+                          {link}
+                        </span>
+                      )}
+                    </li>
+                  );
+                })}
               </ul>
             </div>
           ))}
