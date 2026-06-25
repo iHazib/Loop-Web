@@ -89,8 +89,8 @@ export function NavBar({ darkHero = false }: { darkHero?: boolean }) {
         {/* Center pill nav */}
         <div className={`hidden md:flex items-center rounded-full px-2 py-1.5 gap-1 border transition-all duration-500 ${
           isLight
-            ? 'bg-white/50 backdrop-blur-md border-white/60 shadow-[0_4px_24px_-8px_rgba(0,0,0,0.12),inset_0_1px_0_rgba(255,255,255,0.7)]'
-            : 'bg-white/85 backdrop-blur-md border-white/30 shadow-[0_10px_30px_-8px_rgba(0,0,0,0.45)]'
+            ? 'bg-white border-black/[0.07] shadow-[0_8px_24px_-12px_rgba(0,0,0,0.22)]'
+            : 'bg-white border-transparent shadow-[0_12px_30px_-12px_rgba(0,0,0,0.55)]'
         }`}>
           {navLinks.map((link) => {
             const isServices = link === 'Services';
