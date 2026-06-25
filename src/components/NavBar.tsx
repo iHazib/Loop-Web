@@ -87,11 +87,7 @@ export function NavBar({ darkHero = false }: { darkHero?: boolean }) {
         </Link>
 
         {/* Center pill nav */}
-        <div className={`hidden md:flex items-center rounded-full px-2 py-1.5 gap-1 border transition-all duration-500 ${
-          isLight
-            ? 'bg-white border-black/[0.07] shadow-[0_8px_24px_-12px_rgba(0,0,0,0.22)]'
-            : 'bg-white border-transparent shadow-[0_12px_30px_-12px_rgba(0,0,0,0.55)]'
-        }`}>
+        <div className="hidden md:flex items-center gap-8">
           {navLinks.map((link) => {
             const isServices = link === 'Services';
 
@@ -104,29 +100,19 @@ export function NavBar({ darkHero = false }: { darkHero?: boolean }) {
                   onMouseEnter={() => { setActiveLink(link); setServicesOpen(true); }}
                   onMouseLeave={() => { setActiveLink(null); setServicesOpen(false); }}
                 >
-                  <button
-                    className="relative flex items-center gap-1 px-4 py-1.5 rounded-full text-sm font-medium transition-colors duration-150"
-                  >
-                    <AnimatePresence>
-                      {activeLink === link && (
-                        <motion.span
-                          layoutId="navPillShared"
-                          initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                          transition={{ duration: 0.12 }}
-                          className="absolute inset-0 bg-brand-red rounded-full"
-                          style={{ zIndex: 0 }}
-                        />
-                      )}
-                    </AnimatePresence>
-                    <span className={`relative transition-colors duration-150 ${activeLink === link ? 'text-white' : isLight ? 'text-brand-dark/70' : 'text-brand-dark/75'}`}
-                      style={{ zIndex: 1 }}>
+                  <button className="relative flex items-center gap-1 py-1 text-sm font-medium">
+                    <span className={`transition-colors duration-200 ${activeLink === link ? 'text-brand-red' : isLight ? 'text-brand-dark/70 hover:text-brand-dark' : 'text-white/80 hover:text-white'}`}>
                       {link}
                     </span>
                     <ChevronDown
                       size={12}
-                      className={`relative transition-all duration-200 ${activeLink === link ? 'text-white rotate-180' : isLight ? 'text-brand-dark/40' : 'text-brand-dark/40'}`}
-                      style={{ zIndex: 1 }}
+                      className={`transition-all duration-200 ${activeLink === link ? 'text-brand-red rotate-180' : isLight ? 'text-brand-dark/40' : 'text-white/40'}`}
                     />
+                    {activeLink === link && (
+                      <motion.span layoutId="navUnderline"
+                        className="absolute left-0 right-0 -bottom-1 h-0.5 bg-brand-red rounded-full"
+                        transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }} />
+                    )}
                   </button>
 
                   {/* Dropdown */}
@@ -192,25 +178,16 @@ export function NavBar({ darkHero = false }: { darkHero?: boolean }) {
                 to={navRoutes[link] ?? '/'}
                 onMouseEnter={() => setActiveLink(link)}
                 onMouseLeave={() => setActiveLink(null)}
-                className="relative px-4 py-1.5 rounded-full text-sm font-medium transition-colors duration-150"
+                className="relative py-1 text-sm font-medium"
               >
-                <AnimatePresence>
-                  {activeLink === link && (
-                    <motion.span
-                      layoutId="navPillShared"
-                      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                      transition={{ duration: 0.12 }}
-                      className="absolute inset-0 bg-brand-red rounded-full"
-                      style={{ zIndex: 0 }}
-                    />
-                  )}
-                </AnimatePresence>
-                <span
-                  className={`relative transition-colors duration-150 ${activeLink === link ? 'text-white' : isLight ? 'text-brand-dark/70' : 'text-brand-dark/75'}`}
-                  style={{ zIndex: 1 }}
-                >
+                <span className={`transition-colors duration-200 ${activeLink === link ? 'text-brand-red' : isLight ? 'text-brand-dark/70 hover:text-brand-dark' : 'text-white/80 hover:text-white'}`}>
                   {link}
                 </span>
+                {activeLink === link && (
+                  <motion.span layoutId="navUnderline"
+                    className="absolute left-0 right-0 -bottom-1 h-0.5 bg-brand-red rounded-full"
+                    transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }} />
+                )}
               </Link>
             );
           })}
