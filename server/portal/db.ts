@@ -62,7 +62,7 @@ export async function loadDataset(brandId: string): Promise<Dataset | null> {
   const b = check<any[]>(await sb().from('portal_brands').select('*').eq('id', brandId));
   if (!b.length) return null;
   const by = (q: any) => q.eq('brand_id', brandId);
-  const [products, sales, ads, sellers, competitors, cases, events] = await Promise.all([
+  const [products, sales, ads, sellers, competitors, cases, events, d2c] = await Promise.all([
     selectAll('portal_products', by, 'sku'),
     selectAll('portal_sales', by, 'week_start'),
     selectAll('portal_ads', by, 'week_start'),
@@ -70,6 +70,7 @@ export async function loadDataset(brandId: string): Promise<Dataset | null> {
     selectAll('portal_competitors', by, 'asin'),
     selectAll('portal_cases', by, 'opened_at'),
     check<any[]>(await sb().from('portal_events').select('*').eq('brand_id', brandId).order('at', { ascending: false }).limit(50)),
+    selectAll('portal_d2c', by, 'week_start'),
   ]);
   const asins = [...new Set([...products.map((p) => p.asin), ...competitors.map((c) => c.asin)].filter(Boolean))];
   const since = new Date(Date.now() - 120 * 86_400_000).toISOString().slice(0, 10);
@@ -84,6 +85,7 @@ export async function loadDataset(brandId: string): Promise<Dataset | null> {
     sales: sales.map((r): SalesRow => ({ weekStart: r.week_start, channel: r.channel, sku: r.sku, units: +r.units, revenue: +r.revenue, returns: +r.returns, fees: +r.fees, stock: +r.stock })),
     ads: ads.map((r): AdsRow => ({ weekStart: r.week_start, channel: r.channel, campaign: r.campaign, campaignType: r.campaign_type ?? '', spend: +r.spend, impressions: +r.impressions, clicks: +r.clicks, orders: +r.orders, adSales: +r.ad_sales })),
     sellers: sellers.map((r): AuthorisedSeller => ({ sellerName: r.seller_name, amazonSellerId: r.amazon_seller_id ?? '', ebayUsername: r.ebay_username ?? '', skus: r.skus ?? 'All', validUntil: r.valid_until ?? '' })),
+    d2c: d2c.map((r: any) => ({ weekStart: r.week_start, sessions: +r.sessions, orders: +r.orders, revenue: +r.revenue, newCustomers: +r.new_customers, returningCustomers: +r.returning_customers, refunds: +r.refunds })),
     competitors: competitors.map((r): CompetitorLink => ({ sku: r.sku, asin: r.asin, kind: r.kind, source: r.source, createdAt: String(r.created_at).slice(0, 10) })),
     snapshots: snaps.map((r) => ({ ...(r.data as KeepaSnapshot), asin: r.asin, day: r.day })),
     cases: cases.map((r): ProtectionCase => ({ ...(r.data as ProtectionCase), id: r.id, status: r.status })),
@@ -103,6 +105,9 @@ export async function saveAds(brandId: string, rows: AdsRow[]) {
 }
 export async function saveSellers(brandId: string, rows: AuthorisedSeller[]) {
   await upsert('portal_sellers', rows.map((s) => ({ brand_id: brandId, seller_name: s.sellerName, amazon_seller_id: s.amazonSellerId, ebay_username: s.ebayUsername, skus: s.skus, valid_until: s.validUntil || null })), 'brand_id,seller_name');
+}
+export async function saveD2c(brandId: string, rows: import('./types.js').D2cRow[]) {
+  await upsert('portal_d2c', rows.map((d) => ({ brand_id: brandId, week_start: d.weekStart, sessions: d.sessions, orders: d.orders, revenue: d.revenue, new_customers: d.newCustomers, returning_customers: d.returningCustomers, refunds: d.refunds })), 'brand_id,week_start');
 }
 export async function saveCompetitors(brandId: string, rows: CompetitorLink[]) {
   await upsert('portal_competitors', rows.map((c) => ({ brand_id: brandId, sku: c.sku, asin: c.asin, kind: c.kind, source: c.source })), 'brand_id,sku,asin');

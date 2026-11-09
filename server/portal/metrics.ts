@@ -354,3 +354,51 @@ export function logistics(ds: Dataset) {
     pending: ['Dispatch performance (connect Laneverse or courier data)', 'Courier mix and cost per order', 'Inbound FBA shipments', 'Retail and wholesale accounts list'],
   };
 }
+
+/* ───────────── D2C store ───────────── */
+export function d2c(ds: Dataset, period = 4) {
+  const rows = [...ds.d2c].sort((a, b) => a.weekStart.localeCompare(b.weekStart));
+  const weeks = rows.map((r) => r.weekStart);
+  const cur = rows.slice(-period), prev = rows.slice(-period * 2, -period);
+  const paidSpend = (list: typeof rows) => {
+    const set = new Set(list.map((r) => r.weekStart));
+    return sum(ds.ads.filter((a) => set.has(a.weekStart) && /google|meta|facebook|instagram|d2c|shopify/i.test(a.channel)).map((a) => a.spend));
+  };
+  const k = (list: typeof rows) => {
+    const sessions = sum(list.map((r) => r.sessions)), orders = sum(list.map((r) => r.orders)), revenue = sum(list.map((r) => r.revenue));
+    const nw = sum(list.map((r) => r.newCustomers)), ret = sum(list.map((r) => r.returningCustomers)), refunds = sum(list.map((r) => r.refunds));
+    const spend = paidSpend(list);
+    return {
+      revenue: round(revenue), orders, sessions,
+      conversionPct: sessions ? round((orders / sessions) * 100, 2) : null,
+      aov: orders ? round(revenue / orders) : null,
+      repeatPct: nw + ret ? round((ret / (nw + ret)) * 100, 1) : null,
+      cpa: nw && spend ? round(spend / nw) : null,
+      refundPct: orders ? round((refunds / orders) * 100, 1) : null,
+      newCustomers: nw, paidSpend: round(spend),
+    };
+  };
+  const now = k(cur), before = k(prev);
+  const last12 = rows.slice(-12);
+  return {
+    hasData: rows.length > 0,
+    period: { weeks: period, from: cur[0]?.weekStart ?? null, to: cur.at(-1)?.weekStart ?? null },
+    kpis: now,
+    change: {
+      revenue: pctChange(now.revenue, before.revenue),
+      orders: pctChange(now.orders, before.orders),
+      conversion: now.conversionPct != null && before.conversionPct != null ? round(now.conversionPct - before.conversionPct, 2) : null,
+      aov: pctChange(now.aov ?? 0, before.aov ?? 0),
+      repeat: now.repeatPct != null && before.repeatPct != null ? round(now.repeatPct - before.repeatPct, 1) : null,
+      cpa: now.cpa != null && before.cpa != null ? pctChange(now.cpa, before.cpa) : null,
+    },
+    trend: {
+      weeks: last12.map((r) => r.weekStart),
+      revenue: last12.map((r) => round(r.revenue)),
+      conversionPct: last12.map((r) => (r.sessions ? round((r.orders / r.sessions) * 100, 2) : null)),
+      newCustomers: last12.map((r) => r.newCustomers),
+      returningCustomers: last12.map((r) => r.returningCustomers),
+    },
+    weeksAvailable: weeks.length,
+  };
+}

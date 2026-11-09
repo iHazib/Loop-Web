@@ -130,6 +130,17 @@ export interface PortalEvent {
 }
 
 /** Everything the metric functions need for one brand. */
+/** Weekly D2C store figures (Shopify / WooCommerce / GA4 exports). */
+export interface D2cRow {
+  weekStart: string;
+  sessions: number;
+  orders: number;
+  revenue: number; // £ inc VAT
+  newCustomers: number;
+  returningCustomers: number;
+  refunds: number; // refunded orders
+}
+
 export interface Dataset {
   brand: Brand;
   products: Product[];
@@ -137,6 +148,7 @@ export interface Dataset {
   ads: AdsRow[];
   sellers: AuthorisedSeller[];
   competitors: CompetitorLink[];
+  d2c: D2cRow[];
   snapshots: KeepaSnapshot[];
   cases: ProtectionCase[];
   events: PortalEvent[];

@@ -44,8 +44,8 @@ async function principal(req: PortalReq): Promise<acc.Principal | null> {
   return { kind: 'client', email: s.email, name: s.name, brands };
 }
 
-const VIEWS = ['overview', 'channels', 'protection', 'analysis', 'ads', 'logistics'] as const;
-const KINDS: UploadKind[] = ['products', 'sales', 'ads', 'sellers', 'competitors'];
+const VIEWS = ['overview', 'channels', 'protection', 'analysis', 'ads', 'logistics', 'd2c'] as const;
+const KINDS: UploadKind[] = ['products', 'sales', 'ads', 'sellers', 'competitors', 'd2c'];
 const STATUSES: CaseStatus[] = ['flagged', 'reviewing', 'clear', 'resolved'];
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const num = (v: unknown) => { const n = Number(String(v ?? '').replace(/[£,\s]/g, '')); return Number.isFinite(n) && n >= 0 ? n : null; };
@@ -157,6 +157,7 @@ export async function handlePortal(req: PortalReq): Promise<PortalRes | null> {
       case 'analysis': return ok({ ...base, ...metrics.analysis(ds, query.sku) });
       case 'ads': return ok({ ...base, ...metrics.ads(ds, weeks) });
       case 'logistics': return ok({ ...base, ...metrics.logistics(ds) });
+      case 'd2c': return ok({ ...base, ...metrics.d2c(ds, weeks) });
     }
   }
   if (method === 'GET' && parts[2] === 'products') {
@@ -219,6 +220,7 @@ export async function handlePortal(req: PortalReq): Promise<PortalRes | null> {
       if (kind === 'ads') await db.saveAds(brandId, accepted as any);
       if (kind === 'sellers') await db.saveSellers(brandId, accepted as any);
       if (kind === 'competitors') await db.saveCompetitors(brandId, accepted as any);
+      if (kind === 'd2c') await db.saveD2c(brandId, accepted as any);
       await db.addEvents(brandId, [{ at: new Date().toISOString(), source: 'Manual sheet', message: `${kind[0].toUpperCase() + kind.slice(1)} uploaded by ${who?.email} (${accepted.length} rows${rejected.length ? `, ${rejected.length} rejected` : ''})`, level: rejected.length ? 'warn' : 'ok' }]);
     }
     return ok({ accepted: accepted.length, rejected });

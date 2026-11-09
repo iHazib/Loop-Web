@@ -1,4 +1,4 @@
-import type { Dataset, Product, SalesRow, AdsRow, AuthorisedSeller, CompetitorLink, KeepaSnapshot, Offer, PortalEvent, Channel } from './types.js';
+import type { Dataset, Product, SalesRow, AdsRow, AuthorisedSeller, CompetitorLink, KeepaSnapshot, Offer, PortalEvent, Channel, D2cRow } from './types.js';
 import { newCases, addDays, dayStr } from './protection.js';
 
 /* Illustrative demo brand. Deterministic (seeded), so screenshots stay stable.
@@ -153,9 +153,18 @@ export function demoDataset(now = new Date()): Dataset {
     { at: new Date(now.getTime() - 26 * 3600_000).toISOString(), source: 'TikTok Shop', message: 'Revenue up 18% week on week', level: 'info' },
   ];
 
+  /* D2C store: revenue matches the D2C channel in the sales rows. */
+  const d2c: D2cRow[] = weeks.map((w, wi) => {
+    const revenue = +sales.filter((s) => s.weekStart === w && s.channel === 'D2C').reduce((a, s) => a + s.revenue, 0).toFixed(2);
+    const orders = Math.max(1, Math.round(revenue / (24 + r() * 4)));
+    const conv = 0.019 + wi * 0.0006 + r() * 0.002;
+    const returning = Math.round(orders * (0.22 + wi * 0.006));
+    return { weekStart: w, sessions: Math.round(orders / conv), orders, revenue, newCustomers: orders - returning, returningCustomers: returning, refunds: Math.round(orders * (0.02 + r() * 0.015)) };
+  });
+
   const ds: Dataset = {
     brand: { id: 'demo', name: 'Halcyon Foods (demo)', plan: 'Scale plan' },
-    products: PRODUCTS, sales, ads, sellers: SELLERS, competitors, snapshots, cases: [], events,
+    products: PRODUCTS, sales, ads, sellers: SELLERS, competitors, d2c, snapshots, cases: [], events,
   };
   ds.cases = newCases(ds, now);
   for (const c of ds.cases) ds.events.push({ at: c.openedAt, source: 'Loop Protect', message: c.title, level: 'warn' });

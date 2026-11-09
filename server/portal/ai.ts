@@ -49,6 +49,7 @@ function context(ds: Dataset) {
   const an = metrics.analysis(ds);
   const pr = metrics.protection(ds);
   const ad = metrics.ads(ds, 4);
+  const dc = metrics.d2c(ds, 4);
   return {
     brand: ds.brand.name,
     period: ov.period,
@@ -65,6 +66,7 @@ function context(ds: Dataset) {
     }),
     openCases: pr.cases.filter((c) => c.status === 'flagged' || c.status === 'reviewing').slice(0, 40).map((c) => ({ type: c.type, severity: c.severity, sku: c.sku, title: c.title, detail: c.detail, opened: c.openedAt.slice(0, 10) })),
     sellersOnListings: pr.sellers.map((s) => ({ seller: s.sellerName, authorised: s.authorised, listings: s.listings.length })),
+    d2cStore: dc.hasData ? { kpis: dc.kpis, change: dc.change } : 'no D2C store data uploaded',
     ads: { kpis: ad.kpis, byChannel: ad.byChannel.map((c) => ({ channel: c.channel, spend: c.spend, adSales: c.adSales, roas: c.roas, acosPct: c.acosPct, spendGrowth: c.spendGrowth })), campaigns: ad.campaigns.slice(0, 15) },
   };
 }

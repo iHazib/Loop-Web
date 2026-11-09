@@ -72,6 +72,11 @@ try {
   r = await call('POST', `/brands/${brandId}/upload/competitors`, { rows: [{ 'Our SKU': 'SMK-1', 'Competitor ASIN': 'B000000009', 'Kind': 'competitor' }] });
   ok(`Competitors uploaded (${r.accepted})`);
 
+  r = await call('POST', `/brands/${brandId}/upload/d2c`, { rows: [0, 1, 2, 3, 4, 5, 6, 7].map((w) => ({ 'Week starting': monday(w + 1), 'Sessions': 4000 + w * 50, 'Orders': 90 + w, 'Revenue (£, inc VAT)': 2200 + w * 30, 'New customers': 70, 'Returning customers': 20 + w, 'Refunded orders': 2 })) });
+  ok(`D2C weeks uploaded (${r.accepted})`);
+  const dcv = await call('GET', `/brands/${brandId}/d2c?weeks=4`);
+  if (!dcv.hasData || dcv.kpis.conversionPct == null) throw new Error(`D2C view: ${JSON.stringify(dcv.kpis)}`);
+  ok(`D2C: conversion ${dcv.kpis.conversionPct}%, AOV £${dcv.kpis.aov}, repeat ${dcv.kpis.repeatPct}%`);
   const ov = await call('GET', `/brands/${brandId}/overview?weeks=4`);
   ok(`Overview: GMV £${ov.kpis[0].value}, margin ${ov.kpis[2].value}%, ${ov.events.length} events`);
   const ch = await call('GET', `/brands/${brandId}/channels?weeks=4`);

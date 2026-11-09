@@ -98,6 +98,20 @@ create table if not exists portal_events (
 );
 create index if not exists portal_events_brand on portal_events (brand_id, at desc);
 
+-- Weekly D2C store figures
+create table if not exists portal_d2c (
+  brand_id text references portal_brands(id) on delete cascade,
+  week_start date not null,
+  sessions integer default 0,
+  orders integer default 0,
+  revenue numeric default 0,
+  new_customers integer default 0,
+  returning_customers integer default 0,
+  refunds integer default 0,
+  primary key (brand_id, week_start)
+);
+alter table portal_d2c enable row level security;
+
 -- Client accounts (brand logins)
 create table if not exists portal_users (
   email text primary key,

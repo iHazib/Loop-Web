@@ -12,6 +12,7 @@ type Pr = Base & ReturnType<typeof M.protection>;
 type An = Base & ReturnType<typeof M.analysis>;
 type Ad = Base & ReturnType<typeof M.ads>;
 type Lg = Base & ReturnType<typeof M.logistics>;
+type Dc = Base & ReturnType<typeof M.d2c>;
 
 function Loading() {
   return <div className="grid gap-4">{[0, 1, 2].map((i) => <div key={i} className="h-28 rounded-2xl bg-white/[0.03] animate-pulse" />)}</div>;
@@ -116,6 +117,7 @@ export function Channels({ brandId }: { brandId: string }) {
           </button>
         ))}
       </div>
+      <D2CPanel brandId={brandId} weeks={weeks} />
       <div className="grid lg:grid-cols-3 gap-5">
         <Card title={`Products by channel${channel !== 'All' ? `: ${channel}` : ''}`} right={`last ${weeks} weeks`} className="lg:col-span-2">
           <Table head={['Product', 'Channel', 'Revenue', 'Units', 'Growth']}
@@ -135,6 +137,41 @@ export function Channels({ brandId }: { brandId: string }) {
         </div>
       </div>
     </div>
+  );
+}
+
+/* ═════════════ D2C store panel (inside Channels) ═════════════ */
+export function D2CPanel({ brandId, weeks }: { brandId: string; weeks: number }) {
+  const { data } = useView<Dc>(`/brands/${brandId}/d2c?weeks=${weeks}`);
+  if (!data) return null;
+  if (!data.hasData) return (
+    <Card title="D2C store">
+      <p className="text-sm text-white/45">Upload the weekly D2C sheet under Data (sessions, orders, revenue, new and returning customers, refunds) to see conversion, AOV, repeat rate and cost per new customer.</p>
+    </Card>
+  );
+  const k = data.kpis, c = data.change;
+  const labels = data.trend.weeks.map(shortDate);
+  return (
+    <Card title="D2C store" right={`last ${data.period.weeks} weeks vs the ${data.period.weeks} before`}>
+      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 mb-5">
+        <Kpi label="Revenue" value={gbpShort(k.revenue)} change={c.revenue} />
+        <Kpi label="Conversion" value={pct(k.conversionPct, 2)} change={c.conversion} unit="pp" />
+        <Kpi label="AOV" value={gbp(k.aov, 2)} change={c.aov} />
+        <Kpi label="Repeat customers" value={pct(k.repeatPct)} change={c.repeat} unit="pp" />
+        <Kpi label="Cost per new customer" value={gbp(k.cpa, 2)} change={c.cpa} lowerIsBetter sub={k.cpa == null ? 'needs Google or Meta ads data' : undefined} />
+        <Kpi label="Refund rate" value={pct(k.refundPct)} sub={`${int(k.orders)} orders`} />
+      </div>
+      <div className="grid lg:grid-cols-2 gap-5">
+        <div>
+          <p className="text-[11px] uppercase tracking-wider text-white/40 mb-2">Conversion rate, 12 weeks</p>
+          <LineChart labels={labels} series={[{ name: 'Conversion %', values: data.trend.conversionPct, color: '#E6192B' }]} height={180} format={(v) => `${v.toFixed(1)}%`} />
+        </div>
+        <div>
+          <p className="text-[11px] uppercase tracking-wider text-white/40 mb-2">New vs returning customers</p>
+          <StackedBars labels={labels} height={180} format={(v) => int(v)} series={[{ name: 'New', values: data.trend.newCustomers }, { name: 'Returning', values: data.trend.returningCustomers }]} />
+        </div>
+      </div>
+    </Card>
   );
 }
 

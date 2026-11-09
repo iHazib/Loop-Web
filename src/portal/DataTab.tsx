@@ -4,10 +4,11 @@ import { portalFetch, parseCsv, downloadCsv, useView } from './api';
 import { Card, Badge, Table, gbp } from './ui';
 import type { Status } from './Portal';
 
-type Kind = 'products' | 'sales' | 'ads' | 'sellers' | 'competitors';
+type Kind = 'products' | 'sales' | 'ads' | 'sellers' | 'competitors' | 'd2c';
 const SHEETS: { kind: Kind; title: string; help: string; example: (string | number)[] }[] = [
   { kind: 'sales', title: 'Sales', help: 'Weekly. One row per SKU, per channel, per week (Amazon, TikTok Shop, eBay, Temu, D2C, Wholesale). Keepa cannot see your own sales, so this one comes from you.', example: ['2026-11-02', 'Amazon', 'HAL-OAT-500', 340, 2376.6, 6, 520, 1200] },
   { kind: 'ads', title: 'Ads', help: 'Weekly. One row per campaign, per week, from each ad platform export.', example: ['2026-11-02', 'Amazon', 'SP Oat Bites Exact', 'Sponsored Products', 180, 42000, 610, 74, 517.26] },
+  { kind: 'd2c', title: 'D2C store', help: 'Weekly. One row per week from your Shopify or WooCommerce analytics: sessions, orders, revenue, new and returning customers, refunded orders.', example: ['2026-11-02', 5400, 112, 2890.5, 84, 28, 2] },
   { kind: 'sellers', title: 'Authorised sellers', help: 'Who is allowed to sell. Anyone else on your ASINs opens a protection case.', example: ['Halcyon Direct Ltd', 'A1XXXXXXXXXXXX', 'halcyon_direct', 'All', '2027-12-31'] },
   { kind: 'products', title: 'Products (bulk)', help: 'Optional. Easier: import from ASINs above, then fill cost and minimum price in the table.', example: ['HAL-OAT-500', 'Oat Bites 500g', 'B0XXXXXXXX', '5060000000011', 2.1, 6.99, 5.99] },
   { kind: 'competitors', title: 'Competitors (bulk)', help: 'Optional. Competitor or compatible ASINs per SKU. "Find competitors" does this for you.', example: ['HAL-OAT-500', 'B0YYYYYYYY', 'competitor'] },

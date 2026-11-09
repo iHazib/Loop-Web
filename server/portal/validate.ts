@@ -1,10 +1,10 @@
-import { CHANNELS, type Product, type SalesRow, type AdsRow, type AuthorisedSeller, type CompetitorLink, type Channel } from './types.js';
+import { CHANNELS, type Product, type SalesRow, type AdsRow, type AuthorisedSeller, type CompetitorLink, type Channel, type D2cRow } from './types.js';
 
 /* Validates rows uploaded from the manual sheet.
    Rows arrive as objects keyed by the sheet's column headers (any case/spacing).
    Bad rows are rejected with a reason instead of breaking the dashboard. */
 
-export type UploadKind = 'products' | 'sales' | 'ads' | 'sellers' | 'competitors';
+export type UploadKind = 'products' | 'sales' | 'ads' | 'sellers' | 'competitors' | 'd2c';
 export interface Rejected { row: number; reason: string }
 
 const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -16,6 +16,7 @@ const FIELDS: Record<UploadKind, Record<string, string[]>> = {
   ads: { weekStart: ['weekstarting', 'weekstart', 'week'], channel: ['channel'], campaign: ['campaignname', 'campaign'], campaignType: ['campaigntype', 'type'], spend: ['spend', 'spend£'], impressions: ['impressions'], clicks: ['clicks'], orders: ['orders'], adSales: ['adsales', 'adsales£', 'sales'] },
   sellers: { sellerName: ['sellername', 'name'], amazonSellerId: ['amazonsellerid', 'sellerid'], ebayUsername: ['ebayusernameoptional', 'ebayusername', 'ebay'], skus: ['authorisedskus', 'skus'], validUntil: ['validuntil'] },
   competitors: { sku: ['oursku', 'sku'], asin: ['competitorasin', 'asin'], kind: ['kind', 'type'] },
+  d2c: { weekStart: ['weekstarting', 'weekstart', 'week'], sessions: ['sessions', 'visits'], orders: ['orders'], revenue: ['revenueincvat', 'revenue', 'sales'], newCustomers: ['newcustomers', 'firsttimecustomers'], returningCustomers: ['returningcustomers', 'repeatcustomers'], refunds: ['refundedorders', 'refunds'] },
 };
 
 function mapRow(kind: UploadKind, raw: Record<string, unknown>): Record<string, string> {
@@ -99,6 +100,16 @@ export function validate(kind: UploadKind, rows: Record<string, unknown>[], know
       if (r.validUntil && !valid) return bad(n, 'Valid until is not a date');
       return { sellerName: r.sellerName, amazonSellerId: (r.amazonSellerId ?? '').toUpperCase(), ebayUsername: r.ebayUsername ?? '', skus: r.skus || 'All', validUntil: r.validUntil ?? '' } satisfies AuthorisedSeller;
     }
+    if (kind === 'd2c') {
+      const week = toMonday(r.weekStart ?? '');
+      if (!week) return bad(n, 'Week starting is not a date (use YYYY-MM-DD)');
+      if (week > today) return bad(n, 'Week starting is in the future');
+      const v = [int(r.sessions), int(r.orders), money(r.revenue), int(r.newCustomers), int(r.returningCustomers), int(r.refunds)];
+      if (v.some((x) => x == null)) return bad(n, 'Sessions, orders, revenue, customers and refunds must be numbers');
+      const [sessions, orders, revenue, newCustomers, returningCustomers, refunds] = v as number[];
+      if (orders > sessions && sessions > 0) return bad(n, 'Orders are higher than sessions; check the columns');
+      return { weekStart: week, sessions, orders, revenue, newCustomers, returningCustomers, refunds } satisfies D2cRow;
+    }
     // competitors
     if (!r.sku || !knownSkus.has(r.sku)) return bad(n, `SKU "${r.sku ?? ''}" is not in the Products tab`);
     if (!r.asin || !/^[A-Z0-9]{10}$/i.test(r.asin)) return bad(n, 'Competitor ASIN should be 10 letters or digits');
@@ -116,4 +127,5 @@ export const TEMPLATES: Record<UploadKind, string[]> = {
   ads: ['Week starting', 'Channel', 'Campaign name', 'Campaign type', 'Spend (£)', 'Impressions', 'Clicks', 'Orders', 'Ad sales (£)'],
   sellers: ['Seller name', 'Amazon seller ID', 'eBay username (optional)', 'Authorised SKUs', 'Valid until'],
   competitors: ['Our SKU', 'Competitor ASIN', 'Kind'],
+  d2c: ['Week starting', 'Sessions', 'Orders', 'Revenue (£, inc VAT)', 'New customers', 'Returning customers', 'Refunded orders'],
 };
