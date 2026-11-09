@@ -24,6 +24,7 @@ import ToolCompetitorAnalysis from './pages/ToolCompetitorAnalysis.tsx';
 import UKMarketEntry from './pages/UKMarketEntry.tsx';
 import HowItWorks from './pages/HowItWorks.tsx';
 import { PortalLogin, PortalInvite } from './portal/AuthPages.tsx';
+import Report from './portal/Report.tsx';
 import './index.css';
 
 createRoot(document.getElementById('root')!).render(
@@ -49,6 +50,7 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/portal/login" element={<PortalLogin />} />
         <Route path="/portal/invite/:token" element={<PortalInvite />} />
         <Route path="/portal" element={<Portal />} />
+        <Route path="/portal/:brandId/report" element={<Report />} />
         <Route path="/portal/:brandId" element={<Portal />} />
         <Route path="/portal/:brandId/:tab" element={<Portal />} />
         <Route path="/admin" element={<AdminLayout />}>

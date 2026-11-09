@@ -163,6 +163,7 @@ export default function Portal() {
           </div>
           <div className="flex items-center gap-3">
             {brandId === 'demo' && <span className="text-[10px] font-mono uppercase tracking-widest text-amber-300 border border-amber-300/30 rounded-md px-2 py-1">Illustrative data</span>}
+            {!noAccess && <Link to={`/portal/${brandId}/report`} className="text-xs rounded-lg border border-white/15 px-3 py-1.5 text-white/70 hover:text-white hover:border-white/30">Weekly report (PDF)</Link>}
             {!p && <Link to="/portal/login" className="md:hidden text-xs text-brand-red">Sign in</Link>}
           </div>
         </header>
