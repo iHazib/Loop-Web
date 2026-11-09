@@ -15,6 +15,8 @@ import AdminDashboard from './admin/AdminDashboard.tsx';
 import AdminPosts from './admin/AdminPosts.tsx';
 import AdminPostEditor from './admin/AdminPostEditor.tsx';
 import AdminInbox from './admin/AdminInbox.tsx';
+import Portal from './portal/Portal.tsx';
+import { PortalLogin, PortalInvite } from './portal/AuthPages.tsx';
 import './index.css';
 
 createRoot(document.getElementById('root')!).render(
@@ -30,6 +32,11 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/blog/:slug" element={<BlogPost />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/about" element={<About />} />
+        <Route path="/portal/login" element={<PortalLogin />} />
+        <Route path="/portal/invite/:token" element={<PortalInvite />} />
+        <Route path="/portal" element={<Portal />} />
+        <Route path="/portal/:brandId" element={<Portal />} />
+        <Route path="/portal/:brandId/:tab" element={<Portal />} />
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<AdminDashboard />} />
           <Route path="posts" element={<AdminPosts />} />

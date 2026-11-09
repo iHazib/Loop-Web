@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { CTA, contactHref } from './CTA';
 import { motion, AnimatePresence } from 'motion/react';
 import { BarChart3, Activity, Globe, Zap, ChevronRight, ArrowUpRight, RefreshCw, Shield, Database, TrendingUp } from 'lucide-react';
 
@@ -175,9 +177,9 @@ export function DashboardSection() {
                       <h3 className="font-display text-white text-lg font-medium">{activeTab}</h3>
                       <p className="text-[10px] text-gray-500 font-mono">Last updated: just now</p>
                     </div>
-                    <button className="flex items-center gap-1.5 text-[10px] font-mono tracking-widest text-brand-red border border-brand-red/30 px-3 py-1.5 rounded-lg hover:bg-brand-red/10 transition-colors">
+                    <Link to={contactHref('dashboard-demo')} data-cta="home-dashboard-report" className="flex items-center gap-1.5 text-[10px] font-mono tracking-widest text-brand-red border border-brand-red/30 px-3 py-1.5 rounded-lg hover:bg-brand-red/10 transition-colors">
                       FULL REPORT <ArrowUpRight size={10} />
-                    </button>
+                    </Link>
                   </div>
 
                   {/* Metric cards */}
@@ -332,6 +334,10 @@ export function DashboardSection() {
             </div>
           </div>
         </motion.div>
+        <div className="mt-14 flex flex-col sm:flex-row items-center justify-center gap-4">
+          <CTA to={contactHref('dashboard-demo')} label="Get your free brand report" tone="red" id="home-dashboard" />
+          <CTA to="/portal/demo/overview" label="Open the live demo" tone="outline-light" id="home-dashboard-demo" />
+        </div>
       </div>
     </section>
   );

@@ -190,3 +190,44 @@ For serverless/multi‑instance hosts (e.g. Cloud Run) the filesystem is ephemer
 ---
 
 © Loop Retail. All rights reserved.
+
+
+---
+
+## Brand portal (`/portal`)
+
+A dashboard per brand with six tabs: **Overview, Channels, Protection, Brand Analysis, Ads, Logistics & Distribution**, plus **Data** for uploads.
+
+- **Demo:** `/portal/demo` works with no setup (illustrative data, read only).
+- **Real brands:** sign in at `/admin`, then add a brand from the brand menu. Staff sessions see every brand.
+
+**Data sources (phase 1)**
+- **Manual sheet** (CSV upload under Data): Products, Sales, Ads, Authorised sellers, Competitors. Templates download from the Data tab. Bad rows are rejected with a reason.
+- **Keepa** (Amazon UK): BSR, average prices, Buy Box, sellers, reviews and competitor search. Set `KEEPA_API_KEY`.
+
+**Loop Protect rules** (`server/portal/protection.ts`): unauthorised seller, price below minimum (unauthorised sellers only), Buy Box lost, seller count spike, listing changed, grey market signal score. Cases resolve automatically when the seller leaves the listing.
+
+**Setup**
+1. Run `supabase/portal.sql` once in the Supabase SQL editor.
+2. Add `KEEPA_API_KEY` and `CRON_SECRET` to the environment (see `.env.example`).
+3. Daily job: `npm run job:keepa` from cron on the server, or Vercel Cron calling `/api/portal/cron/keepa` (configured in `vercel.json`).
+
+**Code:** `server/portal/*` (types, metrics, rules, Keepa client, storage, router) and `src/portal/*` (UI). The same router serves Express (`server/app.ts`) and Vercel (`api/index.ts`).
+
+
+### Client logins
+- Staff (signed in at `/admin`) open a brand → **Data → Brand logins**, enter the client's email and role, and send them the invite link (one use, 7 days).
+- **Manager**: view, upload sheets, edit product costs and minimum prices, import ASINs, find competitors, work cases. **Viewer**: view and ask AI.
+- Clients sign in at `/portal/login` and only ever see their own brands. A new invite link resets a forgotten password. Removing a login cuts access immediately.
+
+### Data: Keepa first, sheet only for what Keepa cannot see
+- **Keepa:** product import from ASINs (name, EAN, RRP), daily BSR / prices / averages / Buy Box / sellers (names, rating, country via the seller endpoint, cached 30 days), reviews, competitor tracking and search. No scrapers.
+- **Weekly sheet:** own sales by channel, ad spend, product cost and minimum price, authorised sellers. Seller alerts stay off until the authorised list exists.
+
+### Built-in AI (Gemini free tier)
+- Set `GEMINI_API_KEY` (Google AI Studio). Optional `GEMINI_MODEL` (default `gemini-2.5-flash-lite`).
+- Used for the **Ask** box on every tab (answers only from that brand's data), and for **Find competitors** (picks Keepa search phrases, sorts results into competitor / compatible / not relevant).
+- Limits: 40 questions per user per hour, 15 competitor searches per hour.
+
+### Testing
+`npm run test:portal` runs about 36 checks against the configured database: uploads, every dashboard tab, invites, logins and access rules. Add `KEEPA_API_KEY`, `GEMINI_API_KEY` and `SMOKE_ASIN=<real UK ASIN>` to include Keepa and AI. The test brand and user are deleted afterwards.

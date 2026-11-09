@@ -4,6 +4,7 @@
 import '../server/env.js'; // load env (no-op on Vercel; reads .env locally)
 import * as store from '../server/storage.js';
 import * as auth from '../server/auth.js';
+import { handlePortal } from '../server/portal/handler.js';
 
 /* Single native Vercel serverless function handling ALL /api/* requests.
    vercel.json rewrites `/api/(.*)` → `/api?p=$1`, so the real sub-path
@@ -85,6 +86,18 @@ export default async function handler(req: VReq, res: VRes): Promise<void> {
       const u = { email, name: email.split('@')[0], picture: '' };
       res.setHeader('Set-Cookie', auth.buildSessionCookie(u));
       return json(200, { user: u });
+    }
+
+    /* ── Brand portal ── */
+    if (path.startsWith('/api/portal')) {
+      const q: Record<string, string | undefined> = {};
+      for (const [k, v] of Object.entries(req.query ?? {})) if (k !== 'p') q[k] = Array.isArray(v) ? v[0] : v;
+      const auth_ = req.headers.authorization;
+      const r = await handlePortal({ method, path, query: q, body, user, cookieHeader: req.headers.cookie as string | undefined, authHeader: Array.isArray(auth_) ? auth_[0] : auth_ });
+      if (r) {
+        if (r.setCookie) res.setHeader('Set-Cookie', r.setCookie);
+        return json(r.status, r.data);
+      }
     }
 
     /* ── Posts ── */
