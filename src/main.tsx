@@ -16,6 +16,13 @@ import AdminPosts from './admin/AdminPosts.tsx';
 import AdminPostEditor from './admin/AdminPostEditor.tsx';
 import AdminInbox from './admin/AdminInbox.tsx';
 import Portal from './portal/Portal.tsx';
+import Services from './pages/Services.tsx';
+import Tools from './pages/Tools.tsx';
+import ToolDashboard from './pages/ToolDashboard.tsx';
+import ToolLoopProtect from './pages/ToolLoopProtect.tsx';
+import ToolCompetitorAnalysis from './pages/ToolCompetitorAnalysis.tsx';
+import UKMarketEntry from './pages/UKMarketEntry.tsx';
+import HowItWorks from './pages/HowItWorks.tsx';
 import { PortalLogin, PortalInvite } from './portal/AuthPages.tsx';
 import './index.css';
 
@@ -28,6 +35,13 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/brand-protection" element={<BrandProtection />} />
         <Route path="/retail-expansion" element={<RetailExpansion />} />
         <Route path="/dtc-growth" element={<DTCGrowth />} />
+        <Route path="/services" element={<Services />} />
+        <Route path="/tools" element={<Tools />} />
+        <Route path="/tools/brand-dashboard" element={<ToolDashboard />} />
+        <Route path="/tools/loop-protect" element={<ToolLoopProtect />} />
+        <Route path="/tools/competitor-analysis" element={<ToolCompetitorAnalysis />} />
+        <Route path="/uk-market-entry" element={<UKMarketEntry />} />
+        <Route path="/how-it-works" element={<HowItWorks />} />
         <Route path="/blog" element={<Blog />} />
         <Route path="/blog/:slug" element={<BlogPost />} />
         <Route path="/contact" element={<Contact />} />

@@ -7,11 +7,15 @@ import { FaLinkedinIn, FaXTwitter, FaInstagram } from 'react-icons/fa6';
 const nav = [
   {
     heading: 'What We Do',
-    links: ['Marketplace Control', 'Brand Protection', 'Retail Expansion', 'DTC'],
+    links: ['All Services', 'Marketplace Control', 'Brand Protection', 'Retail Expansion', 'DTC', 'UK Market Entry'],
+  },
+  {
+    heading: 'Tools',
+    links: ['Brand Dashboard', 'Loop Protect', 'Competitor Analysis', 'Client Login'],
   },
   {
     heading: 'Company',
-    links: ['About Us', 'Careers'],
+    links: ['About Us', 'How It Works', 'Careers'],
   },
   {
     heading: 'Resources',
@@ -35,6 +39,13 @@ const routeMap: Record<string, string> = {
   'Brand Protection': '/brand-protection',
   'Retail Expansion': '/retail-expansion',
   'DTC': '/dtc-growth',
+  'All Services': '/services',
+  'UK Market Entry': '/uk-market-entry',
+  'Brand Dashboard': '/tools/brand-dashboard',
+  'Loop Protect': '/tools/loop-protect',
+  'Competitor Analysis': '/tools/competitor-analysis',
+  'Client Login': '/portal/login',
+  'How It Works': '/how-it-works',
   'About Us': '/about',
   'Blog': '/blog',
   'The Loop': '/blog',
@@ -84,7 +95,7 @@ export function Footer() {
         </div>
 
         {/* Right — nav columns */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-10">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-10">
           {nav.map((col) => (
             <div key={col.heading}>
               <p className="text-[9px] font-mono tracking-widest text-brand-red uppercase mb-5">{col.heading}</p>
