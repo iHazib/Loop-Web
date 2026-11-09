@@ -13,6 +13,8 @@ The project is a single‑page React app (the public marketing site + a built‑
 
 **Marketing site**
 - Animated home page and four service pages — Marketplace Control, Brand Protection, Retail Expansion, DTC Growth — sharing a common navbar/footer and a cohesive premium hero system.
+- Detail pages: `/services` (all services, fulfilment, comparison of operating models), `/tools` plus `/tools/brand-dashboard`, `/tools/loop-protect`, `/tools/competitor-analysis`, `/uk-market-entry` (overseas brands) and `/how-it-works` (partnership models, onboarding, reporting, FAQ). Built from shared components in `src/components/site/Page.tsx`.
+- Every home and service section ends in a CTA (`src/components/CTA.tsx`); contact links carry `?topic=` so the enquiry category is pre-filled.
 
 **Blog**
 - Public journal with a featured post, category filters and search (`/blog`)
@@ -231,3 +233,7 @@ A dashboard per brand with six tabs: **Overview, Channels, Protection, Brand Ana
 
 ### Testing
 `npm run test:portal` runs about 36 checks against the configured database: uploads, every dashboard tab, invites, logins and access rules. Add `KEEPA_API_KEY`, `GEMINI_API_KEY` and `SMOKE_ASIN=<real UK ASIN>` to include Keepa and AI. The test brand and user are deleted afterwards.
+
+### D2C metrics and weekly report
+- **D2C sheet** (Data tab): weekly sessions, orders, revenue, new and returning customers, refunded orders. Shows in Channels as conversion, AOV, repeat rate, cost per new customer (from Google/Meta spend in the Ads sheet) and refund rate.
+- **Weekly report:** `/portal/<brand>/report` (button in the portal header) renders an A4 summary; use "Save as PDF" in the print dialog.
