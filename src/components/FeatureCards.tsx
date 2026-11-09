@@ -1,4 +1,5 @@
 import { motion } from 'motion/react';
+import { Link } from 'react-router-dom';
 import { ArrowRight, Zap, Shield, BarChart3, Layers, Globe, Database } from 'lucide-react';
 
 const cards = [
@@ -215,9 +216,9 @@ export function FeatureCards() {
                 </span>
               ))}
             </div>
-            <button className="relative z-10 mt-6 flex items-center gap-2 text-[10px] font-mono tracking-widest text-white/80 hover:text-white transition-colors group">
+            <Link to="/marketplace-control" data-cta="home-features" className="relative z-10 mt-6 flex items-center gap-2 text-[10px] font-mono tracking-widest text-white/80 hover:text-white transition-colors group">
               LEARN HOW IT WORKS <ArrowRight size={12} className="group-hover:translate-x-1 transition-transform" />
-            </button>
+            </Link>
           </motion.div>
 
           {/* Card 6 — All Data in One */}

@@ -1,6 +1,6 @@
 import { useState, type FormEvent, type ReactNode } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { ArrowRight, Check } from 'lucide-react';
 import { NavBar } from '../components/NavBar';
 import { Footer } from '../components/Footer';
@@ -12,13 +12,26 @@ const channels = [
   { k: 'Based', v: 'United Kingdom' },
 ];
 
+const TOPICS: Record<string, { category: QueryCategory; subject: string }> = {
+  'strategy-call': { category: 'General Enquiry', subject: 'Book a strategy call' },
+  'marketplace-control': { category: 'Marketplace Control', subject: 'Marketplace control enquiry' },
+  'brand-protection': { category: 'Brand Protection', subject: 'Brand protection enquiry' },
+  'retail-expansion': { category: 'Retail Expansion', subject: 'Retail expansion enquiry' },
+  'dtc': { category: 'DTC Growth', subject: 'Free UK D2C audit' },
+  'competitor-analysis': { category: 'Competitor Analysis', subject: 'Free competitor scan' },
+  'dashboard-demo': { category: 'Dashboard Demo', subject: 'Free brand report / dashboard demo' },
+  'onboarding': { category: 'General Enquiry', subject: 'Start 30-day onboarding' },
+};
+
 export default function Contact() {
+  const [params] = useSearchParams();
+  const topic = TOPICS[params.get('topic') ?? ''];
   const [form, setForm] = useState({
     name: '',
     email: '',
     company: '',
-    category: 'General Enquiry' as QueryCategory,
-    subject: '',
+    category: (topic?.category ?? 'General Enquiry') as QueryCategory,
+    subject: topic?.subject ?? '',
     message: '',
   });
   const [sent, setSent] = useState(false);

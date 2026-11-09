@@ -1,3 +1,4 @@
+import { SectionCTA } from './CTA';
 import { motion } from 'motion/react';
 import { FaAmazon } from 'react-icons/fa';
 import { SiTiktok, SiEbay, SiZalando, SiShopify } from 'react-icons/si';
@@ -74,6 +75,10 @@ export function Platforms() {
         ))}
       </div>
 
+      <div className="px-6">
+        <SectionCTA to="/marketplace-control" label="Explore marketplace control" id="home-platforms"
+          note="Amazon, TikTok Shop, eBay, Temu, retail and DTC, run as one." />
+      </div>
     </section>
   );
 }
