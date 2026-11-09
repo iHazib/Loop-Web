@@ -1,4 +1,5 @@
-import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
+import { GOOGLE_CLIENT_ID, loadGsi } from '../lib/auth';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { portalFetch } from './api';
 
@@ -26,6 +27,26 @@ export function PortalLogin() {
   const [password, setPassword] = useState('');
   const [err, setErr] = useState('');
   const [busy, setBusy] = useState(false);
+  const googleRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!GOOGLE_CLIENT_ID) return;
+    let cancelled = false;
+    loadGsi().then(() => {
+      if (cancelled || !window.google || !googleRef.current) return;
+      window.google.accounts.id.initialize({
+        client_id: GOOGLE_CLIENT_ID,
+        callback: async ({ credential }) => {
+          setErr('');
+          try {
+            const r = await portalFetch<{ brands: string[] }>('/auth/google', { method: 'POST', body: JSON.stringify({ credential }) });
+            nav(`/portal/${r.brands[0]}/overview`);
+          } catch (e) { setErr((e as Error).message); }
+        },
+      });
+      window.google.accounts.id.renderButton(googleRef.current, { theme: 'filled_black', size: 'large', shape: 'pill', text: 'continue_with', width: 300 });
+    }).catch(() => null);
+    return () => { cancelled = true; };
+  }, [nav]);
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     setBusy(true); setErr('');
@@ -36,6 +57,12 @@ export function PortalLogin() {
   };
   return (
     <Shell title="Brand dashboard" sub="Sign in to see your brand's sales, protection and competitor data.">
+      {GOOGLE_CLIENT_ID && (
+        <>
+          <div ref={googleRef} className="flex justify-center min-h-[44px]" />
+          <div className="flex items-center gap-3 my-5 text-[11px] text-white/30"><span className="h-px flex-1 bg-white/10" />or with email<span className="h-px flex-1 bg-white/10" /></div>
+        </>
+      )}
       <form onSubmit={submit} className="grid gap-3">
         <input className={input} type="email" autoComplete="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
         <input className={input} type="password" autoComplete="current-password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required />

@@ -6,6 +6,7 @@ import { syncBrand, discoverCompetitors, importAsins } from './sync.js';
 import { validate, TEMPLATES, type UploadKind } from './validate.js';
 import * as ai from './ai.js';
 import * as acc from './access.js';
+import { verifyGoogleToken } from '../auth.js';
 import type { Dataset, ProtectionCase, CaseStatus } from './types.js';
 
 /* Router for /api/portal/*, shared by Express (server/app.ts) and Vercel (api/index.ts).
@@ -81,6 +82,19 @@ export async function handlePortal(req: PortalReq): Promise<PortalRes | null> {
       acc.clearFailures(email);
       await db.touchLogin(email);
       return ok({ email, name: u.name, brands: Object.keys(brands) }, acc.setClientCookie({ email, name: u.name }));
+    }
+    if (parts[1] === 'google' && method === 'POST') {
+      const credential = String(body.credential ?? '');
+      if (!credential) return err(400, 'Missing Google credential.');
+      const profile = await verifyGoogleToken(credential);
+      if (!profile || !profile.verified) return err(401, 'Could not verify this Google account.');
+      const email = profile.email.toLowerCase();
+      const u = await db.getUser(email);
+      const brands = u ? await db.userBrands(email) : {};
+      if (!u || !Object.keys(brands).length) return err(403, `${email} has no brand access yet. Ask Loopretail to invite this email.`);
+      const name = u.name || profile.name;
+      await db.touchLogin(email);
+      return ok({ email, name, brands: Object.keys(brands) }, acc.setClientCookie({ email, name }));
     }
     if (parts[1] === 'logout' && method === 'POST') return ok({ ok: true }, acc.clearClientCookie());
     if (parts[1] === 'invite' && parts[2]) {
