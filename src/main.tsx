@@ -15,6 +15,8 @@ const AdminDashboard = lazy(() => import('./admin/AdminDashboard.tsx'));
 const AdminPosts = lazy(() => import('./admin/AdminPosts.tsx'));
 const AdminPostEditor = lazy(() => import('./admin/AdminPostEditor.tsx'));
 const AdminInbox = lazy(() => import('./admin/AdminInbox.tsx'));
+const AdminBrands = lazy(() => import('./admin/AdminBrands.tsx'));
+const AdminBrandDetail = lazy(() => import('./admin/AdminBrandDetail.tsx'));
 const Portal = lazy(() => import('./portal/Portal.tsx'));
 const Services = lazy(() => import('./pages/Services.tsx'));
 const Tools = lazy(() => import('./pages/Tools.tsx'));
@@ -92,6 +94,8 @@ createRoot(document.getElementById('root')!).render(
           <Route path="posts/new" element={<AdminPostEditor />} />
           <Route path="posts/:id" element={<AdminPostEditor />} />
           <Route path="inbox" element={<AdminInbox />} />
+          <Route path="brands" element={<AdminBrands />} />
+          <Route path="brands/:id" element={<AdminBrandDetail />} />
         </Route>
       </Routes>
       </Suspense>

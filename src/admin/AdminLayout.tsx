@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, type FormEvent } from 'react';
 import { NavLink, Outlet, Link, useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { LayoutDashboard, FileText, Inbox, LogOut, ArrowUpRight, Lock, ShieldCheck, AtSign, Mail, Loader2 } from 'lucide-react';
+import { LayoutDashboard, FileText, Inbox, LogOut, ArrowUpRight, Lock, ShieldCheck, AtSign, Mail, Loader2, Building2 } from 'lucide-react';
 import { Logo } from '../components/Logo';
 import { useQueries, refresh, type ContactQuery } from '../lib/store';
 import {
@@ -185,6 +185,7 @@ const navItems = [
   { to: '/admin', label: 'Dashboard', icon: LayoutDashboard, end: true },
   { to: '/admin/posts', label: 'Posts', icon: FileText, end: false },
   { to: '/admin/inbox', label: 'Inbox', icon: Inbox, end: false },
+  { to: '/admin/brands', label: 'Brands', icon: Building2, end: false },
 ];
 
 export default function AdminLayout() {
