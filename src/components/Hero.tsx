@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { CTA, contactHref } from './CTA';
 import { motion, AnimatePresence } from 'motion/react';
 import { ArrowRight } from 'lucide-react';
 import { NavBar } from './NavBar';
@@ -69,9 +70,10 @@ export function Hero() {
             <p className="text-sm text-brand-dark/60 font-light mb-6 text-left md:text-right">
               Loopretail helps brands sell more, move faster, and stay protected — combining inventory buying, marketplace operations, fulfilment, retail expansion, DTC growth, and brand protection into one connected operating model.
             </p>
-            <button className="bg-brand-dark text-white px-6 py-3 rounded text-xs font-semibold uppercase tracking-wider flex items-center gap-2 hover:bg-brand-red transition-colors duration-300">
-              See How It Works <ArrowRight size={14} />
-            </button>
+            <div className="flex flex-wrap gap-3 justify-end">
+              <CTA to={contactHref('strategy-call')} label="Book a strategy call" tone="dark" id="home-hero" />
+              <CTA to="/marketplace-control" label="See how it works" tone="outline-dark" id="home-hero-secondary" />
+            </div>
           </motion.div>
         </div>
 

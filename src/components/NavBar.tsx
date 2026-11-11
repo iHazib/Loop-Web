@@ -30,10 +30,18 @@ const services = [
     href: '/dtc-growth',
     tag: null,
   },
+  {
+    label: 'UK Market Entry',
+    desc: 'For overseas brands launching in the UK.',
+    href: '/uk-market-entry',
+    tag: 'New',
+  },
 ];
 
-const navLinks = ['Services', 'About', 'Blog', 'Contact'];
+const navLinks = ['Services', 'Tools', 'How it works', 'About', 'Blog', 'Contact'];
 const navRoutes: Record<string, string> = {
+  Tools: '/tools',
+  'How it works': '/how-it-works',
   About: '/about',
   Blog: '/blog',
   Contact: '/contact',
@@ -87,7 +95,7 @@ export function NavBar({ darkHero = false }: { darkHero?: boolean }) {
         </Link>
 
         {/* Center pill nav */}
-        <div className="hidden md:flex items-center gap-8">
+        <div className="hidden lg:flex items-center gap-7">
           {navLinks.map((link) => {
             const isServices = link === 'Services';
 
@@ -161,9 +169,9 @@ export function NavBar({ darkHero = false }: { darkHero?: boolean }) {
 
                         {/* Footer */}
                         <div className="px-4 py-3 border-t border-black/5 bg-surface-offwhite/60">
-                          <p className="text-[9px] font-mono text-brand-dark/35 tracking-wide">
-                            One operating model · Every channel
-                          </p>
+                          <Link to="/services" onClick={() => setServicesOpen(false)} className="text-[10px] font-mono text-brand-red tracking-widest uppercase hover:underline">
+                            All services →
+                          </Link>
                         </div>
                       </motion.div>
                     )}
@@ -194,7 +202,10 @@ export function NavBar({ darkHero = false }: { darkHero?: boolean }) {
         </div>
 
         {/* Right CTA */}
-        <div className="hidden md:flex items-center gap-3 shrink-0">
+        <div className="hidden lg:flex items-center gap-3 shrink-0">
+          <Link to="/portal/login" className={`text-sm font-medium transition-colors ${isLight ? 'text-brand-dark/60 hover:text-brand-dark' : 'text-white/70 hover:text-white'}`}>
+            Client login
+          </Link>
           <Link
             to="/contact"
             className="group relative flex items-center gap-1.5 text-sm font-semibold px-5 py-2.5 rounded-full text-white overflow-hidden bg-gradient-to-b from-[#ff3346] to-brand-red ring-1 ring-white/15 shadow-[0_8px_22px_-8px_rgba(230,25,43,0.65)] hover:shadow-[0_14px_34px_-8px_rgba(230,25,43,0.9)] hover:-translate-y-0.5 transition-all duration-300"
@@ -208,7 +219,7 @@ export function NavBar({ darkHero = false }: { darkHero?: boolean }) {
 
         {/* Mobile toggle */}
         <button
-          className={`md:hidden w-9 h-9 flex items-center justify-center rounded-xl border backdrop-blur-md transition-all ${
+          className={`lg:hidden w-9 h-9 flex items-center justify-center rounded-xl border backdrop-blur-md transition-all ${
             isLight ? 'bg-white/60 border-black/8 text-brand-dark shadow-sm' : 'bg-white/90 border-white/20 text-brand-dark shadow-md'
           }`}
           onClick={() => setMenuOpen((v) => !v)}
@@ -224,7 +235,7 @@ export function NavBar({ darkHero = false }: { darkHero?: boolean }) {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="md:hidden bg-white/95 backdrop-blur-xl border-t border-black/5 overflow-hidden"
+            className="lg:hidden bg-white/95 backdrop-blur-xl border-t border-black/5 overflow-hidden"
           >
             <div className="px-6 py-5 flex flex-col gap-1">
               {/* Services expanded in mobile */}
@@ -253,6 +264,7 @@ export function NavBar({ darkHero = false }: { darkHero?: boolean }) {
                 </Link>
               ))}
 
+              <Link to="/portal/login" onClick={() => setMenuOpen(false)} className="block px-3 py-3 text-sm font-medium text-brand-dark/70">Client login</Link>
               <Link to="/contact" onClick={() => setMenuOpen(false)}
                 className="mt-3 flex items-center justify-center gap-1.5 bg-gradient-to-b from-[#ff3346] to-brand-red text-white text-sm font-semibold px-4 py-3 rounded-full ring-1 ring-white/15 shadow-[0_10px_24px_-10px_rgba(230,25,43,0.7)] hover:-translate-y-0.5 transition-all">
                 Get Started <ArrowUpRight size={13} />

@@ -1,55 +1,6 @@
 import { motion } from 'motion/react';
+import { Link } from 'react-router-dom';
 import { ArrowRight, Zap, Shield, BarChart3, Layers, Globe, Database } from 'lucide-react';
-
-const cards = [
-  {
-    tag: "CORE",
-    title: "How NexusMesh\nWorks in 3 Steps",
-    steps: ["01  CONNECT", "02  ANALYZE", "03  ORCHESTRATE"],
-    accent: false,
-    size: "tall",
-  },
-  {
-    tag: null,
-    headline: "WE'RE LIVE.",
-    sub: "NODE SYNCHRONIZATION",
-    accent: true,
-    size: "med",
-  },
-  {
-    tag: "GROWTH PACKAGE",
-    price: "$499",
-    period: "/mo",
-    badge: "Scaling teams",
-    footnote: "Predictive AI for growing networks.",
-    accent: false,
-    dark: true,
-    size: "med",
-  },
-  {
-    tag: "DOCUMENT X-RAY",
-    title: "Node\nIntelligence",
-    desc: "AI ingests and interprets distributed mesh data seamlessly.",
-    icon: Database,
-    accent: true,
-    size: "tall",
-  },
-  {
-    tag: "OUR PRODUCT",
-    features: ["01  RETAIL HUB", "02  DOCUMENT X-RAY", "03  LOGIC ENGINE", "04  DASHBOARDS", "05  AI INSIGHTS"],
-    cta: "LEARN HOW IT WORKS",
-    accent: false,
-    dark: true,
-    size: "med",
-  },
-  {
-    tag: "NEXUS MESH",
-    title: "All Your Network\nData in One Place",
-    accent: false,
-    light: true,
-    size: "med",
-  },
-];
 
 export function FeatureCards() {
   return (
@@ -104,7 +55,7 @@ export function FeatureCards() {
                 ))}
               </div>
             </div>
-            <span className="relative z-10 text-[9px] font-mono tracking-widest text-gray-600 mt-6">@LOOPRETAIL</span>
+            <Link to="/how-it-works" data-cta="home-features-how" className="relative z-10 mt-6 inline-flex items-center gap-2 text-[10px] font-mono tracking-widest text-white/70 hover:text-white">HOW IT WORKS <ArrowRight size={12} /></Link>
           </motion.div>
 
           {/* Card 2 — We're Live */}
@@ -124,7 +75,7 @@ export function FeatureCards() {
                 transition={{ duration: 3, repeat: Infinity }}
                 className="font-display text-4xl font-bold text-white tracking-tight mb-4"
               >
-                WE'RE LIVE.
+                LIVE DATA.
               </motion.p>
               <div className="inline-flex items-center gap-2 bg-brand-red px-4 py-1.5 rounded-full">
                 <motion.span
@@ -132,12 +83,13 @@ export function FeatureCards() {
                   transition={{ duration: 1.2, repeat: Infinity }}
                   className="w-1.5 h-1.5 rounded-full bg-white"
                 />
-                <span className="text-[10px] font-mono tracking-widest text-white font-bold">CHANNEL SYNCHRONIZATION</span>
+                <span className="text-[10px] font-mono tracking-widest text-white font-bold">UPDATED DAILY</span>
               </div>
+              <Link to="/portal/demo/overview" data-cta="home-features-demo" className="mt-5 block text-[10px] font-mono tracking-widest text-white/70 hover:text-white">OPEN THE LIVE DEMO →</Link>
             </div>
           </motion.div>
 
-          {/* Card 3 — Pricing */}
+          {/* Card 3 — Free brand report */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -152,16 +104,10 @@ export function FeatureCards() {
               <span className="text-[9px] font-mono tracking-widest text-gray-500">@LOOPRETAIL</span>
             </div>
             <div className="relative z-10">
-              <p className="text-xs font-semibold tracking-widest text-white/60 uppercase mb-3">Scale Plan</p>
-              <div className="flex items-start">
-                <span className="font-display text-2xl text-white mt-2">$</span>
-                <span className="font-display text-7xl font-bold text-white tracking-tighter leading-none">499</span>
-                <span className="font-display text-xl text-white/60 mt-auto mb-2">/mo</span>
-              </div>
-              <div className="mt-3 inline-block bg-brand-red/20 border border-brand-red/40 text-brand-red text-[9px] font-mono tracking-widest px-3 py-1 rounded-full">
-                Scaling teams
-              </div>
-              <p className="text-xs text-gray-500 mt-4">Brand protection baked into the service fee.</p>
+              <p className="text-xs font-semibold tracking-widest text-white/60 uppercase mb-3">Free brand report</p>
+              <p className="font-display text-3xl font-bold text-white tracking-tight leading-tight">Send your ASINs.<br />See who sells them.</p>
+              <p className="text-xs text-gray-500 mt-4">Sellers, prices below your minimum and your top competitors, before you commit to anything.</p>
+              <Link to="/contact?topic=dashboard-demo" data-cta="home-features-report" className="mt-5 inline-flex items-center gap-2 bg-brand-red/20 border border-brand-red/40 text-white text-[10px] font-mono tracking-widest px-3 py-1.5 rounded-full hover:bg-brand-red/40">REQUEST IT <ArrowRight size={11} /></Link>
             </div>
           </motion.div>
 
@@ -186,11 +132,12 @@ export function FeatureCards() {
                 <Zap size={14} className="text-white" />
               </div>
               <h3 className="font-display text-3xl font-medium text-white tracking-tight mb-3 whitespace-pre-line">
-                Brand{"\n"}Shield AI
+                Loop{"\n"}Protect
               </h3>
               <p className="text-sm text-gray-400 font-light leading-relaxed">
-                Detect rogue sellers, counterfeit risks and price breaches with automated enforcement workflows.
+                Daily checks of every seller on your Amazon UK listings. Unauthorised sellers, price breaches and listing changes open a case with evidence.
               </p>
+              <Link to="/tools/loop-protect" data-cta="home-features-protect" className="mt-4 inline-flex items-center gap-2 text-[10px] font-mono tracking-widest text-white/70 hover:text-white">SEE HOW IT WORKS <ArrowRight size={12} /></Link>
             </div>
           </motion.div>
 
@@ -209,15 +156,15 @@ export function FeatureCards() {
               <span className="text-[9px] font-mono tracking-widest text-white/50">LOOPRETAIL.IO</span>
             </div>
             <div className="relative z-10 space-y-2 mt-4">
-              {["01  RETAIL HUB", "02  DOCUMENT X-RAY", "03  LOGISTICS", "04  DASHBOARDS", "05  AI INSIGHTS"].map((f, i) => (
+              {["01  BRAND DASHBOARD", "02  LOOP PROTECT", "03  COMPETITOR ANALYSIS", "04  AI SEARCH", "05  UK FULFILMENT"].map((f, i) => (
                 <span key={i} className="inline-block bg-white/15 border border-white/20 text-white text-[9px] font-mono tracking-widest px-3 py-1.5 rounded-full mr-2">
                   {f}
                 </span>
               ))}
             </div>
-            <button className="relative z-10 mt-6 flex items-center gap-2 text-[10px] font-mono tracking-widest text-white/80 hover:text-white transition-colors group">
-              LEARN HOW IT WORKS <ArrowRight size={12} className="group-hover:translate-x-1 transition-transform" />
-            </button>
+            <Link to="/tools" data-cta="home-features" className="relative z-10 mt-6 flex items-center gap-2 text-[10px] font-mono tracking-widest text-white/80 hover:text-white transition-colors group">
+              EXPLORE OUR TOOLS <ArrowRight size={12} className="group-hover:translate-x-1 transition-transform" />
+            </Link>
           </motion.div>
 
           {/* Card 6 — All Data in One */}
@@ -236,7 +183,7 @@ export function FeatureCards() {
                 </div>
                 <span className="text-xs font-semibold text-white">Loopretail</span>
               </div>
-              <span className="text-[9px] font-mono tracking-widest bg-white/10 text-white/60 px-2 py-1 rounded-full border border-white/10">RETAIL HUB</span>
+              <span className="text-[9px] font-mono tracking-widest bg-white/10 text-white/60 px-2 py-1 rounded-full border border-white/10">BRAND DASHBOARD</span>
             </div>
             <div className="relative z-10 mt-auto">
               <h3 className="font-display text-3xl font-medium text-white tracking-tighter leading-tight">
@@ -248,8 +195,8 @@ export function FeatureCards() {
               </div>
             </div>
             <div className="relative z-10 flex justify-between items-center mt-4">
+              <Link to="/tools/brand-dashboard" data-cta="home-features-dashboard" className="text-[9px] font-mono tracking-widest text-white/60 hover:text-white">SEE THE DASHBOARD →</Link>
               <span className="text-[9px] font-mono tracking-widest text-gray-600">LOOPRETAIL.IO</span>
-              <span className="text-[9px] font-mono tracking-widest text-gray-600">@LOOPRETAIL</span>
             </div>
           </motion.div>
         </div>

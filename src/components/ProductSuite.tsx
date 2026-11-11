@@ -1,4 +1,6 @@
 import { motion } from 'motion/react';
+import { Link } from 'react-router-dom';
+import { SectionCTA, contactHref } from './CTA';
 import { TrendingUp, GitBranch, Package, Shield } from 'lucide-react';
 
 type Step = {
@@ -8,6 +10,8 @@ type Step = {
   tag: string;
   variant: 'red' | 'image' | 'plain';
   image?: string;
+  to: string;
+  cta: string;
 };
 
 const steps: Step[] = [
@@ -16,6 +20,8 @@ const steps: Step[] = [
     desc: 'Predict SKU velocity, track marketplace trends, and plan inventory before stock even lands.',
     icon: TrendingUp,
     tag: 'Demand Signals',
+    to: '/retail-expansion',
+    cta: 'Explore retail expansion',
     variant: 'red',
   },
   {
@@ -23,6 +29,8 @@ const steps: Step[] = [
     desc: 'Route products across Amazon, TikTok Shop, Wayfair, Zalando and DTC from a unified commerce layer.',
     icon: GitBranch,
     tag: 'Channel Orchestration',
+    to: '/marketplace-control',
+    cta: 'Explore marketplace control',
     variant: 'image',
     image: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=700&q=80',
   },
@@ -31,6 +39,8 @@ const steps: Step[] = [
     desc: 'Barcode scans, weight checks, photo logging and live SLA monitoring reduce errors before parcels leave the door.',
     icon: Package,
     tag: 'Smart Fulfilment',
+    to: '/dtc-growth',
+    cta: 'Explore DTC growth',
     variant: 'image',
     image: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=700&q=80',
   },
@@ -39,6 +49,8 @@ const steps: Step[] = [
     desc: 'Detect rogue sellers, counterfeit risks and price breaches with automated monitoring and rapid enforcement.',
     icon: Shield,
     tag: 'Brand Shield AI',
+    to: '/brand-protection',
+    cta: 'Explore brand protection',
     variant: 'plain',
   },
 ];
@@ -119,16 +131,17 @@ export function ProductSuite() {
                     <p className={`text-sm leading-relaxed font-light mb-6 ${isRed ? 'text-white/80' : 'text-brand-dark/55'}`}>
                       {item.desc}
                     </p>
-                    <button className={`text-xs font-semibold tracking-wider font-mono uppercase inline-flex items-center gap-1.5 transition-all group/btn ${isRed ? 'text-white' : 'text-brand-red'}`}>
-                      Learn More
+                    <Link to={item.to} data-cta={`home-suite-${item.tag}`} className={`text-xs font-semibold tracking-wider font-mono uppercase inline-flex items-center gap-1.5 transition-all group/btn ${isRed ? 'text-white' : 'text-brand-red'}`}>
+                      {item.cta}
                       <span className="group-hover/btn:translate-x-0.5 transition-transform">→</span>
-                    </button>
+                    </Link>
                   </div>
                 </div>
               </motion.div>
             );
           })}
         </div>
+        <SectionCTA to={contactHref('strategy-call')} label="Talk to us about your brand" id="home-suite" />
       </div>
     </section>
   );

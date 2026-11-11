@@ -24,6 +24,8 @@ export const QUERY_CATEGORIES = [
   'Brand Protection',
   'Retail Expansion',
   'DTC Growth',
+  'Competitor Analysis',
+  'Dashboard Demo',
   'General Enquiry',
   'Partnership',
   'Press & Media',

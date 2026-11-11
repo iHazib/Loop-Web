@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { motion, useInView, AnimatePresence } from 'motion/react';
 import { ArrowRight } from 'lucide-react';
 import { NavBar } from '../components/NavBar';
+import { SectionCTA, contactHref } from '../components/CTA';
 import { Footer } from '../components/Footer';
 
 /* ─── Animated counter ─── */
@@ -36,6 +37,14 @@ const pillars = [
   { num: '2.0', title: 'Listing Ownership', body: 'Optimised titles, images, A+ content and keywords built for marketplace search.' },
   { num: '3.0', title: 'Stock Management', body: 'Demand forecasting and fulfilment coordination so you never lose rank.' },
   { num: '4.0', title: 'Seller Protection', body: 'Identify and remove unauthorised sellers undermining price and trust.' },
+  { num: '5.0', title: 'Competitor Analysis', body: 'See every seller, lookalike and compatible copy built on your demand, and how their price, rank and growth compare to yours.' },
+];
+
+const threats = [
+  { name: 'Grey market stock', looks: 'Genuine product bought cheap abroad and resold in the UK.', detect: 'Unauthorised seller, price below UK trade, overseas seller, sudden stock.', act: 'Test buy, evidence pack, supply route check.' },
+  { name: 'Lookalike sold as genuine', looks: 'Same name or packaging, unknown factory.', detect: 'Your brand name on listings you do not own, copied images, "fake" in reviews.', act: 'Brand Registry report, eBay VeRO, Temu and TikTok IP reports.' },
+  { name: "'Compatible' copy", looks: 'Built on your idea, sitting on your keywords and ASIN.', detect: 'Keyword sweeps for "compatible with [brand]", new ASINs in your category.', act: 'Track their price, BSR and growth. Defend keywords with ads.' },
+  { name: 'Listing hijacker', looks: 'Wins the Buy Box on your own page.', detect: 'New seller on your ASIN, Buy Box owner change, edited title or images.', act: 'Report a Violation, restore content, test buy.' },
 ];
 
 const timelineSteps = [
@@ -233,7 +242,7 @@ export default function MarketplaceControl() {
           <div className="mb-16 flex flex-col md:flex-row md:items-end justify-between gap-6">
             <h2 className="font-display font-bold tracking-tighter text-brand-dark"
               style={{ fontSize: 'clamp(2.4rem, 5vw, 5rem)' }}>
-              The four pillars<br />of marketplace control.
+              The five pillars<br />of marketplace control.
             </h2>
             <p className="text-brand-dark/40 font-light text-sm max-w-xs leading-relaxed">
               Control only works when every part of the system connects. Missing one breaks the whole.
@@ -245,33 +254,70 @@ export default function MarketplaceControl() {
             {pillars.map((p, i) => (
               <motion.div key={i}
                 initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.12 }}
-                className={`relative border rounded-3xl overflow-hidden cursor-default transition-all duration-300 group
-                  ${i === 0 ? 'bg-brand-dark border-brand-dark' : i === 3 ? 'bg-brand-red border-brand-red' : 'bg-surface-offwhite border-black/6 hover:border-brand-red/20'}`}>
+                className={`relative border rounded-3xl overflow-hidden cursor-default transition-all duration-300 group ${i === 4 ? 'sm:col-span-2' : ''}
+                  ${i === 0 || i === 4 ? 'bg-brand-dark border-brand-dark' : i === 3 ? 'bg-brand-red border-brand-red' : 'bg-surface-offwhite border-black/6 hover:border-brand-red/20'}`}>
                 <div className="p-10 flex flex-col justify-between min-h-[220px]">
                   {/* Top row: number tag + title */}
                   <div className="flex items-start justify-between gap-4">
-                    <span className={`text-[9px] font-mono tracking-widest ${i === 0 || i === 3 ? 'text-white/30' : 'text-brand-dark/25'}`}>
+                    <span className={`text-[9px] font-mono tracking-widest ${i === 0 || i === 3 || i === 4 ? 'text-white/30' : 'text-brand-dark/25'}`}>
                       {p.num}
                     </span>
-                    <div className={`w-8 h-8 rounded-full border flex items-center justify-center shrink-0 ${i === 0 ? 'border-white/10' : i === 3 ? 'border-white/20' : 'border-black/8'}`}>
-                      <div className={`w-2 h-2 rounded-full ${i === 0 || i === 3 ? 'bg-white/40' : 'bg-brand-red/40'}`} />
+                    <div className={`w-8 h-8 rounded-full border flex items-center justify-center shrink-0 ${i === 0 || i === 4 ? 'border-white/10' : i === 3 ? 'border-white/20' : 'border-black/8'}`}>
+                      <div className={`w-2 h-2 rounded-full ${i === 0 || i === 3 || i === 4 ? 'bg-white/40' : 'bg-brand-red/40'}`} />
                     </div>
                   </div>
                   {/* Bottom: title + body */}
                   <div>
-                    <h3 className={`font-display font-bold text-2xl mb-2 ${i === 0 || i === 3 ? 'text-white' : 'text-brand-dark'}`}>
+                    <h3 className={`font-display font-bold text-2xl mb-2 ${i === 0 || i === 3 || i === 4 ? 'text-white' : 'text-brand-dark'}`}>
                       {p.title}
                     </h3>
-                    <p className={`text-sm font-light leading-relaxed ${i === 0 ? 'text-gray-400' : i === 3 ? 'text-white/70' : 'text-brand-dark/50'}`}>
+                    <p className={`text-sm font-light leading-relaxed ${i === 0 || i === 4 ? 'text-gray-400' : i === 3 ? 'text-white/70' : 'text-brand-dark/50'}`}>
                       {p.body}
                     </p>
                   </div>
                 </div>
                 {/* Accent decoration */}
-                {i === 0 && <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-brand-red/40 via-brand-red/10 to-transparent" />}
+                {(i === 0 || i === 4) && <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-brand-red/40 via-brand-red/10 to-transparent" />}
                 {i === 3 && <div className="absolute top-0 right-0 w-40 h-40 bg-white/8 blur-[60px] rounded-full" />}
               </motion.div>
             ))}
+          </div>
+
+          {/* Competitor threats — what we watch for */}
+          <div className="mt-24">
+            <div className="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
+              <h3 className="font-display font-bold tracking-tighter text-brand-dark" style={{ fontSize: 'clamp(1.8rem, 3.4vw, 3.2rem)' }}>
+                What we watch for.
+              </h3>
+              <p className="text-brand-dark/40 font-light text-sm max-w-sm leading-relaxed">
+                The marketplace shows an offer. It does not show who sourced it, from where, or whether it is genuine.
+              </p>
+            </div>
+            <div className="grid md:grid-cols-2 gap-5">
+              {threats.map((t, i) => (
+                <motion.div key={t.name}
+                  initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.08 }}
+                  className="rounded-3xl border border-black/6 bg-surface-offwhite p-8 hover:border-brand-red/25 transition-colors">
+                  <div className="flex items-center gap-3 mb-4">
+                    <span className="w-2 h-2 rounded-full bg-brand-red" />
+                    <h4 className="font-display font-bold text-xl text-brand-dark">{t.name}</h4>
+                  </div>
+                  <p className="text-sm text-brand-dark/60 font-light mb-5">{t.looks}</p>
+                  <dl className="grid sm:grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <dt className="text-[10px] font-mono tracking-widest uppercase text-brand-red mb-1">We detect</dt>
+                      <dd className="text-brand-dark/70 font-light leading-relaxed">{t.detect}</dd>
+                    </div>
+                    <div>
+                      <dt className="text-[10px] font-mono tracking-widest uppercase text-brand-dark/40 mb-1">We act</dt>
+                      <dd className="text-brand-dark/70 font-light leading-relaxed">{t.act}</dd>
+                    </div>
+                  </dl>
+                </motion.div>
+              ))}
+            </div>
+            <SectionCTA to={contactHref('competitor-analysis')} label="Get a free competitor scan" id="mc-competitor-scan"
+              note="See who is selling against you, and at what price." />
           </div>
         </div>
       </section>

@@ -1,13 +1,14 @@
 import express from 'express';
 import * as store from './storage';
 import * as auth from './auth';
+import { handlePortal } from './portal/handler';
 
 /* The Express API as a portable app (no app.listen, no static serving).
    - Local/self-hosted: server/index.ts wraps this with static serving + listen.
    - Vercel: api/index.ts exports this directly as a serverless function. */
 
 const app = express();
-app.use(express.json({ limit: '1mb' }));
+app.use(express.json({ limit: '10mb' }));
 
 // Wrap async handlers so DB errors return 500 JSON instead of hanging the request.
 const ah =
@@ -141,6 +142,22 @@ app.patch('/api/queries/:id', auth.requireAuth, ah(async (req, res) => {
 app.delete('/api/queries/:id', auth.requireAuth, ah(async (req, res) => {
   await store.deleteQuery(req.params.id);
   res.status(204).end();
+}));
+
+/* ─────────── Brand portal ─────────── */
+app.all('/api/portal*', ah(async (req, res) => {
+  const r = await handlePortal({
+    method: req.method,
+    path: req.path,
+    query: req.query as Record<string, string | undefined>,
+    body: (req.body ?? {}) as Record<string, unknown>,
+    user: auth.sessionFromReq(req),
+    cookieHeader: req.headers.cookie,
+    authHeader: req.headers.authorization,
+  });
+  if (!r) { res.status(404).json({ error: 'Not found' }); return; }
+  if (r.setCookie) res.setHeader('Set-Cookie', r.setCookie);
+  res.status(r.status).json(r.data);
 }));
 
 export default app;

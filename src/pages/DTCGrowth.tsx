@@ -3,6 +3,18 @@ import { motion, useInView, AnimatePresence } from 'motion/react';
 import { ArrowRight, Globe, ShoppingCart, TrendingUp, Package, Truck, Check, X } from 'lucide-react';
 import { NavBar } from '../components/NavBar';
 import { Footer } from '../components/Footer';
+import { SectionCTA, CTA, contactHref } from '../components/CTA';
+
+const dtcPlatforms = ['Shopify', 'WooCommerce', 'Your existing site'];
+
+const dtcPackages = [
+  { tag: 'Test the market', name: 'Launch', desc: 'Prove UK demand with a localised store and UK fulfilment.',
+    items: ['UK store setup or localisation (GBP, VAT, UK copy)', 'UK stock holding and same day dispatch', 'Returns handled under UK rules', 'Monthly sales and feedback report'] },
+  { tag: 'Most brands', name: 'Run', desc: 'We operate the UK D2C channel day to day.',
+    items: ['Everything in Launch', 'UK customer service', 'Google and Meta ads management', 'Live D2C view in your brand dashboard'] },
+  { tag: 'Ready for retail', name: 'Scale', desc: 'Turn D2C data into marketplace and retail growth.',
+    items: ['Everything in Run', 'Marketplace launch (Amazon, TikTok Shop)', 'Retail buyer evidence pack', 'Brand protection monitoring'] },
+];
 
 /* ── Counter ── */
 function Counter({ to, prefix = '', suffix = '', decimals = 0 }: { to: number; prefix?: string; suffix?: string; decimals?: number }) {
@@ -227,7 +239,8 @@ export default function DTCGrowth() {
               </motion.p>
 
               <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6, duration: 0.6 }}
-                className="mt-10 flex items-center gap-7">
+                className="mt-10 flex flex-wrap items-center gap-5">
+                <CTA to={contactHref('dtc')} label="Get a free UK D2C audit" tone="red" id="dtc-hero" />
                 <a href="#how"
                   className="flex items-center gap-2 bg-white text-brand-dark px-7 py-3.5 rounded-full font-semibold text-sm hover:bg-brand-red hover:text-white transition-colors group">
                   See how it works <ArrowRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
@@ -322,6 +335,9 @@ export default function DTCGrowth() {
             </p>
           </motion.div>
         </div>
+        <div className="relative z-10 px-8 pb-20">
+          <SectionCTA to={contactHref('dtc')} label="Start selling to UK customers" tone="light" dark id="dtc-impact" />
+        </div>
       </section>
 
       {/* ══════════════════════════════════════════
@@ -390,6 +406,9 @@ export default function DTCGrowth() {
             The brand stays yours. <span className="text-brand-dark/70 font-medium">The UK operation becomes local.</span>
           </p>
         </div>
+        <div className="relative z-10 px-8 ">
+          <SectionCTA to={contactHref('dtc')} label="Close the gap with a UK launch" tone="dark" id="dtc-the" />
+        </div>
       </section>
 
       {/* ══════════════════════════════════════════
@@ -412,6 +431,9 @@ export default function DTCGrowth() {
           </div>
 
           <TrustReveal />
+        </div>
+        <div className="relative z-10 px-8 ">
+          <SectionCTA to={contactHref('dtc')} label="Make your brand feel local" tone="light" dark id="dtc-trust" />
         </div>
       </section>
 
@@ -471,6 +493,9 @@ export default function DTCGrowth() {
             </div>
           </motion.div>
         </div>
+        <div className="relative z-10 px-8 ">
+          <SectionCTA to={contactHref('dtc')} label="Get same day UK dispatch" tone="dark" id="dtc-order" />
+        </div>
       </section>
 
       {/* ══════════════════════════════════════════
@@ -529,6 +554,9 @@ export default function DTCGrowth() {
               ))}
             </div>
           </div>
+        </div>
+        <div className="relative z-10 px-8 ">
+          <SectionCTA to={contactHref('dtc')} label="Get a free UK D2C audit" tone="red" dark id="dtc-how" />
         </div>
       </section>
 
@@ -604,6 +632,46 @@ export default function DTCGrowth() {
             ))}
           </div>
         </div>
+        <div className="relative z-10 px-8 ">
+          <SectionCTA to={contactHref('dtc')} label="Build your retail ready proof" tone="light" dark id="dtc-dtc" />
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════
+          7b. PLATFORMS + PACKAGES — white
+         ══════════════════════════════════════════ */}
+      <section className="w-full bg-white py-28 px-8 border-b border-black/5">
+        <div className="max-w-[1200px] mx-auto">
+          <div className="mb-14 flex flex-col md:flex-row md:items-end justify-between gap-6">
+            <h2 className="font-display font-bold tracking-tighter text-brand-dark leading-[1.0]" style={{ fontSize: 'clamp(2.2rem, 4.5vw, 4.2rem)' }}>
+              Pick how far<br />we take it.
+            </h2>
+            <div className="flex flex-wrap gap-2 md:justify-end">
+              {dtcPlatforms.map((p) => (
+                <span key={p} className="px-4 py-2 rounded-full border border-black/8 text-xs font-mono tracking-widest uppercase text-brand-dark/60">{p}</span>
+              ))}
+            </div>
+          </div>
+          <div className="grid md:grid-cols-3 gap-5">
+            {dtcPackages.map((pk, i) => (
+              <motion.div key={pk.name}
+                initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }}
+                className={`rounded-3xl p-9 flex flex-col border ${i === 1 ? 'bg-brand-dark border-brand-dark text-white' : 'bg-surface-offwhite border-black/6 text-brand-dark'}`}>
+                <span className={`text-[10px] font-mono tracking-widest uppercase mb-3 ${i === 1 ? 'text-brand-red' : 'text-brand-red'}`}>{pk.tag}</span>
+                <h3 className="font-display font-bold text-3xl mb-3">{pk.name}</h3>
+                <p className={`text-sm font-light mb-6 ${i === 1 ? 'text-white/60' : 'text-brand-dark/55'}`}>{pk.desc}</p>
+                <ul className="space-y-2.5 mb-8 flex-1">
+                  {pk.items.map((it) => (
+                    <li key={it} className={`flex gap-2.5 text-sm ${i === 1 ? 'text-white/80' : 'text-brand-dark/75'}`}>
+                      <Check size={15} className="text-brand-red shrink-0 mt-0.5" />{it}
+                    </li>
+                  ))}
+                </ul>
+                <CTA to={contactHref('dtc')} label={`Ask about ${pk.name}`} tone={i === 1 ? 'red' : 'dark'} id={`dtc-package-${pk.name.toLowerCase()}`} className="self-start" />
+              </motion.div>
+            ))}
+          </div>
+        </div>
       </section>
 
       {/* ══════════════════════════════════════════
@@ -627,7 +695,7 @@ export default function DTCGrowth() {
             No UK office. No internal warehouse team. No slow cross-border deliveries. Just Loop Retail running your local layer from day one.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <a href="mailto:hello@loopretail.io"
+            <a href="/contact?topic=dtc" data-cta="dtc-final"
               className="flex items-center gap-2 bg-brand-red text-white px-10 py-4 rounded-full font-semibold text-sm hover:bg-[#c0001f] transition-colors group">
               Start Your UK DTC Launch
               <ArrowRight size={14} className="group-hover:translate-x-0.5 transition-transform" />

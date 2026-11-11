@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { SectionCTA, contactHref } from './CTA';
 import { motion, AnimatePresence } from 'motion/react';
 import { RefreshCw, Users, Globe, Award, ArrowRight } from 'lucide-react';
 
@@ -130,7 +131,7 @@ export function ImpactSection() {
                 </span>
               ))}
             </div>
-            <a href="/contact"
+            <a href="/contact?topic=onboarding"
               className="inline-flex items-center gap-2 bg-brand-red text-white text-sm font-semibold px-6 py-3.5 rounded-full hover:bg-[#c0001f] transition-colors group">
               Start your 30-day onboarding
               <ArrowRight size={15} className="group-hover:translate-x-0.5 transition-transform" />
@@ -221,6 +222,7 @@ export function ImpactSection() {
               The numbers<br/>behind the loop.
               <span className="absolute -inset-8 bg-brand-red/20 blur-3xl rounded-full -z-10 mix-blend-screen opacity-50"></span>
             </h2>
+            <SectionCTA to={contactHref('strategy-call')} label="Get results like these" tone="light" dark id="home-impact" />
           </div>
         </div>
       </div>

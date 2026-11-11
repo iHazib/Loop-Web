@@ -1,4 +1,5 @@
 import { motion } from 'motion/react';
+import { SectionCTA, contactHref } from './CTA';
 import { ArrowRight, Globe2 } from 'lucide-react';
 
 const stats = [
@@ -93,6 +94,8 @@ export function GlobalPresence() {
                 </ul>
               ))}
             </div>
+            <SectionCTA to={contactHref('strategy-call')} label="Bring your brand to the UK" id="home-global"
+              note="One partner instead of five vendors." />
           </div>
         </motion.div>
       </div>
