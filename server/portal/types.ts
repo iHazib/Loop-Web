@@ -3,10 +3,19 @@
 export const CHANNELS = ['Amazon', 'TikTok Shop', 'eBay', 'Temu', 'D2C', 'Wholesale'] as const;
 export type Channel = (typeof CHANNELS)[number];
 
+export const BRAND_STATUSES = ['onboarding', 'active', 'paused', 'churned'] as const;
+export type BrandStatus = (typeof BRAND_STATUSES)[number];
+
 export interface Brand {
   id: string;
   name: string;
   plan: string;
+  status?: BrandStatus;
+  accountManager?: string; // name of the Loopretail contact
+  accountManagerEmail?: string;
+  contactEmail?: string; // main contact at the brand
+  notes?: string; // staff only
+  createdAt?: string;
 }
 
 export interface Product {

@@ -43,7 +43,10 @@ function salesKpis(ds: Dataset, sales: SalesRow[], ads: AdsRow[], lastWeek: stri
 function riskIndex(ds: Dataset) {
   const open = ds.cases.filter((c) => c.status === 'flagged' || c.status === 'reviewing');
   const score = sum(open.map((c) => SEVERITY_WEIGHT[c.severity]));
-  return { score, open: open.length, label: score === 0 ? 'Low' : score <= 6 ? 'Low' : score <= 15 ? 'Medium' : 'High' };
+  const high = open.filter((c) => c.severity === 'high').length;
+  // Any open high alert means at least Medium; many alerts or 3+ high means High.
+  const label = high >= 3 || score > 15 ? 'High' : high > 0 || score > 6 ? 'Medium' : 'Low';
+  return { score, open: open.length, high, label };
 }
 
 /* ───────────── Overview ───────────── */
@@ -400,5 +403,88 @@ export function d2c(ds: Dataset, period = 4) {
       returningCustomers: last12.map((r) => r.returningCustomers),
     },
     weeksAvailable: weeks.length,
+  };
+}
+
+/* ───────────── Home (client landing) ───────────── */
+const daysSince = (day: string | null | undefined, now: Date) => (day ? Math.floor((now.getTime() - new Date(day.slice(0, 10) + 'T00:00:00Z').getTime()) / 86_400_000) : null);
+
+export function home(ds: Dataset, now = new Date()) {
+  const latest = (xs: string[]) => xs.reduce<string | null>((m, x) => (!m || x > m ? x : m), null);
+  const lastKeepa = latest(ds.snapshots.map((s) => s.day));
+  const lastSales = latest(ds.sales.map((s) => s.weekStart));
+  const lastAds = latest(ds.ads.map((a) => a.weekStart));
+  const lastD2c = latest(ds.d2c.map((d) => d.weekStart));
+  const withAsin = ds.products.filter((p) => p.asin);
+  const priced = ds.products.filter((p) => p.cost > 0 && p.mapPrice > 0);
+
+  const steps = [
+    { key: 'products', label: 'Import your products from ASINs', done: withAsin.length > 0, detail: withAsin.length ? `${withAsin.length} products` : 'Paste your ASINs under Data', tab: 'data' },
+    { key: 'pricing', label: 'Add cost and minimum price for every product', done: ds.products.length > 0 && priced.length === ds.products.length, detail: ds.products.length ? `${priced.length} of ${ds.products.length} done` : 'After products are in', tab: 'data' },
+    { key: 'sellers', label: 'Upload your authorised seller list', done: ds.sellers.some((s) => s.amazonSellerId), detail: ds.sellers.length ? `${ds.sellers.length} sellers` : 'Switches on seller alerts', tab: 'data' },
+    { key: 'keepa', label: 'First Keepa check', done: Boolean(lastKeepa), detail: lastKeepa ? `Last check ${lastKeepa}` : 'Runs daily once products are in', tab: 'protection' },
+    { key: 'competitors', label: 'Build competitor sets', done: ds.competitors.length > 0, detail: ds.competitors.length ? `${ds.competitors.length} tracked` : 'Use Find competitors under Data', tab: 'data' },
+    { key: 'sales', label: 'Upload weekly sales', done: Boolean(lastSales), detail: lastSales ? `Latest week ${lastSales}` : 'From the Sales template', tab: 'data' },
+    { key: 'ads', label: 'Upload weekly ads', done: Boolean(lastAds), detail: lastAds ? `Latest week ${lastAds}` : 'From the Ads template', tab: 'data' },
+  ];
+  const done = steps.filter((s) => s.done).length;
+
+  const fresh = (label: string, day: string | null, maxDays: number, tab: string) => {
+    const age = daysSince(day, now);
+    return { label, last: day, ageDays: age, status: age == null ? 'missing' : age > maxDays ? 'stale' : 'ok', tab };
+  };
+  const freshness = [
+    fresh('Keepa market data', lastKeepa, 2, 'protection'),
+    fresh('Sales sheet', lastSales, 14, 'data'),
+    fresh('Ads sheet', lastAds, 14, 'data'),
+    ...(ds.d2c.length ? [fresh('D2C sheet', lastD2c, 14, 'data')] : []),
+  ];
+
+  const open = ds.cases.filter((c) => c.status === 'flagged' || c.status === 'reviewing');
+  const ch = ds.sales.length ? channels(ds, 4) : null;
+  const ad = ds.ads.length ? ads(ds, 4) : null;
+  const an = analysis(ds);
+  const attention = [
+    ...open.filter((c) => c.severity === 'high').slice(0, 5).map((c) => ({ kind: 'case', level: 'high', title: c.title, detail: c.detail, tab: 'protection' })),
+    ...(ch?.stockWarnings ?? []).slice(0, 3).map((s) => ({ kind: 'stock', level: 'medium', title: `${s.name}: ${s.weeksCover} weeks of stock left`, detail: `${s.stock} units, selling about ${s.weeklyUnits} a week`, tab: 'channels' })),
+    ...(ad ? ad.campaigns.filter((c) => (c.acosPct ?? 0) > ad.targetAcosPct).slice(0, 3).map((c) => ({ kind: 'ads', level: 'medium', title: `${c.campaign} is at ${c.acosPct}% ACoS`, detail: `${c.channel}, £${c.spend} spend in 4 weeks`, tab: 'ads' })) : []),
+    ...an.products.filter((p) => p.cheapest === false && p.price != null && p.lowestCompetitor != null && p.price - p.lowestCompetitor > 0.5).slice(0, 3).map((p) => ({ kind: 'price', level: 'low', title: `Undercut on ${p.name}`, detail: `You £${p.price?.toFixed(2)}, lowest rival £${p.lowestCompetitor?.toFixed(2)}`, tab: 'analysis' })),
+  ];
+
+  const ov = overview(ds, 4);
+  return {
+    brandInfo: { status: ds.brand.status ?? 'active', plan: ds.brand.plan, accountManager: ds.brand.accountManager ?? '', accountManagerEmail: ds.brand.accountManagerEmail ?? '' },
+    setup: { steps, done, total: steps.length, pct: Math.round((done / steps.length) * 100) },
+    freshness,
+    attention,
+    counts: { products: ds.products.length, competitors: ds.competitors.length, openCases: open.length, highCases: open.filter((c) => c.severity === 'high').length },
+    // Without a sales sheet there is no GMV yet: show "–" rather than £0.
+    kpis: ov.kpis.filter((k) => ['gmv', 'margin', 'tacos', 'bsr'].includes(k.key)).map((k) => (k.key === 'gmv' && !ds.sales.length ? { ...k, value: null } : k)),
+    risk: ov.risk,
+    events: ov.events.slice(0, 5),
+  };
+}
+
+/** One row per brand for the staff admin list. */
+export function adminSummary(ds: Dataset, users: number, now = new Date()) {
+  const h = home(ds, now);
+  const stale = h.freshness.filter((f) => f.status !== 'ok').map((f) => f.label);
+  const health = h.setup.done < 4 ? 'setup' : h.counts.highCases > 0 ? 'alerts' : stale.length ? 'stale' : 'ok';
+  const ov = ds.sales.length ? overview(ds, 4) : null;
+  return {
+    brand: ds.brand,
+    users,
+    setupPct: h.setup.pct,
+    setupDone: h.setup.done,
+    setupTotal: h.setup.total,
+    products: h.counts.products,
+    openCases: h.counts.openCases,
+    highCases: h.counts.highCases,
+    lastKeepa: h.freshness[0].last,
+    lastSales: h.freshness[1].last,
+    stale,
+    health,
+    gmv4w: ov ? ov.kpis.find((k) => k.key === 'gmv')?.value ?? null : null,
+    gmvChange: ov ? ov.kpis.find((k) => k.key === 'gmv')?.change ?? null : null,
   };
 }

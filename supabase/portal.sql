@@ -98,6 +98,13 @@ create table if not exists portal_events (
 );
 create index if not exists portal_events_brand on portal_events (brand_id, at desc);
 
+-- Brand management fields (staff admin)
+alter table portal_brands add column if not exists status text not null default 'onboarding';
+alter table portal_brands add column if not exists account_manager text default '';
+alter table portal_brands add column if not exists account_manager_email text default '';
+alter table portal_brands add column if not exists contact_email text default '';
+alter table portal_brands add column if not exists notes text default '';
+
 -- Weekly D2C store figures
 create table if not exists portal_d2c (
   brand_id text references portal_brands(id) on delete cascade,

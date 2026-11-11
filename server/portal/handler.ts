@@ -7,7 +7,7 @@ import { validate, TEMPLATES, type UploadKind } from './validate.js';
 import * as ai from './ai.js';
 import * as acc from './access.js';
 import { verifyGoogleToken } from '../auth.js';
-import type { Dataset, ProtectionCase, CaseStatus } from './types.js';
+import { BRAND_STATUSES, type Dataset, type ProtectionCase, type CaseStatus, type Brand, type BrandStatus } from './types.js';
 
 /* Router for /api/portal/*, shared by Express (server/app.ts) and Vercel (api/index.ts).
    Who can do what:
@@ -45,11 +45,30 @@ async function principal(req: PortalReq): Promise<acc.Principal | null> {
   return { kind: 'client', email: s.email, name: s.name, brands };
 }
 
-const VIEWS = ['overview', 'channels', 'protection', 'analysis', 'ads', 'logistics', 'd2c'] as const;
+const VIEWS = ['home', 'overview', 'channels', 'protection', 'analysis', 'ads', 'logistics', 'd2c'] as const;
 const KINDS: UploadKind[] = ['products', 'sales', 'ads', 'sellers', 'competitors', 'd2c'];
 const STATUSES: CaseStatus[] = ['flagged', 'reviewing', 'clear', 'resolved'];
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const num = (v: unknown) => { const n = Number(String(v ?? '').replace(/[£,\s]/g, '')); return Number.isFinite(n) && n >= 0 ? n : null; };
+
+/** What clients may see about their brand (no staff notes). */
+const publicBrand = (b: Brand): Brand => ({ id: b.id, name: b.name, plan: b.plan, status: b.status, accountManager: b.accountManager, accountManagerEmail: b.accountManagerEmail });
+
+/** Validates the editable brand fields; returns an error message string when invalid. */
+function brandFields(body: Record<string, unknown>): Partial<Brand> | string {
+  const f: Partial<Brand> = {};
+  if (body.status !== undefined) {
+    if (!BRAND_STATUSES.includes(body.status as BrandStatus)) return `Status must be one of ${BRAND_STATUSES.join(', ')}.`;
+    f.status = body.status as BrandStatus;
+  }
+  for (const k of ['accountManager', 'accountManagerEmail', 'contactEmail', 'notes'] as const) {
+    if (body[k] === undefined) continue;
+    const v = String(body[k]).trim();
+    if ((k === 'accountManagerEmail' || k === 'contactEmail') && v && !EMAIL.test(v)) return `${k === 'contactEmail' ? 'Brand contact' : 'Account manager'} email is not valid.`;
+    f[k] = v.slice(0, k === 'notes' ? 4000 : 120);
+  }
+  return f;
+}
 
 export async function handlePortal(req: PortalReq): Promise<PortalRes | null> {
   const { method, path, query, body } = req;
@@ -140,14 +159,74 @@ export async function handlePortal(req: PortalReq): Promise<PortalRes | null> {
       if (!who || !db.dbConfigured()) return ok([DEMO_BRAND]);
       const all = await db.listBrands();
       if (who.kind === 'staff') return ok([DEMO_BRAND, ...all]);
-      return ok(all.filter((b) => who.brands[b.id]));
+      return ok(all.filter((b) => who.brands[b.id]).map(publicBrand));
     }
     if (method === 'POST') {
       if (!acc.isStaff(who)) return err(403, 'Only Loopretail staff can add brands.');
       const name = String(body.name ?? '').trim();
       if (!name) return err(400, 'Brand name is required.');
-      return ok(await db.createBrand(name, String(body.plan ?? '')));
+      const fields = brandFields(body);
+      if (typeof fields === 'string') return err(400, fields);
+      const brand = await db.createBrand(name.slice(0, 80), String(body.plan ?? '').slice(0, 60), { status: 'onboarding', accountManager: who!.name || who!.email, accountManagerEmail: who!.email, ...fields });
+      await db.addEvents(brand.id, [{ at: new Date().toISOString(), source: 'Loopretail', message: `Brand created by ${who!.email}`, level: 'info' }]);
+      let invitePath: string | null = null;
+      const inviteEmail = String(body.inviteEmail ?? '').trim().toLowerCase();
+      if (inviteEmail) {
+        if (!EMAIL.test(inviteEmail)) return ok({ ...brand, invitePath, warning: 'Brand created, but the invite email was not valid.' });
+        const role = body.inviteRole === 'viewer' ? 'viewer' : 'manager';
+        await db.ensureUser(inviteEmail);
+        await db.linkUser(inviteEmail, brand.id, role);
+        const { token, hash } = acc.newInviteToken();
+        await db.createInvite(hash, inviteEmail, brand.id, role);
+        invitePath = `/portal/invite/${token}`;
+      }
+      return ok({ ...brand, invitePath });
     }
+  }
+
+  /* ── Staff admin: every onboarded brand ── */
+  if (parts[0] === 'admin') {
+    if (!acc.isStaff(who)) return err(who ? 403 : 401, 'Staff only.');
+    if (!db.dbConfigured()) return err(503, 'The database is not configured yet.');
+    if (parts[1] === 'brands' && !parts[2] && method === 'GET') {
+      const [brands, counts] = await Promise.all([db.listBrands(), db.userCounts()]);
+      const rows = [];
+      for (const b of brands) {
+        const ds = await db.loadDataset(b.id);
+        if (ds) rows.push(metrics.adminSummary(ds, counts[b.id] ?? 0));
+      }
+      const by = (s: string) => rows.filter((r) => r.brand.status === s).length;
+      return ok({
+        totals: { brands: rows.length, active: by('active'), onboarding: by('onboarding'), paused: by('paused'), churned: by('churned'), highCases: rows.reduce((a, r) => a + r.highCases, 0), needAttention: rows.filter((r) => r.health !== 'ok' && r.brand.status !== 'churned').length },
+        brands: rows,
+      });
+    }
+    if (parts[1] === 'brands' && parts[2]) {
+      const id = parts[2];
+      const brand = await db.getBrand(id);
+      if (!brand) return err(404, 'Brand not found.');
+      if (method === 'GET') {
+        const ds = await db.loadDataset(id);
+        const users = await db.brandUsers(id);
+        return ok({ brand, summary: metrics.adminSummary(ds!, users.users.length), home: metrics.home(ds!), users, openCases: ds!.cases.filter((c) => c.status === 'flagged' || c.status === 'reviewing').slice(0, 30) });
+      }
+      if (method === 'PATCH') {
+        const fields = brandFields(body);
+        if (typeof fields === 'string') return err(400, fields);
+        if (body.name !== undefined) { const n = String(body.name).trim(); if (!n) return err(400, 'Brand name cannot be empty.'); fields.name = n.slice(0, 80); }
+        if (body.plan !== undefined) fields.plan = String(body.plan).slice(0, 60);
+        try { await db.updateBrand(id, fields); }
+        catch (e) { return err(500, /column/i.test((e as Error).message) ? 'New brand fields are missing in the database. Run supabase/portal.sql again.' : (e as Error).message); }
+        if (fields.status && fields.status !== brand.status) await db.addEvents(id, [{ at: new Date().toISOString(), source: 'Loopretail', message: `Status changed to ${fields.status} by ${who!.email}`, level: 'info' }]);
+        return ok(await db.getBrand(id));
+      }
+      if (method === 'DELETE') {
+        if (query.confirm !== id) return err(400, 'Confirm by sending the brand id.');
+        await db.deleteBrand(id);
+        return ok({ deleted: true });
+      }
+    }
+    return err(404, `No admin route for ${method} ${path}`);
   }
 
   if (parts[0] !== 'brands' || !parts[1]) return err(404, `No portal route for ${method} ${path}`);
@@ -163,8 +242,9 @@ export async function handlePortal(req: PortalReq): Promise<PortalRes | null> {
     const ds = await loadDs();
     if (!ds) return err(404, 'Brand not found.');
     const weeks = Math.min(13, Math.max(1, Number(query.weeks) || 4));
-    const base = { brand: ds.brand, demo: isDemo, canEdit: acc.canEdit(who, brandId), isStaff: acc.isStaff(who) };
+    const base = { brand: acc.isStaff(who) ? ds.brand : publicBrand(ds.brand), demo: isDemo, canEdit: acc.canEdit(who, brandId), isStaff: acc.isStaff(who) };
     switch (parts[2]) {
+      case 'home': return ok({ ...base, ...metrics.home(ds) });
       case 'overview': return ok({ ...base, ...metrics.overview(ds, weeks) });
       case 'channels': return ok({ ...base, ...metrics.channels(ds, weeks) });
       case 'protection': return ok({ ...base, ...metrics.protection(ds) });

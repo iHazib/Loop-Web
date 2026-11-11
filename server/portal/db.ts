@@ -42,14 +42,50 @@ async function upsert(table: string, rows: any[], onConflict: string) {
 }
 
 /* ── Brands ── */
+const toBrand = (r: any): Brand => ({
+  id: r.id, name: r.name, plan: r.plan ?? '',
+  status: r.status ?? 'active',
+  accountManager: r.account_manager ?? '', accountManagerEmail: r.account_manager_email ?? '',
+  contactEmail: r.contact_email ?? '', notes: r.notes ?? '',
+  createdAt: r.created_at ?? '',
+});
 export async function listBrands(): Promise<Brand[]> {
   const rows = check<any[]>(await sb().from('portal_brands').select('*').order('name'));
-  return rows.map((r) => ({ id: r.id, name: r.name, plan: r.plan ?? '' }));
+  return rows.map(toBrand);
 }
-export async function createBrand(name: string, plan = ''): Promise<Brand> {
-  const id = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40) || `brand-${Date.now()}`;
-  const r = check<any>(await sb().from('portal_brands').insert({ id, name, plan }).select().single());
-  return { id: r.id, name: r.name, plan: r.plan ?? '' };
+export async function getBrand(id: string): Promise<Brand | null> {
+  const rows = check<any[]>(await sb().from('portal_brands').select('*').eq('id', id));
+  return rows[0] ? toBrand(rows[0]) : null;
+}
+const brandRow = (b: Partial<Brand>) => {
+  const row: Record<string, unknown> = {};
+  if (b.name !== undefined) row.name = b.name;
+  if (b.plan !== undefined) row.plan = b.plan;
+  if (b.status !== undefined) row.status = b.status;
+  if (b.accountManager !== undefined) row.account_manager = b.accountManager;
+  if (b.accountManagerEmail !== undefined) row.account_manager_email = b.accountManagerEmail;
+  if (b.contactEmail !== undefined) row.contact_email = b.contactEmail;
+  if (b.notes !== undefined) row.notes = b.notes;
+  return row;
+};
+export async function createBrand(name: string, plan = '', extra: Partial<Brand> = {}): Promise<Brand> {
+  const base = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40) || 'brand';
+  const taken = new Set((await listBrands()).map((b) => b.id));
+  let id = base;
+  for (let i = 2; taken.has(id) || id === 'demo'; i++) id = `${base}-${i}`;
+  const r = check<any>(await sb().from('portal_brands').insert({ id, ...brandRow({ ...extra, name, plan }) }).select().single());
+  return toBrand(r);
+}
+export async function updateBrand(id: string, patch: Partial<Brand>) {
+  const row = brandRow(patch);
+  if (!Object.keys(row).length) return;
+  check(await sb().from('portal_brands').update(row).eq('id', id));
+}
+export async function userCounts(): Promise<Record<string, number>> {
+  const rows = check<any[]>(await sb().from('portal_user_brands').select('brand_id'));
+  const out: Record<string, number> = {};
+  for (const r of rows) out[r.brand_id] = (out[r.brand_id] ?? 0) + 1;
+  return out;
 }
 
 export async function deleteBrand(id: string) {
@@ -80,7 +116,7 @@ export async function loadDataset(brandId: string): Promise<Dataset | null> {
     snaps.push(...(await selectAll('portal_keepa_snapshots', (q: any) => q.in('asin', part).gte('day', since), 'day')));
   }
   return {
-    brand: { id: b[0].id, name: b[0].name, plan: b[0].plan ?? '' },
+    brand: toBrand(b[0]),
     products: products.map((r): Product => ({ sku: r.sku, name: r.name, asin: r.asin ?? '', ean: r.ean ?? '', cost: +r.cost || 0, rrp: +r.rrp || 0, mapPrice: +r.map_price || 0 })),
     sales: sales.map((r): SalesRow => ({ weekStart: r.week_start, channel: r.channel, sku: r.sku, units: +r.units, revenue: +r.revenue, returns: +r.returns, fees: +r.fees, stock: +r.stock })),
     ads: ads.map((r): AdsRow => ({ weekStart: r.week_start, channel: r.channel, campaign: r.campaign, campaignType: r.campaign_type ?? '', spend: +r.spend, impressions: +r.impressions, clicks: +r.clicks, orders: +r.orders, adSales: +r.ad_sales })),
