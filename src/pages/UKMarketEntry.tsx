@@ -7,7 +7,7 @@ export default function UKMarketEntry() {
       <PageHero
         eyebrow="UK Market Entry · Loop Retail"
         tag="For overseas brands"
-        title={<><span className="font-light text-white/50">Sell in the UK</span><br />without building a UK team.</>}
+        title={<><span className="text-white/50">Sell in the UK</span><br />without building a UK team.</>}
         lead="The UK rewards brands that arrive prepared: tax set up, products compliant, listings written for UK shoppers and stock already here. We coordinate all of it and run the channels once you are live."
         ctas={<><CTA to={contactHref('strategy-call')} label="Plan your UK launch" tone="red" id="ukentry-hero" /><CTA to="/how-it-works" label="How we work" tone="outline-light" id="ukentry-hero-how" /></>}
         meta={[{ k: 'Launch plan', v: 'Channel by channel' }, { k: 'Stock', v: 'Held in the UK' }, { k: 'Listings', v: 'Written for UK search' }, { k: 'Protection', v: 'From day one' }]}

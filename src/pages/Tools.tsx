@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ArrowRight, BarChart3, Shield, Search, Sparkles } from 'lucide-react';
+import { ArrowUpRight, BarChart3, Shield, Search, Sparkles } from 'lucide-react';
 import { SitePage, PageHero, Section, CardGrid, CTABand, Related } from '../components/site/Page';
 import { CTA, contactHref } from '../components/CTA';
 
@@ -24,27 +24,31 @@ export default function Tools() {
       <PageHero
         eyebrow="Tools · Loop Retail"
         tag="Built in house"
-        title={<><span className="font-light text-white/50">The tools behind</span><br />the operation.</>}
+        title={<><span className="text-white/50">The tools behind</span><br />the operation.</>}
         lead="We built our own software so every brand we work with can see exactly what is happening on its channels, without waiting for a monthly report."
         ctas={<><CTA to="/portal/demo/overview" label="Open the live demo" tone="red" id="tools-hero-demo" /><CTA to="/portal/login" label="Client sign in" tone="outline-light" id="tools-hero-login" /></>}
       />
 
-      <section className="w-full bg-white px-6 md:px-8 py-24 border-b border-black/5">
-        <div className="max-w-[1200px] mx-auto grid gap-5">
+      <Section eyebrow="Three tools" title={<>One login.<br />Three ways to see your market.</>}
+        lead="Every client gets the Brand Dashboard. Loop Protect and Competitor Analysis run inside it, on the same daily data.">
+        <div className="grid md:grid-cols-3 gap-3 md:gap-4">
           {tools.map((t, i) => (
             <Link key={t.title} to={t.to}
-              className={`group grid md:grid-cols-[72px_1fr_auto] gap-6 items-center rounded-3xl border p-8 md:p-10 transition-colors ${i === 0 ? 'bg-brand-dark border-brand-dark' : 'bg-surface-offwhite/60 border-black/6 hover:border-brand-red/30'}`}>
-              <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${i === 0 ? 'bg-brand-red/15' : 'bg-brand-red/10'}`}><t.icon className="text-brand-red" size={24} /></div>
-              <div>
-                <span className="font-mono text-[10px] tracking-widest uppercase text-brand-red">{t.tag}</span>
-                <h2 className={`font-display font-bold text-2xl md:text-3xl mt-1 ${i === 0 ? 'text-white' : 'text-brand-dark'}`}>{t.title}</h2>
-                <p className={`mt-2 text-sm md:text-base font-light leading-relaxed max-w-2xl ${i === 0 ? 'text-white/55' : 'text-brand-dark/60'}`}>{t.body}</p>
+              className={`group flex flex-col rounded-[20px] p-7 md:p-8 min-h-[340px] transition-colors duration-300 ${i === 0 ? 'bg-brand-dark hover:bg-black' : 'bg-[#f4f4f4] hover:bg-[#efefef]'}`}>
+              <div className="flex items-start justify-between">
+                <div className={`w-12 h-12 rounded-2xl grid place-items-center ${i === 0 ? 'bg-brand-red' : 'bg-white'}`}><t.icon className={i === 0 ? 'text-white' : 'text-brand-red'} size={22} /></div>
+                <span className={`text-[12px] font-medium rounded-full px-3 py-1 ${i === 0 ? 'bg-white/10 text-white/80' : 'bg-white text-brand-dark/60'}`}>{t.tag}</span>
               </div>
-              <ArrowRight className={`${i === 0 ? 'text-white/50' : 'text-brand-dark/30'} group-hover:text-brand-red group-hover:translate-x-1 transition-all`} />
+              <h2 className={`font-display font-semibold tracking-[-0.035em] text-[28px] leading-tight mt-auto pt-10 ${i === 0 ? 'text-white' : 'text-brand-dark'}`}>{t.title}</h2>
+              <p className={`mt-3 text-[15px] leading-relaxed ${i === 0 ? 'text-white/60' : 'text-brand-dark/60'}`}>{t.body}</p>
+              <span className="mt-7 flex items-center justify-between">
+                <span className={`text-sm font-medium ${i === 0 ? 'text-white' : 'text-brand-dark'}`}>Explore {t.title}</span>
+                <span className="w-9 h-9 rounded-full bg-brand-red text-white grid place-items-center group-hover:rotate-45 transition-transform duration-300"><ArrowUpRight size={16} /></span>
+              </span>
             </Link>
           ))}
         </div>
-      </section>
+      </Section>
 
       <Section tone="off" eyebrow="Where the data comes from" title={<>Real data.<br />Not screenshots.</>}
         lead="Our tools read market data automatically and combine it with the numbers only you have. No scraping, no guesswork.">

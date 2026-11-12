@@ -7,7 +7,7 @@ export default function HowItWorks() {
       <PageHero
         eyebrow="How it works · Loop Retail"
         tag="Partnership models"
-        title={<><span className="font-light text-white/50">You keep the brand.</span><br />We run the UK operation.</>}
+        title={<><span className="text-white/50">You keep the brand.</span><br />We run the UK operation.</>}
         lead="Two ways to work with us, one onboarding process and one dashboard. You set the brand rules, prices and priorities; we run the day to day and report on it."
         ctas={<><CTA to={contactHref('strategy-call')} label="Book a strategy call" tone="red" id="how-hero" /><CTA to="/portal/demo/overview" label="See the dashboard" tone="outline-light" id="how-hero-demo" /></>}
       />

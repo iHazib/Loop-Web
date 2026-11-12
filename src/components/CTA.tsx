@@ -3,12 +3,20 @@ import { ArrowRight } from 'lucide-react';
 
 type Tone = 'red' | 'dark' | 'light' | 'outline-light' | 'outline-dark';
 
+/* Button: 12px corners, sentence case, label plus a round arrow badge. */
 const tones: Record<Tone, string> = {
-  red: 'bg-brand-red text-white hover:bg-brand-dark',
-  dark: 'bg-brand-dark text-white hover:bg-brand-red',
-  light: 'bg-white text-brand-dark hover:bg-brand-red hover:text-white',
-  'outline-light': 'border border-white/25 text-white hover:bg-white hover:text-brand-dark',
-  'outline-dark': 'border border-brand-dark/15 text-brand-dark hover:border-brand-red hover:text-brand-red',
+  red: 'bg-brand-red text-white hover:bg-[#c91424]',
+  dark: 'bg-brand-dark text-white hover:bg-black',
+  light: 'bg-white text-brand-dark hover:bg-white/90',
+  'outline-light': 'bg-white/[0.06] border border-white/20 text-white hover:bg-white/[0.14] backdrop-blur-sm',
+  'outline-dark': 'bg-white border border-brand-dark/12 text-brand-dark hover:border-brand-dark/30',
+};
+const badge: Record<Tone, string> = {
+  red: 'bg-white text-brand-red',
+  dark: 'bg-brand-red text-white',
+  light: 'bg-brand-red text-white',
+  'outline-light': 'bg-white text-brand-dark',
+  'outline-dark': 'bg-brand-dark text-white',
 };
 
 /** Contact link with the enquiry topic pre-selected (read by the contact form). */
@@ -40,10 +48,12 @@ export function CTA({
       to={to}
       onClick={track}
       data-cta={id}
-      className={`group inline-flex items-center gap-2 px-6 py-3 rounded-full text-xs font-semibold uppercase tracking-wider transition-colors duration-300 ${tones[tone]} ${className}`}
+      className={`group inline-flex items-center gap-3 pl-5 pr-2 py-2 rounded-xl text-[15px] font-medium transition-colors duration-300 ${tones[tone]} ${className}`}
     >
       {label}
-      <ArrowRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
+      <span className={`w-7 h-7 rounded-full grid place-items-center shrink-0 ${badge[tone]}`}>
+        <ArrowRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
+      </span>
     </Link>
   );
 }

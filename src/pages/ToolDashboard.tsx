@@ -16,7 +16,7 @@ export default function ToolDashboard() {
       <PageHero
         eyebrow="Tools · Brand Dashboard"
         tag="Included for every client"
-        title={<><span className="font-light text-white/50">Your UK business,</span><br />on one screen.</>}
+        title={<><span className="text-white/50">Your UK business,</span><br />on one screen.</>}
         lead="Sales, margin, ads, stock, rank, price and protection across every channel. Updated daily, available to your team with their own logins."
         ctas={<><CTA to="/portal/demo/overview" label="Open the live demo" tone="red" id="dash-hero-demo" /><CTA to={contactHref('dashboard-demo')} label="Get a free brand report" tone="outline-light" id="dash-hero-report" /></>}
         meta={[{ k: 'Tabs', v: 'Six views' }, { k: 'Market data', v: 'Daily from Keepa' }, { k: 'Your data', v: 'Weekly sheet' }, { k: 'Access', v: 'Manager and viewer logins' }]}

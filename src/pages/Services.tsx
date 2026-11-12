@@ -47,7 +47,7 @@ export default function Services() {
       <PageHero
         eyebrow="Services · Loop Retail"
         tag="One operating model"
-        title={<><span className="font-light text-white/50">Everything a brand needs</span><br />to sell in the UK. In one place.</>}
+        title={<><span className="text-white/50">Everything a brand needs</span><br />to sell in the UK. In one place.</>}
         lead="Most brands piece together a marketplace agency, a 3PL, a protection vendor and a DTC freelancer. We run all of it as one connected operation, measured in one dashboard."
         ctas={<><CTA to={contactHref('strategy-call')} label="Book a strategy call" tone="red" id="services-hero" /><CTA to="/how-it-works" label="See how it works" tone="outline-light" id="services-hero-how" /></>}
         meta={[{ k: 'Channels', v: 'Amazon, TikTok, eBay, Temu' }, { k: 'Direct', v: 'Shopify, WooCommerce' }, { k: 'Retail', v: 'UK wholesale and retail' }, { k: 'Reporting', v: 'Live brand dashboard' }]}

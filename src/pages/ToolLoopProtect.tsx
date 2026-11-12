@@ -16,7 +16,7 @@ export default function ToolLoopProtect() {
       <PageHero
         eyebrow="Tools · Loop Protect"
         tag="Amazon UK · daily"
-        title={<><span className="font-light text-white/50">See the signal.</span><br />Verify the facts. Act.</>}
+        title={<><span className="text-white/50">See the signal.</span><br />Verify the facts. Act.</>}
         lead="Loop Protect checks every seller on your Amazon UK listings each day. When something breaks your rules it opens a case with the evidence, so your team or ours can act the same day."
         ctas={<><CTA to={contactHref('brand-protection')} label="Get a free seller scan" tone="red" id="protect-hero" /><CTA to="/portal/demo/protection" label="See it in the demo" tone="outline-light" id="protect-hero-demo" /></>}
         meta={[{ k: 'Checks', v: 'Daily' }, { k: 'Rules', v: 'Six' }, { k: 'Evidence', v: 'Saved per case' }, { k: 'Coverage', v: 'Amazon UK' }]}

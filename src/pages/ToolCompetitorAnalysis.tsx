@@ -7,7 +7,7 @@ export default function ToolCompetitorAnalysis() {
       <PageHero
         eyebrow="Tools · Competitor Analysis"
         tag="Per product · daily"
-        title={<><span className="font-light text-white/50">Know who sells against you.</span><br />And how fast they grow.</>}
+        title={<><span className="text-white/50">Know who sells against you.</span><br />And how fast they grow.</>}
         lead="For every product, we track the direct competitors and the 'compatible with' copies built on your demand: their price, rank, reviews and growth, next to yours."
         ctas={<><CTA to={contactHref('competitor-analysis')} label="Get a free competitor scan" tone="red" id="comp-hero" /><CTA to="/portal/demo/analysis" label="See it in the demo" tone="outline-light" id="comp-hero-demo" /></>}
         meta={[{ k: 'Per product', v: 'Up to 30 rivals' }, { k: 'History', v: '90 days' }, { k: 'Found by', v: 'Keepa search + AI' }, { k: 'Updated', v: 'Daily' }]}
