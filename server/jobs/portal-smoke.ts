@@ -91,6 +91,20 @@ try {
   ok(`Logistics: ${lg.stock.length} products with stock`);
 
   const liveAsin = (process.env.SMOKE_ASIN || '').trim().toUpperCase();
+  /* ── Staff admin + Home ── */
+  const adminList = await call('GET', '/admin/brands');
+  const row = adminList.brands.find((b: { brand: { id: string } }) => b.brand.id === brandId);
+  if (!row) throw new Error('Admin list does not include the test brand');
+  ok(`Admin list: ${adminList.totals.brands} brands, test brand setup ${row.setupDone}/${row.setupTotal}, health "${row.health}"`);
+  await call('PATCH', `/admin/brands/${brandId}`, { status: 'active', accountManager: 'Smoke AM', accountManagerEmail: 'am@loopretail.test', notes: 'staff secret note' });
+  const det = await call('GET', `/admin/brands/${brandId}`);
+  if (det.brand.status !== 'active' || det.brand.notes !== 'staff secret note') throw new Error(`Brand edit did not save: ${JSON.stringify(det.brand)}`);
+  ok('Staff edited brand status, account manager and notes');
+  await refused(400, 'Invalid status rejected', () => call('PATCH', `/admin/brands/${brandId}`, { status: 'deleted' }));
+  const hm = await call('GET', `/brands/${brandId}/home`);
+  if (!hm.setup || !Array.isArray(hm.freshness)) throw new Error('Home view missing setup or freshness');
+  ok(`Home: setup ${hm.setup.pct}%, ${hm.attention.length} attention items, account manager "${hm.brandInfo.accountManager}"`);
+
   /* ── Client login flow ── */
   const inv = await call('POST', `/brands/${brandId}/users`, { email: clientEmail, role: 'viewer' });
   const token = String(inv.invitePath).split('/').pop()!;
@@ -111,6 +125,10 @@ try {
   ok('Client sees only their own brand');
   await call('GET', `/brands/${brandId}/overview`, {}, { cookie });
   ok('Client can open their dashboard');
+  const chome = await call('GET', `/brands/${brandId}/home`, {}, { cookie });
+  if ('notes' in chome.brand && chome.brand.notes) throw new Error('Staff notes leaked to the client');
+  ok('Client Home works and staff notes are hidden from the client');
+  await refused(403, 'Client is blocked from the staff admin', () => call('GET', '/admin/brands', {}, { cookie }));
   otherBrand = (await call('POST', '/brands', { name: `Smoke Other ${Date.now()}` })).id;
   await refused(403, "Client is blocked from another brand's data", () => call('GET', `/brands/${otherBrand}/overview`, {}, { cookie }));
   await refused(403, 'Viewer cannot upload sheets', () => call('POST', `/brands/${brandId}/upload/sales`, { rows: [{}] }, { cookie }));

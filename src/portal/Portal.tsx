@@ -1,12 +1,13 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { BarChart3, Store, Shield, Search, Megaphone, Truck, Database, Plus, ArrowLeft, Sparkles, LogOut, X } from 'lucide-react';
+import { Home as HomeIcon, BarChart3, Store, Shield, Search, Megaphone, Truck, Database, Plus, ArrowLeft, Sparkles, LogOut, X } from 'lucide-react';
 import type { Brand } from '../../server/portal/types';
 import { useView, portalFetch } from './api';
-import { Overview, Channels, Protection, Analysis, Ads, Logistics } from './views';
+import { Home, Overview, Channels, Protection, Analysis, Ads, Logistics } from './views';
 import { DataTab } from './DataTab';
 
 const TABS = [
+  { id: 'home', label: 'Home', icon: HomeIcon },
   { id: 'overview', label: 'Overview', icon: BarChart3 },
   { id: 'channels', label: 'Channels', icon: Store },
   { id: 'protection', label: 'Protection', icon: Shield },
@@ -65,7 +66,7 @@ function AskBar({ brandId, enabled }: { brandId: string; enabled: boolean }) {
 }
 
 export default function Portal() {
-  const { brandId: paramBrand, tab = 'overview' } = useParams();
+  const { brandId: paramBrand, tab = 'home' } = useParams();
   const nav = useNavigate();
   const [rev, setRev] = useState(0);
   const { data: status, loading: statusLoading } = useView<Status>(`/status?r=${rev}`);
@@ -79,7 +80,7 @@ export default function Portal() {
 
   // Clients go straight to their own brand; nobody signed in lands on the demo.
   useEffect(() => {
-    if (!paramBrand && p?.kind === 'client' && brands?.length) nav(`/portal/${brands[0].id}/overview`, { replace: true });
+    if (!paramBrand && p?.kind === 'client' && brands?.length) nav(`/portal/${brands[0].id}/home`, { replace: true });
   }, [paramBrand, p, brands, nav]);
 
   const addBrand = async () => {
@@ -107,6 +108,7 @@ export default function Portal() {
     </div>
   ) : (() => {
     switch (current.id) {
+      case 'home': return <Home key={key} brandId={brandId} brandName={brand?.name ?? brandId} />;
       case 'overview': return <Overview key={key} brandId={brandId} />;
       case 'channels': return <Channels key={key} brandId={brandId} />;
       case 'protection': return <Protection key={key} brandId={brandId} canEdit={canEdit} />;

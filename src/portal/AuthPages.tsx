@@ -39,7 +39,7 @@ export function PortalLogin() {
           setErr('');
           try {
             const r = await portalFetch<{ brands: string[] }>('/auth/google', { method: 'POST', body: JSON.stringify({ credential }) });
-            nav(`/portal/${r.brands[0]}/overview`);
+            nav(`/portal/${r.brands[0]}/home`);
           } catch (e) { setErr((e as Error).message); }
         },
       });
@@ -52,7 +52,7 @@ export function PortalLogin() {
     setBusy(true); setErr('');
     try {
       const r = await portalFetch<{ brands: string[] }>('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) });
-      nav(`/portal/${r.brands[0]}/overview`);
+      nav(`/portal/${r.brands[0]}/home`);
     } catch (e) { setErr((e as Error).message); } finally { setBusy(false); }
   };
   return (
@@ -96,7 +96,7 @@ export function PortalInvite() {
     setBusy(true); setErr('');
     try {
       const r = await portalFetch<{ brandId: string }>(`/auth/invite/${encodeURIComponent(token)}`, { method: 'POST', body: JSON.stringify({ name, password }) });
-      nav(`/portal/${r.brandId}/overview`);
+      nav(`/portal/${r.brandId}/home`);
     } catch (e) { setErr((e as Error).message); } finally { setBusy(false); }
   };
   if (loadErr) return <Shell title="Invite not valid" sub={loadErr}><Link to="/portal/login" className="text-sm text-brand-red hover:underline">Go to sign in</Link></Shell>;

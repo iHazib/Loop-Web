@@ -237,3 +237,8 @@ A dashboard per brand with six tabs: **Overview, Channels, Protection, Brand Ana
 ### D2C metrics and weekly report
 - **D2C sheet** (Data tab): weekly sessions, orders, revenue, new and returning customers, refunded orders. Shows in Channels as conversion, AOV, repeat rate, cost per new customer (from Google/Meta spend in the Ads sheet) and refund rate.
 - **Weekly report:** `/portal/<brand>/report` (button in the portal header) renders an A4 summary; use "Save as PDF" in the print dialog.
+
+### Brand Home and staff brand management
+- **Client Home** (`/portal/<brand>/home`, the landing page after login): setup checklist, needs attention (high alerts, low stock, overspending campaigns, price undercuts), headline numbers, data freshness, recent activity and a button to email the account manager.
+- **Staff admin → Brands** (`/admin/brands`): every onboarded brand with status (onboarding, active, paused, churned), account manager, setup progress, logins, alerts, last Keepa check, last sales sheet, GMV and a health label. Add a brand (optionally inviting the first client login), edit details and staff only notes, manage logins, run a Keepa check, open the portal or report, delete with confirmation.
+- Run `supabase/portal.sql` again after updating: it adds the brand status, account manager, contact and notes columns.

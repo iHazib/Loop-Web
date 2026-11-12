@@ -163,7 +163,7 @@ export function demoDataset(now = new Date()): Dataset {
   });
 
   const ds: Dataset = {
-    brand: { id: 'demo', name: 'Halcyon Foods (demo)', plan: 'Scale plan' },
+    brand: { id: 'demo', name: 'Halcyon Foods (demo)', plan: 'Scale plan', status: 'active', accountManager: 'Your Loopretail account manager', accountManagerEmail: 'hello@loopretail.io', contactEmail: '' },
     products: PRODUCTS, sales, ads, sellers: SELLERS, competitors, d2c, snapshots, cases: [], events,
   };
   ds.cases = newCases(ds, now);

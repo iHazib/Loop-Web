@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { CheckCircle2, Circle, AlertTriangle, ArrowRight, FileText, Mail } from 'lucide-react';
 import type * as M from '../../server/portal/metrics';
 import type { Brand, ProtectionCase } from '../../server/portal/types';
 import { CASE_LABELS } from '../../server/portal/types';
@@ -13,12 +15,108 @@ type An = Base & ReturnType<typeof M.analysis>;
 type Ad = Base & ReturnType<typeof M.ads>;
 type Lg = Base & ReturnType<typeof M.logistics>;
 type Dc = Base & ReturnType<typeof M.d2c>;
+type Hm = Base & ReturnType<typeof M.home>;
 
 function Loading() {
   return <div className="grid gap-4">{[0, 1, 2].map((i) => <div key={i} className="h-28 rounded-2xl bg-white/[0.03] animate-pulse" />)}</div>;
 }
 function Failed({ error }: { error: string }) {
   return <Empty title="Could not load this view">{error}</Empty>;
+}
+
+/* ═════════════ Home (brand landing) ═════════════ */
+export function Home({ brandId, brandName }: { brandId: string; brandName: string }) {
+  const { data, error, loading } = useView<Hm>(`/brands/${brandId}/home`);
+  if (loading && !data) return <Loading />;
+  if (error) return <Failed error={error} />;
+  if (!data) return null;
+  const s = data.setup;
+  const hour = new Date().getHours();
+  const greet = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+  const lvl: Record<string, string> = { high: 'border-rose-500/30 bg-rose-500/[0.06]', medium: 'border-amber-400/30 bg-amber-400/[0.05]', low: 'border-white/10 bg-white/[0.02]' };
+  return (
+    <div className="grid gap-5">
+      <section className="rounded-2xl border border-white/[0.07] bg-gradient-to-br from-brand-red/[0.12] via-white/[0.02] to-transparent p-6 md:p-7 flex flex-col md:flex-row md:items-center justify-between gap-5">
+        <div>
+          <p className="text-sm text-white/50">{greet}</p>
+          <h2 className="text-2xl font-semibold mt-1">{brandName}</h2>
+          <p className="text-sm text-white/50 mt-2">
+            {s.done < s.total ? `Setup is ${s.pct}% complete. Finish the steps below to switch everything on.` : data.attention.length ? `${data.attention.length} things need a look this week.` : 'Everything is up to date. Nothing needs your attention.'}
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Link to={`/portal/${brandId}/report`} className="inline-flex items-center gap-2 rounded-lg border border-white/15 px-3.5 py-2 text-sm text-white/80 hover:text-white"><FileText size={15} /> Weekly report</Link>
+          {data.brandInfo.accountManagerEmail && (
+            <a href={`mailto:${data.brandInfo.accountManagerEmail}`} className="inline-flex items-center gap-2 rounded-lg bg-brand-red px-3.5 py-2 text-sm font-semibold text-white"><Mail size={15} /> {data.brandInfo.accountManager || 'Account manager'}</a>
+          )}
+        </div>
+      </section>
+
+      <div className="grid lg:grid-cols-[1.25fr_1fr] gap-5">
+        <Card title="Needs attention" right={data.attention.length ? `${data.attention.length} items` : 'all clear'}>
+          {!data.attention.length ? <p className="text-sm text-white/45">Nothing urgent. Open cases, low stock, overspending campaigns and price undercuts will show here.</p> : (
+            <ul className="grid gap-2.5">
+              {data.attention.map((a, i) => (
+                <li key={i}>
+                  <Link to={`/portal/${brandId}/${a.tab}`} className={`flex items-start gap-3 rounded-xl border p-3.5 hover:border-white/25 transition-colors ${lvl[a.level]}`}>
+                    <AlertTriangle size={16} className={a.level === 'high' ? 'text-rose-400 mt-0.5' : a.level === 'medium' ? 'text-amber-300 mt-0.5' : 'text-white/40 mt-0.5'} />
+                    <div className="flex-1 min-w-0"><div className="text-sm text-white">{a.title}</div><div className="text-xs text-white/45 truncate">{a.detail}</div></div>
+                    <ArrowRight size={14} className="text-white/30 mt-1" />
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Card>
+        <Card title="Setup" right={`${s.done} of ${s.total}`}>
+          <div className="h-1.5 rounded-full bg-white/10 mb-4 overflow-hidden"><div className="h-full bg-brand-red rounded-full" style={{ width: `${s.pct}%` }} /></div>
+          <ul className="grid gap-1">
+            {s.steps.map((st) => (
+              <li key={st.key}>
+                <Link to={`/portal/${brandId}/${st.tab}`} className="flex items-start gap-3 rounded-lg px-2 py-2 hover:bg-white/[0.03]">
+                  {st.done ? <CheckCircle2 size={17} className="text-emerald-400 shrink-0 mt-0.5" /> : <Circle size={17} className="text-white/25 shrink-0 mt-0.5" />}
+                  <div><div className={`text-sm ${st.done ? 'text-white/60' : 'text-white'}`}>{st.label}</div><div className="text-[11px] text-white/40">{st.detail}</div></div>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+        {data.kpis.map((k) => <Kpi key={k.key} label={k.label} value={fmt(k.value, k.format)} change={k.change} unit={k.unit} lowerIsBetter={'lowerIsBetter' in k ? Boolean(k.lowerIsBetter) : false} />)}
+        <Kpi label="Risk index" value={data.risk.label} sub={`${data.counts.openCases} open cases`} />
+      </div>
+
+      <div className="grid lg:grid-cols-2 gap-5">
+        <Card title="Data freshness">
+          <ul className="grid gap-2">
+            {data.freshness.map((f) => (
+              <li key={f.label} className="flex items-center justify-between gap-3 text-sm">
+                <span className="text-white/75">{f.label}</span>
+                <span className="flex items-center gap-2">
+                  <span className="text-[11px] text-white/40 font-mono">{f.last ? `${f.last} · ${f.ageDays}d ago` : 'never'}</span>
+                  <Badge tone={f.status === 'ok' ? 'ok' : f.status === 'stale' ? 'warn' : 'info'}>{f.status === 'ok' ? 'fresh' : f.status}</Badge>
+                </span>
+              </li>
+            ))}
+          </ul>
+        </Card>
+        <Card title="Recent activity">
+          <ul className="space-y-3">
+            {data.events.map((e, i) => (
+              <li key={i} className="flex gap-3 text-sm">
+                <span className={`mt-1.5 w-1.5 h-1.5 rounded-full shrink-0 ${e.level === 'warn' ? 'bg-amber-400' : e.level === 'ok' ? 'bg-emerald-400' : 'bg-sky-400'}`} />
+                <span className="text-white/80 flex-1 min-w-0 truncate">{e.source}: <span className="text-white/50">{e.message}</span></span>
+                <span className="text-[10px] font-mono text-white/30">{ago(e.at)}</span>
+              </li>
+            ))}
+            {!data.events.length && <li className="text-sm text-white/40">Nothing yet.</li>}
+          </ul>
+        </Card>
+      </div>
+    </div>
+  );
 }
 
 /* ═════════════ Overview ═════════════ */
