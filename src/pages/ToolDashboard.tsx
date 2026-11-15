@@ -14,22 +14,24 @@ export default function ToolDashboard() {
   return (
     <SitePage>
       <PageHero
-        eyebrow="Tools · Brand Dashboard"
-        tag="Included for every client"
-        title={<><span className="text-white/50">Your UK business,</span><br />on one screen.</>}
+        eyebrow="Brand Dashboard"
+        title="Your UK business on one screen."
         lead="Sales, margin, ads, stock, rank, price and protection across every channel. Updated daily, available to your team with their own logins."
-        ctas={<><CTA to="/portal/demo/overview" label="Open the live demo" tone="red" id="dash-hero-demo" /><CTA to={contactHref('dashboard-demo')} label="Get a free brand report" tone="outline-light" id="dash-hero-report" /></>}
+        ctas={<><CTA to="/portal/demo/overview" label="Open the live demo" tone="red" id="dash-hero-demo" /><CTA to={contactHref('dashboard-demo')} label="Get a free brand report" tone="outline-dark" id="dash-hero-report" /></>}
         meta={[{ k: 'Tabs', v: 'Six views' }, { k: 'Market data', v: 'Daily from Keepa' }, { k: 'Your data', v: 'Weekly sheet' }, { k: 'Access', v: 'Manager and viewer logins' }]}
+        image="analytics"
+        imageAlt="Sales and traffic charts on a laptop"
+        crumb={{ label: 'Tools', to: '/tools' }}
       />
 
-      <Section eyebrow="What you see" title={<>Six views.<br />Every channel.</>}
+      <Section eyebrow="What you see" title="Six views across every channel."
         lead="Each tab answers one question a brand owner asks every week. Click any number to see what is behind it.">
         <CardGrid items={tabs} />
       </Section>
 
-      <Section tone="dark" eyebrow="Ask it anything" title={<>Questions in plain English.<br />Answers from your data.</>}
+      <Section tone="dark" eyebrow="Ask it anything" title="Ask in plain English, get answers from your own data."
         lead="The built in AI search reads your dashboard, not the internet. Every answer links to the tab with the detail.">
-        <CardGrid dark cols={2} items={[
+        <CardGrid cols={2} items={[
           { title: '"Which products lost the Buy Box this week?"', body: 'Lists the products, who holds the Buy Box now and the open protection case for each.' },
           { title: '"Where are competitors cheaper than us?"', body: 'Shows the products where a direct competitor undercuts you, by how much, and their rank trend.' },
           { title: '"Which channel grew fastest this month?"', body: 'Compares revenue growth across channels and points to the products driving it.' },
@@ -37,7 +39,7 @@ export default function ToolDashboard() {
         ]} />
       </Section>
 
-      <Section tone="off" eyebrow="Where every number comes from" title="Clear sources. No black box.">
+      <Section tone="off" eyebrow="Where every number comes from" title="Every number has a named source.">
         <Compare highlight={-1}
           columns={['Source', 'Updated', 'Covers']}
           rows={[

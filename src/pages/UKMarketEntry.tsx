@@ -5,15 +5,17 @@ export default function UKMarketEntry() {
   return (
     <SitePage>
       <PageHero
-        eyebrow="UK Market Entry · Loop Retail"
-        tag="For overseas brands"
-        title={<><span className="text-white/50">Sell in the UK</span><br />without building a UK team.</>}
+        eyebrow="UK Market Entry"
+        title="Sell in the UK without building a UK team."
         lead="The UK rewards brands that arrive prepared: tax set up, products compliant, listings written for UK shoppers and stock already here. We coordinate all of it and run the channels once you are live."
-        ctas={<><CTA to={contactHref('strategy-call')} label="Plan your UK launch" tone="red" id="ukentry-hero" /><CTA to="/how-it-works" label="How we work" tone="outline-light" id="ukentry-hero-how" /></>}
+        ctas={<><CTA to={contactHref('strategy-call')} label="Plan your UK launch" tone="red" id="ukentry-hero" /><CTA to="/how-it-works" label="How we work" tone="outline-dark" id="ukentry-hero-how" /></>}
         meta={[{ k: 'Launch plan', v: 'Channel by channel' }, { k: 'Stock', v: 'Held in the UK' }, { k: 'Listings', v: 'Written for UK search' }, { k: 'Protection', v: 'From day one' }]}
+        image="port"
+        imageAlt="Shipping containers stacked at a port"
+        crumb={{ label: 'Services', to: '/services' }}
       />
 
-      <Section eyebrow="The checklist" title={<>What has to be true<br />before the first sale.</>}
+      <Section eyebrow="The checklist" title="What has to be true before the first sale."
         lead="Every brand's list is different. These are the areas we work through with you and your advisers before anything goes live.">
         <CardGrid items={[
           { tag: '01 · Tax', title: 'UK VAT', body: 'Overseas sellers do not get the UK VAT threshold. Holding stock in the UK, including in Amazon warehouses, normally means registering before you sell. We work alongside your accountant so marketplace accounts and invoices match.' },
@@ -27,7 +29,7 @@ export default function UKMarketEntry() {
       </Section>
 
       <Section tone="dark" eyebrow="Launch path" title="From first call to first UK orders.">
-        <Steps dark steps={[
+        <Steps steps={[
           { title: 'Readiness review', body: 'Range, compliance, labelling, pricing and margin checked against UK channels. You get a clear list of what is ready and what is not.', time: 'Week 1' },
           { title: 'Channel plan', body: 'Which channel first (usually Amazon UK or a UK D2C store), which products, launch prices and first stock quantities.', time: 'Week 2' },
           { title: 'Set up', body: 'Accounts, listings, Brand Registry route, authorised seller list and minimum prices loaded into Loop Protect.', time: 'Weeks 2 to 4' },

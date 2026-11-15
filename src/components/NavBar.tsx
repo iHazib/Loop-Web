@@ -1,278 +1,114 @@
-import { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import { ArrowUpRight, Menu, X, ChevronDown, ArrowRight } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import { Link, NavLink, useLocation } from 'react-router-dom';
+import { ChevronDown, Menu, X } from 'lucide-react';
 import { Logo } from './Logo';
+import { CTA, contactHref } from './CTA';
 
-/* ─── Sub-services under "Services" ─── */
-const services = [
-  {
-    label: 'Marketplace Control',
-    desc: 'Own your listings, pricing and sellers.',
-    href: '/marketplace-control',
-    tag: 'Live',
-  },
-  {
-    label: 'Brand Protection',
-    desc: 'Stop counterfeits before they damage trust.',
-    href: '/brand-protection',
-    tag: null,
-  },
-  {
-    label: 'Retail Expansion',
-    desc: 'Scale into new channels without losing control.',
-    href: '/retail-expansion',
-    tag: null,
-  },
-  {
-    label: 'DTC Growth',
-    desc: 'Own the customer relationship end-to-end.',
-    href: '/dtc-growth',
-    tag: null,
-  },
-  {
-    label: 'UK Market Entry',
-    desc: 'For overseas brands launching in the UK.',
-    href: '/uk-market-entry',
-    tag: 'New',
-  },
+/* Light top bar on every public page. Solid surface, never transparent over content. */
+
+export const SERVICES = [
+  { label: 'Marketplace Control', desc: 'Amazon, TikTok Shop, eBay and Temu run day to day.', href: '/marketplace-control' },
+  { label: 'Brand Protection', desc: 'Unauthorised sellers and grey stock taken off your listings.', href: '/brand-protection' },
+  { label: 'DTC Growth', desc: 'A UK direct store with local stock and returns.', href: '/dtc-growth' },
+  { label: 'Retail Expansion', desc: 'Get buyer ready for UK chains and independents.', href: '/retail-expansion' },
+  { label: 'UK Market Entry', desc: 'For overseas brands launching in the UK.', href: '/uk-market-entry' },
 ];
 
-const navLinks = ['Services', 'Tools', 'How it works', 'About', 'Blog', 'Contact'];
-const navRoutes: Record<string, string> = {
-  Tools: '/tools',
-  'How it works': '/how-it-works',
-  About: '/about',
-  Blog: '/blog',
-  Contact: '/contact',
-};
+const LINKS = [
+  { label: 'Tools', to: '/tools' },
+  { label: 'How it works', to: '/how-it-works' },
+  { label: 'About', to: '/about' },
+  { label: 'Blog', to: '/blog' },
+];
 
-export function NavBar({ darkHero = false }: { darkHero?: boolean }) {
+export function NavBar(_props: { darkHero?: boolean } = {}) {
+  const [open, setOpen] = useState(false);
+  const [svc, setSvc] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [activeLink, setActiveLink] = useState<string | null>(null);
-  const [servicesOpen, setServicesOpen] = useState(false);
-  const servicesRef = useRef<HTMLDivElement>(null);
+  const ref = useRef<HTMLDivElement>(null);
+  const { pathname } = useLocation();
 
-  const isLight = scrolled || !darkHero;
-
+  useEffect(() => { setOpen(false); setSvc(false); }, [pathname]);
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 30);
-    window.addEventListener('scroll', onScroll);
+    const onScroll = () => setScrolled(window.scrollY > 8);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
-
-  /* Close dropdown on outside click */
   useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (servicesRef.current && !servicesRef.current.contains(e.target as Node)) {
-        setServicesOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
+    const close = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setSvc(false); };
+    document.addEventListener('mousedown', close);
+    return () => document.removeEventListener('mousedown', close);
   }, []);
 
-  return (
-    <motion.nav
-      initial={{ y: -20, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-        scrolled
-          ? 'bg-white/70 backdrop-blur-2xl backdrop-saturate-150 border-b border-black/[0.06] shadow-[0_8px_30px_-12px_rgba(0,0,0,0.12)]'
-          : 'bg-transparent'
-      }`}
-    >
-      <div className="max-w-[1400px] mx-auto px-6 h-16 flex items-center justify-between">
+  const inServices = SERVICES.some((s) => pathname.startsWith(s.href)) || pathname === '/services';
+  const linkCls = ({ isActive }: { isActive: boolean }) =>
+    `text-[14px] font-medium transition-colors ${isActive ? 'text-ink' : 'text-muted hover:text-ink'}`;
 
-        {/* Logo */}
-        <Link to="/" className="flex items-center gap-2.5 group shrink-0">
-          <Logo size={28} />
-          <span className={`font-display font-bold text-base tracking-tight transition-colors duration-500 ${isLight ? 'text-brand-dark' : 'text-white'}`}>
-            Loopretail
-          </span>
+  return (
+    <header className={`sticky top-0 z-50 bg-surface/95 backdrop-blur border-b transition-colors ${scrolled ? 'border-line' : 'border-transparent'}`}>
+      <div className="max-w-[1248px] mx-auto px-4 md:px-6 h-16 flex items-center justify-between gap-6">
+        <Link to="/" className="flex items-center gap-2.5 shrink-0" aria-label="Loopretail home">
+          <Logo size={26} />
+          <span className="font-semibold text-[17px] tracking-[-0.02em] text-ink">Loopretail</span>
         </Link>
 
-        {/* Center pill nav */}
-        <div className="hidden lg:flex items-center gap-7">
-          {navLinks.map((link) => {
-            const isServices = link === 'Services';
+        <nav className="hidden lg:flex items-center gap-7" aria-label="Main">
+          <div ref={ref} className="relative">
+            <button
+              type="button"
+              onClick={() => setSvc((v) => !v)}
+              aria-expanded={svc}
+              className={`inline-flex items-center gap-1 text-[14px] font-medium ${inServices ? 'text-ink' : 'text-muted hover:text-ink'}`}
+            >
+              Services <ChevronDown size={15} className={`transition-transform ${svc ? 'rotate-180' : ''}`} />
+            </button>
+            {svc && (
+              <div className="absolute left-1/2 -translate-x-1/2 top-[calc(100%+14px)] w-[560px] bg-surface border border-line rounded-2xl shadow-[0_18px_50px_-20px_rgba(18,22,20,0.35)] p-2 grid grid-cols-2 gap-1">
+                {SERVICES.map((s) => (
+                  <Link key={s.href} to={s.href} className="rounded-xl p-3 hover:bg-canvas">
+                    <span className="block text-[14px] font-semibold text-ink">{s.label}</span>
+                    <span className="block text-[13px] text-muted mt-0.5 leading-snug">{s.desc}</span>
+                  </Link>
+                ))}
+                <Link to="/services" className="rounded-xl p-3 bg-canvas hover:bg-sunken">
+                  <span className="block text-[14px] font-semibold text-ink">All services</span>
+                  <span className="block text-[13px] text-muted mt-0.5 leading-snug">Compare what we run and how we charge.</span>
+                </Link>
+              </div>
+            )}
+          </div>
+          {LINKS.map((l) => <NavLink key={l.to} to={l.to} className={linkCls}>{l.label}</NavLink>)}
+        </nav>
 
-            if (isServices) {
-              return (
-                <div
-                  key={link}
-                  ref={servicesRef}
-                  className="relative"
-                  onMouseEnter={() => { setActiveLink(link); setServicesOpen(true); }}
-                  onMouseLeave={() => { setActiveLink(null); setServicesOpen(false); }}
-                >
-                  <button className="relative flex items-center gap-1 py-1 text-sm font-medium">
-                    <span className={`transition-colors duration-200 ${activeLink === link ? 'text-brand-red' : isLight ? 'text-brand-dark/70 hover:text-brand-dark' : 'text-white/80 hover:text-white'}`}>
-                      {link}
-                    </span>
-                    <ChevronDown
-                      size={12}
-                      className={`transition-all duration-200 ${activeLink === link ? 'text-brand-red rotate-180' : isLight ? 'text-brand-dark/40' : 'text-white/40'}`}
-                    />
-                    {activeLink === link && (
-                      <motion.span layoutId="navUnderline"
-                        className="absolute left-0 right-0 -bottom-1 h-0.5 bg-brand-red rounded-full"
-                        transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }} />
-                    )}
-                  </button>
-
-                  {/* Dropdown */}
-                  <AnimatePresence>
-                    {servicesOpen && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 8, scale: 0.97 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 8, scale: 0.97 }}
-                        transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
-                        className="absolute top-[calc(100%+10px)] left-1/2 -translate-x-1/2 w-[340px] bg-white rounded-2xl border border-black/8 shadow-[0_16px_48px_-8px_rgba(0,0,0,0.18)] overflow-hidden"
-                      >
-                        {/* Header strip */}
-                        <div className="px-4 pt-4 pb-2 border-b border-black/5">
-                          <p className="text-[9px] font-mono tracking-widest text-brand-red uppercase">Our Services</p>
-                        </div>
-
-                        {/* Service rows */}
-                        <div className="p-2">
-                          {services.map((s) => (
-                            <Link
-                              key={s.label}
-                              to={s.href}
-                              onClick={() => setServicesOpen(false)}
-                              className="flex items-start gap-3 px-3 py-3 rounded-xl hover:bg-surface-offwhite group transition-colors"
-                            >
-                              {/* Red dot */}
-                              <div className="w-1.5 h-1.5 rounded-full bg-brand-red/30 group-hover:bg-brand-red shrink-0 mt-[5px] transition-colors" />
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2">
-                                  <span className="font-display font-semibold text-sm text-brand-dark group-hover:text-brand-red transition-colors">
-                                    {s.label}
-                                  </span>
-                                  {s.tag && (
-                                    <span className="text-[8px] font-mono tracking-widest bg-brand-red/10 text-brand-red px-1.5 py-0.5 rounded-full">
-                                      {s.tag}
-                                    </span>
-                                  )}
-                                </div>
-                                <p className="text-xs text-brand-dark/45 font-light mt-0.5">{s.desc}</p>
-                              </div>
-                              <ArrowRight size={12} className="text-brand-dark/20 group-hover:text-brand-red group-hover:translate-x-0.5 transition-all shrink-0 mt-1" />
-                            </Link>
-                          ))}
-                        </div>
-
-                        {/* Footer */}
-                        <div className="px-4 py-3 border-t border-black/5 bg-surface-offwhite/60">
-                          <Link to="/services" onClick={() => setServicesOpen(false)} className="text-[10px] font-mono text-brand-red tracking-widest uppercase hover:underline">
-                            All services →
-                          </Link>
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              );
-            }
-
-            return (
-              <Link
-                key={link}
-                to={navRoutes[link] ?? '/'}
-                onMouseEnter={() => setActiveLink(link)}
-                onMouseLeave={() => setActiveLink(null)}
-                className="relative py-1 text-sm font-medium"
-              >
-                <span className={`transition-colors duration-200 ${activeLink === link ? 'text-brand-red' : isLight ? 'text-brand-dark/70 hover:text-brand-dark' : 'text-white/80 hover:text-white'}`}>
-                  {link}
-                </span>
-                {activeLink === link && (
-                  <motion.span layoutId="navUnderline"
-                    className="absolute left-0 right-0 -bottom-1 h-0.5 bg-brand-red rounded-full"
-                    transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }} />
-                )}
-              </Link>
-            );
-          })}
+        <div className="hidden lg:flex items-center gap-4">
+          <Link to="/portal/login" className="text-[14px] font-medium text-ink hover:text-red-text">Client login</Link>
+          <CTA to={contactHref('strategy-call')} label="Book a call" id="nav-book" />
         </div>
 
-        {/* Right CTA */}
-        <div className="hidden lg:flex items-center gap-3 shrink-0">
-          <Link to="/portal/login" className={`text-sm font-medium transition-colors ${isLight ? 'text-brand-dark/60 hover:text-brand-dark' : 'text-white/70 hover:text-white'}`}>
-            Client login
-          </Link>
-          <Link
-            to="/contact"
-            className="group relative flex items-center gap-1.5 text-sm font-semibold px-5 py-2.5 rounded-full text-white overflow-hidden bg-gradient-to-b from-[#ff3346] to-brand-red ring-1 ring-white/15 shadow-[0_8px_22px_-8px_rgba(230,25,43,0.65)] hover:shadow-[0_14px_34px_-8px_rgba(230,25,43,0.9)] hover:-translate-y-0.5 transition-all duration-300"
-          >
-            {/* glossy sheen */}
-            <span className="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/30 to-transparent opacity-60 group-hover:opacity-90 transition-opacity pointer-events-none" />
-            <span className="relative">Get Started</span>
-            <ArrowUpRight size={13} className="relative group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
-          </Link>
-        </div>
-
-        {/* Mobile toggle */}
-        <button
-          className={`lg:hidden w-9 h-9 flex items-center justify-center rounded-xl border backdrop-blur-md transition-all ${
-            isLight ? 'bg-white/60 border-black/8 text-brand-dark shadow-sm' : 'bg-white/90 border-white/20 text-brand-dark shadow-md'
-          }`}
-          onClick={() => setMenuOpen((v) => !v)}
-        >
-          {menuOpen ? <X size={16} /> : <Menu size={16} />}
+        <button type="button" className="lg:hidden w-10 h-10 grid place-items-center rounded-lg text-ink" onClick={() => setOpen((v) => !v)} aria-label={open ? 'Close menu' : 'Open menu'} aria-expanded={open}>
+          {open ? <X size={22} /> : <Menu size={22} />}
         </button>
       </div>
 
-      {/* Mobile menu */}
-      <AnimatePresence>
-        {menuOpen && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="lg:hidden bg-white/95 backdrop-blur-xl border-t border-black/5 overflow-hidden"
-          >
-            <div className="px-6 py-5 flex flex-col gap-1">
-              {/* Services expanded in mobile */}
-              <p className="text-[9px] font-mono tracking-widest text-brand-red uppercase px-2 pt-2 pb-1">Services</p>
-              {services.map((s) => (
-                <Link
-                  key={s.label}
-                  to={s.href}
-                  onClick={() => setMenuOpen(false)}
-                  className="flex items-center gap-3 px-2 py-2.5 rounded-xl hover:bg-surface-offwhite transition-colors group"
-                >
-                  <div className="w-1 h-1 rounded-full bg-brand-red/40 group-hover:bg-brand-red transition-colors shrink-0" />
-                  <span className="text-sm font-medium text-brand-dark/75 group-hover:text-brand-red transition-colors">{s.label}</span>
-                  {s.tag && (
-                    <span className="text-[8px] font-mono bg-brand-red/10 text-brand-red px-1.5 py-0.5 rounded-full">{s.tag}</span>
-                  )}
-                </Link>
-              ))}
-
-              <div className="h-px bg-black/6 my-2" />
-
-              {['About', 'Blog', 'Contact'].map((link) => (
-                <Link key={link} to={navRoutes[link] ?? '/'} onClick={() => setMenuOpen(false)}
-                  className="text-brand-dark/60 text-sm font-medium hover:text-brand-red transition-colors px-2 py-2.5">
-                  {link}
-                </Link>
-              ))}
-
-              <Link to="/portal/login" onClick={() => setMenuOpen(false)} className="block px-3 py-3 text-sm font-medium text-brand-dark/70">Client login</Link>
-              <Link to="/contact" onClick={() => setMenuOpen(false)}
-                className="mt-3 flex items-center justify-center gap-1.5 bg-gradient-to-b from-[#ff3346] to-brand-red text-white text-sm font-semibold px-4 py-3 rounded-full ring-1 ring-white/15 shadow-[0_10px_24px_-10px_rgba(230,25,43,0.7)] hover:-translate-y-0.5 transition-all">
-                Get Started <ArrowUpRight size={13} />
+      {open && (
+        <div className="lg:hidden border-t border-line bg-surface max-h-[calc(100vh-64px)] overflow-y-auto">
+          <div className="px-4 py-4 grid gap-1">
+            <p className="text-[13px] font-medium text-muted px-2 pt-1 pb-2">Services</p>
+            {SERVICES.map((s) => (
+              <Link key={s.href} to={s.href} className="rounded-xl px-2 py-2.5 hover:bg-canvas">
+                <span className="block text-[15px] font-semibold">{s.label}</span>
+                <span className="block text-[13px] text-muted">{s.desc}</span>
               </Link>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </motion.nav>
+            ))}
+            <div className="h-px bg-line my-2" />
+            {[{ label: 'All services', to: '/services' }, ...LINKS, { label: 'Contact', to: '/contact' }, { label: 'Client login', to: '/portal/login' }].map((l) => (
+              <Link key={l.to} to={l.to} className="rounded-xl px-2 py-2.5 text-[15px] font-medium hover:bg-canvas">{l.label}</Link>
+            ))}
+            <div className="pt-3"><CTA to={contactHref('strategy-call')} label="Book a strategy call" id="nav-mobile-book" /></div>
+          </div>
+        </div>
+      )}
+    </header>
   );
 }

@@ -5,15 +5,17 @@ export default function ToolCompetitorAnalysis() {
   return (
     <SitePage>
       <PageHero
-        eyebrow="Tools · Competitor Analysis"
-        tag="Per product · daily"
-        title={<><span className="text-white/50">Know who sells against you.</span><br />And how fast they grow.</>}
+        eyebrow="Competitor Analysis"
+        title="Know who sells against you, and how fast they grow."
         lead="For every product, we track the direct competitors and the 'compatible with' copies built on your demand: their price, rank, reviews and growth, next to yours."
-        ctas={<><CTA to={contactHref('competitor-analysis')} label="Get a free competitor scan" tone="red" id="comp-hero" /><CTA to="/portal/demo/analysis" label="See it in the demo" tone="outline-light" id="comp-hero-demo" /></>}
+        ctas={<><CTA to={contactHref('competitor-analysis')} label="Get a free competitor scan" tone="red" id="comp-hero" /><CTA to="/portal/demo/analysis" label="See it in the demo" tone="outline-dark" id="comp-hero-demo" /></>}
         meta={[{ k: 'Per product', v: 'Up to 30 rivals' }, { k: 'History', v: '90 days' }, { k: 'Found by', v: 'Keepa search + AI' }, { k: 'Updated', v: 'Daily' }]}
+        image="stacked"
+        imageAlt="A room stacked with cardboard boxes"
+        crumb={{ label: 'Tools', to: '/tools' }}
       />
 
-      <Section eyebrow="Four kinds of competition" title={<>Not every rival<br />is a brand.</>}
+      <Section eyebrow="Four kinds of competition" title="Not every rival is a brand."
         lead="Marketplace competition comes in four shapes. Each one needs a different response, so we track them separately.">
         <CardGrid cols={4} items={[
           { tag: 'Track', title: 'Direct competitors', body: 'Other brands selling the same kind of product to the same shopper.' },
@@ -24,7 +26,7 @@ export default function ToolCompetitorAnalysis() {
       </Section>
 
       <Section tone="dark" eyebrow="What you see for each product" title="Your product against the field.">
-        <CardGrid dark items={[
+        <CardGrid items={[
           { title: 'Price position', body: 'Your price against the lowest, average and highest competitor, labelled cheapest, below average, above average or premium.' },
           { title: 'Rank and price trends', body: '90 day BSR and price lines for you and your top five competitors, so you can see who is moving and when.' },
           { title: 'Competitor table', body: 'Each rival with price, 90 day average price, BSR, monthly sales bracket, reviews and review growth.' },

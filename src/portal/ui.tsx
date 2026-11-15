@@ -20,16 +20,16 @@ export const ago = (iso: string) => {
   return `${Math.round(m / 1440)}d ago`;
 };
 
-export const PALETTE = ['#E6192B', '#60A5FA', '#F59E0B', '#34D399', '#A78BFA', '#F472B6', '#94A3B8'];
+export const PALETTE = ['#E6192B', '#0F3D46', '#B45309', '#13795B', '#6D28D9', '#BE185D', '#8A918D'];
 
 /* ── Layout pieces ── */
 export function Card({ title, right, children, className = '' }: { title?: ReactNode; right?: ReactNode; children: ReactNode; className?: string }) {
   return (
-    <section className={`min-w-0 rounded-2xl border border-white/[0.07] bg-white/[0.025] p-5 ${className}`}>
+    <section className={`min-w-0 rounded-2xl border border-line bg-surface p-5 ${className}`}>
       {(title || right) && (
         <header className="flex items-center justify-between gap-3 mb-4">
-          {title && <h3 className="text-sm font-semibold text-white">{title}</h3>}
-          {right && <div className="text-[11px] font-mono text-white/40">{right}</div>}
+          {title && <h3 className="text-sm font-semibold text-ink">{title}</h3>}
+          {right && <div className="text-[11px] font-mono text-muted">{right}</div>}
         </header>
       )}
       {children}
@@ -38,10 +38,10 @@ export function Card({ title, right, children, className = '' }: { title?: React
 }
 
 export function Change({ value, unit = '%', lowerIsBetter = false }: { value: number | null | undefined; unit?: string; lowerIsBetter?: boolean }) {
-  if (value == null) return <span className="text-[11px] font-mono text-white/30">no prior data</span>;
+  if (value == null) return <span className="text-[11px] font-mono text-muted">no prior data</span>;
   const good = lowerIsBetter ? value <= 0 : value >= 0;
   return (
-    <span className={`text-[11px] font-mono ${good ? 'text-emerald-400' : 'text-rose-400'}`}>
+    <span className={`text-[11px] font-mono ${good ? 'text-emerald-700' : 'text-rose-700'}`}>
       {value > 0 ? '+' : ''}{value}{unit}
     </span>
   );
@@ -49,25 +49,25 @@ export function Change({ value, unit = '%', lowerIsBetter = false }: { value: nu
 
 export function Kpi({ label, value, change, unit, lowerIsBetter, sub }: { label: string; value: string; change?: number | null; unit?: string; lowerIsBetter?: boolean; sub?: string }) {
   return (
-    <div className="min-w-0 rounded-2xl border border-white/[0.07] bg-white/[0.025] p-5">
-      <div className="text-[11px] uppercase tracking-wider text-white/40 mb-3">{label}</div>
-      <div className={`${value.length > 9 ? 'text-xl' : 'text-2xl'} font-semibold text-white tracking-tight break-words`}>{value}</div>
-      <div className="mt-2 min-h-4">{change !== undefined ? <Change value={change} unit={unit} lowerIsBetter={lowerIsBetter} /> : <span className="text-[11px] text-white/35">{sub}</span>}</div>
+    <div className="min-w-0 rounded-2xl border border-line bg-surface p-5">
+      <div className="text-[11px] uppercase tracking-wider text-muted mb-3">{label}</div>
+      <div className={`${value.length > 9 ? 'text-xl' : 'text-2xl'} font-semibold text-ink tracking-tight break-words`}>{value}</div>
+      <div className="mt-2 min-h-4">{change !== undefined ? <Change value={change} unit={unit} lowerIsBetter={lowerIsBetter} /> : <span className="text-[11px] text-muted">{sub}</span>}</div>
     </div>
   );
 }
 
 const BADGE: Record<string, string> = {
-  high: 'bg-rose-500/15 text-rose-300 border-rose-500/30',
-  medium: 'bg-amber-500/15 text-amber-300 border-amber-500/30',
-  low: 'bg-sky-500/15 text-sky-300 border-sky-500/30',
-  flagged: 'bg-rose-500/15 text-rose-300 border-rose-500/30',
-  reviewing: 'bg-amber-500/15 text-amber-300 border-amber-500/30',
-  clear: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30',
-  resolved: 'bg-white/5 text-white/50 border-white/10',
-  ok: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30',
-  warn: 'bg-amber-500/15 text-amber-300 border-amber-500/30',
-  info: 'bg-sky-500/15 text-sky-300 border-sky-500/30',
+  high: 'bg-rose-500/15 text-rose-700 border-rose-500/30',
+  medium: 'bg-amber-500/15 text-amber-700 border-amber-500/30',
+  low: 'bg-sky-500/15 text-sky-700 border-sky-500/30',
+  flagged: 'bg-rose-500/15 text-rose-700 border-rose-500/30',
+  reviewing: 'bg-amber-500/15 text-amber-700 border-amber-500/30',
+  clear: 'bg-emerald-500/15 text-emerald-700 border-emerald-500/30',
+  resolved: 'bg-surface text-muted border-line',
+  ok: 'bg-emerald-500/15 text-emerald-700 border-emerald-500/30',
+  warn: 'bg-amber-500/15 text-amber-700 border-amber-500/30',
+  info: 'bg-sky-500/15 text-sky-700 border-sky-500/30',
 };
 export function Badge({ tone, children }: { tone: string; children: ReactNode }) {
   return <span className={`inline-flex items-center px-2 py-0.5 rounded-md border text-[10px] font-mono uppercase tracking-wider ${BADGE[tone] ?? BADGE.info}`}>{children}</span>;
@@ -75,26 +75,26 @@ export function Badge({ tone, children }: { tone: string; children: ReactNode })
 
 export function Empty({ title, children }: { title: string; children?: ReactNode }) {
   return (
-    <div className="rounded-2xl border border-dashed border-white/15 p-8 text-center">
-      <p className="text-white font-medium">{title}</p>
-      {children && <div className="text-sm text-white/45 mt-2">{children}</div>}
+    <div className="rounded-2xl border border-dashed border-line p-8 text-center">
+      <p className="text-ink font-medium">{title}</p>
+      {children && <div className="text-sm text-muted mt-2">{children}</div>}
     </div>
   );
 }
 
 export function Table({ head, rows, empty = 'No rows yet.' }: { head: ReactNode[]; rows: ReactNode[][]; empty?: string }) {
-  if (!rows.length) return <p className="text-sm text-white/40">{empty}</p>;
+  if (!rows.length) return <p className="text-sm text-muted">{empty}</p>;
   return (
     <div className="overflow-x-auto -mx-1">
       <table className="w-full text-sm">
         <thead>
-          <tr className="text-left text-[11px] uppercase tracking-wider text-white/35">
+          <tr className="text-left text-[11px] uppercase tracking-wider text-muted">
             {head.map((h, i) => <th key={i} className={`px-2 pb-2 font-medium whitespace-nowrap ${i ? 'text-right' : ''}`}>{h}</th>)}
           </tr>
         </thead>
         <tbody>
           {rows.map((r, i) => (
-            <tr key={i} className="border-t border-white/[0.06] text-white/80">
+            <tr key={i} className="border-t border-line text-ink/80">
               {r.map((c, j) => <td key={j} className={`px-2 py-2.5 whitespace-nowrap ${j ? 'text-right tabular-nums' : ''}`}>{c}</td>)}
             </tr>
           ))}
@@ -108,7 +108,7 @@ export function Legend({ items }: { items: { name: string; color: string }[] }) 
   return (
     <div className="flex flex-wrap gap-x-4 gap-y-1 mt-3">
       {items.map((s) => (
-        <span key={s.name} className="inline-flex items-center gap-1.5 text-[11px] text-white/55">
+        <span key={s.name} className="inline-flex items-center gap-1.5 text-[11px] text-muted">
           <span className="w-2.5 h-2.5 rounded-sm" style={{ background: s.color }} />{s.name}
         </span>
       ))}
@@ -176,26 +176,26 @@ export function LineChart({ labels, series, height = 220, format = (v: number) =
         }}>
         {ticks.map((t, i) => (
           <g key={i}>
-            <line x1={pad.l} x2={w - pad.r} y1={y(t)} y2={y(t)} stroke="rgba(255,255,255,0.06)" />
-            <text x={pad.l - 8} y={y(t) + 4} textAnchor="end" fontSize="10" fill="rgba(255,255,255,0.35)">{format(t)}</text>
+            <line x1={pad.l} x2={w - pad.r} y1={y(t)} y2={y(t)} stroke="#dfe2de" />
+            <text x={pad.l - 8} y={y(t) + 4} textAnchor="end" fontSize="10" fill="#5c635f">{format(t)}</text>
           </g>
         ))}
         {labels.map((l, i) => i % every === 0 && (
-          <text key={i} x={x(i)} y={height - 6} textAnchor="middle" fontSize="10" fill="rgba(255,255,255,0.35)">{l}</text>
+          <text key={i} x={x(i)} y={height - 6} textAnchor="middle" fontSize="10" fill="#5c635f">{l}</text>
         ))}
         {series.map((s, si) => (
           <path key={s.name} d={path(s.values)} fill="none" stroke={s.color ?? PALETTE[si % PALETTE.length]} strokeWidth={si === 0 ? 2.2 : 1.5} strokeOpacity={si === 0 ? 1 : 0.8} />
         ))}
-        {hover != null && <line x1={x(hover)} x2={x(hover)} y1={pad.t} y2={pad.t + ih} stroke="rgba(255,255,255,0.2)" />}
+        {hover != null && <line x1={x(hover)} x2={x(hover)} y1={pad.t} y2={pad.t + ih} stroke="#8a918d" />}
       </svg>
       {hover != null && (
-        <div className="absolute top-2 pointer-events-none rounded-lg border border-white/10 bg-[#141414] px-3 py-2 text-[11px] shadow-xl"
+        <div className="absolute top-2 pointer-events-none rounded-lg border border-line bg-surface px-3 py-2 text-[11px] shadow-xl"
           style={{ left: Math.min(x(hover) + 10, w - 170) }}>
-          <div className="text-white/50 mb-1">{labels[hover]}</div>
+          <div className="text-muted mb-1">{labels[hover]}</div>
           {series.map((s, si) => (
             <div key={s.name} className="flex justify-between gap-4">
               <span style={{ color: s.color ?? PALETTE[si % PALETTE.length] }}>{s.name}</span>
-              <span className="text-white tabular-nums">{s.values[hover] == null ? '–' : format(s.values[hover]!)}</span>
+              <span className="text-ink tabular-nums">{s.values[hover] == null ? '–' : format(s.values[hover]!)}</span>
             </div>
           ))}
         </div>
@@ -226,8 +226,8 @@ export function StackedBars({ labels, series, height = 220, format = (v: number)
       <svg className="block" width={w} height={height} onMouseLeave={() => setHover(null)}>
         {[0, 0.5, 1].map((t) => (
           <g key={t}>
-            <line x1={pad.l} x2={w - pad.r} y1={pad.t + ih - t * ih} y2={pad.t + ih - t * ih} stroke="rgba(255,255,255,0.06)" />
-            <text x={pad.l - 8} y={pad.t + ih - t * ih + 4} textAnchor="end" fontSize="10" fill="rgba(255,255,255,0.35)">{format(t * hi)}</text>
+            <line x1={pad.l} x2={w - pad.r} y1={pad.t + ih - t * ih} y2={pad.t + ih - t * ih} stroke="#dfe2de" />
+            <text x={pad.l - 8} y={pad.t + ih - t * ih + 4} textAnchor="end" fontSize="10" fill="#5c635f">{format(t * hi)}</text>
           </g>
         ))}
         {labels.map((l, i) => {
@@ -241,18 +241,18 @@ export function StackedBars({ labels, series, height = 220, format = (v: number)
                 acc += v;
                 return <rect key={s.name} x={x(i) - bw / 2} y={y0} width={bw} height={Math.max(0, h(v) - 1)} fill={PALETTE[si % PALETTE.length]} opacity={hover == null || hover === i ? 0.9 : 0.45} rx={1.5} />;
               })}
-              {i % every === 0 && <text x={x(i)} y={height - 6} textAnchor="middle" fontSize="10" fill="rgba(255,255,255,0.35)">{l}</text>}
+              {i % every === 0 && <text x={x(i)} y={height - 6} textAnchor="middle" fontSize="10" fill="#5c635f">{l}</text>}
             </g>
           );
         })}
       </svg>
       {hover != null && (
-        <div className="absolute top-2 pointer-events-none rounded-lg border border-white/10 bg-[#141414] px-3 py-2 text-[11px] shadow-xl" style={{ left: Math.min(x(hover) + 14, w - 180) }}>
-          <div className="text-white/50 mb-1">{labels[hover]} · {format(totals[hover])}</div>
+        <div className="absolute top-2 pointer-events-none rounded-lg border border-line bg-surface px-3 py-2 text-[11px] shadow-xl" style={{ left: Math.min(x(hover) + 14, w - 180) }}>
+          <div className="text-muted mb-1">{labels[hover]} · {format(totals[hover])}</div>
           {series.map((s, si) => (
             <div key={s.name} className="flex justify-between gap-4">
               <span style={{ color: PALETTE[si % PALETTE.length] }}>{s.name}</span>
-              <span className="text-white tabular-nums">{format(s.values[hover] ?? 0)}</span>
+              <span className="text-ink tabular-nums">{format(s.values[hover] ?? 0)}</span>
             </div>
           ))}
         </div>
