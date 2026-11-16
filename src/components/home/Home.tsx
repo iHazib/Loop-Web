@@ -166,6 +166,21 @@ export function LoopFlow() {
   );
 }
 
+export function LoopSection() {
+  return (
+    <section className={`${WRAP} py-12 md:py-[72px] overflow-x-clip`}>
+      <div className="grid lg:grid-cols-[0.9fr_1.1fr] gap-10 lg:gap-14 items-center">
+        <div className="flex flex-col gap-4">
+          <Eyebrow>The loop</Eyebrow>
+          <h2 className={H2}>One operator between your brand and every channel.</h2>
+          <p className="text-[16px] leading-[25px] text-muted max-w-[460px]">Your stock and your rules go in once. We run every channel from them and send the orders, prices and seller checks back to you in one dashboard.</p>
+        </div>
+        <LoopFlow />
+      </div>
+    </section>
+  );
+}
+
 export function HomeHero() {
   return (
     <section className={`${WRAP} pt-8 md:pt-12 pb-10 md:pb-12 overflow-x-clip`}>
@@ -496,57 +511,41 @@ function CompetitorPreview() {
   );
 }
 
-export function ToolsShowcase() {
+export function ToolsPreview() {
   const [tab, setTab] = useState<TabId>('dashboard');
   const current = TABS.find((t) => t.id === tab)!;
   return (
-    <section className="px-2 md:px-3 my-3">
-      <div className="rounded-[24px] bg-petrol text-white overflow-hidden">
-        <div className={`${WRAP} py-12 md:py-[72px]`}>
-          <div className="mb-8 grid md:grid-cols-[1.25fr_1fr] gap-4 md:gap-12 md:items-end">
-            <div className="flex flex-col gap-3">
-              <Eyebrow dark>Tools</Eyebrow>
-              <h2 className={H2}>See your market the way we see it.</h2>
-            </div>
-            <p className="text-[16px] leading-[25px] text-white/75 max-w-[460px] md:justify-self-end">
-              Every client gets a login. Amazon UK numbers update daily from Keepa; every other channel updates from your weekly sheets.
-            </p>
-          </div>
-
-          <div role="tablist" aria-label="Loopretail tools" className="inline-flex flex-wrap gap-1 rounded-xl bg-white/10 p-1 mb-4">
-            {TABS.map((t) => {
-              const I = t.icon;
-              const on = t.id === tab;
-              return (
-                <button key={t.id} role="tab" aria-selected={on} aria-controls="tool-panel" type="button" onClick={() => setTab(t.id)}
-                  className={`relative inline-flex items-center gap-2 rounded-lg px-3.5 py-2 text-[14px] font-medium transition-colors ${on ? 'text-ink' : 'text-white/80 hover:text-white'}`}>
-                  {on && <motion.span layoutId="tool-tab" className="absolute inset-0 rounded-lg bg-white" transition={{ type: 'spring', stiffness: 400, damping: 34 }} />}
-                  <I size={15} className="relative" aria-hidden="true" /><span className="relative">{t.label}</span>
-                </button>
-              );
-            })}
-          </div>
-
-          <div id="tool-panel" role="tabpanel" className="rounded-2xl bg-surface overflow-hidden shadow-[0_40px_90px_-30px_rgba(0,0,0,0.6)]">
-            <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-line text-ink">
-              <div className="flex gap-1.5" aria-hidden="true"><span className="w-3 h-3 rounded-full bg-[#ff5f57]" /><span className="w-3 h-3 rounded-full bg-[#febc2e]" /><span className="w-3 h-3 rounded-full bg-[#28c840]" /></div>
-              <span className="flex items-center gap-2 rounded-lg bg-canvas border border-line px-3 py-1 text-[12px] text-muted"><span className="w-1.5 h-1.5 rounded-full bg-brand-red" />loopretail.io/portal/{tab === 'dashboard' ? 'overview' : tab === 'protect' ? 'protection' : 'competitors'}</span>
-              <span className="hidden sm:flex items-center gap-1.5 text-[12px] text-muted"><RefreshCw size={12} className="animate-spin [animation-duration:3s]" aria-hidden="true" />Live</span>
-            </div>
-            <AnimatePresence mode="wait">
-              <motion.div key={tab} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.22 }}>
-                {tab === 'dashboard' ? <DashboardPreview /> : tab === 'protect' ? <ProtectPreview /> : <CompetitorPreview />}
-              </motion.div>
-            </AnimatePresence>
-          </div>
-
-          <div className="mt-8 flex flex-wrap gap-3">
-            <CTA to="/portal/demo/home" label="Open the live demo" tone="light" id="home-tools-demo" />
-            <CTA to={current.href} label={`About ${current.label}`} tone="outline-light" id={`home-tools-${tab}`} />
-          </div>
+    <div className="mt-10">
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+        <div role="tablist" aria-label="Loopretail tools" className="inline-flex flex-wrap gap-1 rounded-xl bg-sunken p-1">
+          {TABS.map((t) => {
+            const I = t.icon;
+            const on = t.id === tab;
+            return (
+              <button key={t.id} role="tab" aria-selected={on} aria-controls="tool-panel" type="button" onClick={() => setTab(t.id)}
+                className={`relative inline-flex items-center gap-2 rounded-lg px-3.5 py-2 text-[14px] font-medium transition-colors ${on ? 'text-ink' : 'text-muted hover:text-ink'}`}>
+                {on && <motion.span layoutId="tool-tab" className="absolute inset-0 rounded-lg bg-surface shadow-[0_2px_8px_-2px_rgba(18,22,20,0.18)]" transition={{ type: 'spring', stiffness: 400, damping: 34 }} />}
+                <I size={15} className={`relative ${on ? 'text-brand-red' : ''}`} aria-hidden="true" /><span className="relative">{t.label}</span>
+              </button>
+            );
+          })}
         </div>
+        <Link to={current.href} className="text-[14px] font-medium text-red-text inline-flex items-center gap-1 hover:underline">About {current.label} <ArrowUpRight size={15} aria-hidden="true" /></Link>
       </div>
-    </section>
+
+      <div id="tool-panel" role="tabpanel" className="rounded-2xl bg-surface border border-line overflow-hidden shadow-[0_30px_70px_-34px_rgba(18,22,20,0.35)]">
+        <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-line text-ink">
+          <div className="flex gap-1.5" aria-hidden="true"><span className="w-3 h-3 rounded-full bg-[#ff5f57]" /><span className="w-3 h-3 rounded-full bg-[#febc2e]" /><span className="w-3 h-3 rounded-full bg-[#28c840]" /></div>
+          <span className="flex items-center gap-2 rounded-lg bg-canvas border border-line px-3 py-1 text-[12px] text-muted"><span className="w-1.5 h-1.5 rounded-full bg-brand-red" />loopretail.io/portal/{tab === 'dashboard' ? 'overview' : tab === 'protect' ? 'protection' : 'competitors'}</span>
+          <span className="hidden sm:flex items-center gap-1.5 text-[12px] text-muted"><RefreshCw size={12} className="animate-spin [animation-duration:3s]" aria-hidden="true" />Live</span>
+        </div>
+        <AnimatePresence mode="wait">
+          <motion.div key={tab} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.22 }}>
+            {tab === 'dashboard' ? <DashboardPreview /> : tab === 'protect' ? <ProtectPreview /> : <CompetitorPreview />}
+          </motion.div>
+        </AnimatePresence>
+      </div>
+    </div>
   );
 }
 
@@ -610,7 +609,7 @@ export function AuditToPilot() {
                   viewport={{ once: true }}
                   transition={{ duration: 0.55, delay: i * 0.08 }}
                   style={{ originY: 1 }}
-                  className={`flex-1 min-w-0 ${st.h} rounded-t-xl p-2 sm:p-3 flex flex-col text-left transition-colors duration-500 ${on ? (last ? 'bg-brand-red text-white' : 'bg-ink text-white') : 'bg-surface border border-line text-ink hover:border-ink/30'}`}
+                  className={`flex-1 min-w-0 ${st.h} rounded-t-xl p-2 sm:p-3 flex flex-col text-left transition-colors duration-500 ${on ? 'bg-brand-red text-white' : last ? 'bg-red-tint text-red-text' : 'bg-surface border border-line text-ink hover:border-ink/30'}`}
                 >
                   <span className="text-[11px] sm:text-[14px] lg:text-[15px] font-semibold tracking-[-0.02em] break-words hyphens-auto">{st.name}</span>
                   <span className={`text-[11px] md:text-[12px] mt-0.5 ${on ? 'text-white/70' : 'text-muted'}`}>{st.days.replace('Days ', '').replace('Day ', '')}</span>
@@ -629,10 +628,10 @@ export function AuditToPilot() {
           <div className="mt-6"><CTA to={contactHref('onboarding')} label="Start your 30 day onboarding" id="home-pilot" /></div>
         </div>
 
-        <div className="rounded-[24px] bg-ink text-white p-6 md:p-10 relative overflow-hidden">
-          <div aria-hidden="true" className="absolute -top-24 -right-24 w-72 h-72 rounded-full bg-brand-red/30 blur-[80px]" />
+        <div className="rounded-[24px] bg-surface border border-line p-6 md:p-10 relative overflow-hidden">
+          <div aria-hidden="true" className="absolute -top-24 -right-24 w-72 h-72 rounded-full bg-brand-red/10 blur-[70px]" />
           <h3 className="relative text-[30px] leading-[34px] md:text-[42px] md:leading-[44px] font-semibold tracking-[-0.035em]">One partner.<br />Every channel.</h3>
-          <div className="relative mt-10 rounded-2xl bg-surface text-ink p-6 md:p-7">
+          <div className="relative mt-8 rounded-2xl bg-canvas p-6 md:p-7">
             <p className="text-[13px] font-medium text-muted">Why Loopretail</p>
             <p className="mt-1 text-[24px] leading-[28px] font-semibold tracking-[-0.025em]">Built different. By design.</p>
             <div className="flex gap-1.5 mt-5 mb-4">
@@ -647,7 +646,7 @@ export function AuditToPilot() {
                   <motion.li key={t} onClick={() => setItem(i)}
                     animate={{ opacity: on ? 1 : Math.abs(item - i) === 1 ? 0.55 : 0.35, scale: on ? 1 : 0.985 }}
                     transition={{ duration: 0.3 }}
-                    className={`flex items-center gap-4 rounded-xl px-4 py-3 cursor-pointer ${on ? (i === 0 ? 'bg-brand-red text-white' : 'bg-ink text-white') : 'bg-canvas'}`}>
+                    className={`flex items-center gap-4 rounded-xl px-4 py-3 cursor-pointer ${on ? 'bg-brand-red text-white' : 'bg-surface'}`}>
                     <span className="text-[18px] font-semibold tnum shrink-0">{String(i + 1).padStart(2, '0')}</span>
                     <span className="text-[14px] leading-[19px]">{t}</span>
                   </motion.li>
@@ -674,35 +673,33 @@ export function NumbersLoop() {
   const still = useReducedMotion();
   return (
     <section className="px-2 md:px-3 my-3">
-      <div className="relative rounded-[24px] bg-ink text-white overflow-hidden">
-        <div aria-hidden="true" className="absolute -bottom-40 left-1/2 -translate-x-1/2 w-[140%] h-[360px] rounded-[100%] bg-brand-red/25 blur-3xl" />
-        <div aria-hidden="true" className="absolute -bottom-72 left-1/2 -translate-x-1/2 w-[120%] h-[400px] rounded-[100%] border-t border-brand-red/50" />
+      <div className="relative rounded-[24px] bg-surface overflow-hidden">
+        <div aria-hidden="true" className="absolute -bottom-48 left-1/2 -translate-x-1/2 w-[140%] h-[360px] rounded-[100%] bg-red-tint blur-2xl" />
+        <div aria-hidden="true" className="absolute -bottom-72 left-1/2 -translate-x-1/2 w-[120%] h-[400px] rounded-[100%] border-t border-brand-red/30" />
         <div className={`${WRAP} relative py-14 md:py-24`}>
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12 md:mb-16">
             <h2 className="text-[40px] leading-[42px] md:text-[72px] md:leading-[70px] font-semibold tracking-[-0.045em]">The numbers<br />behind the loop.</h2>
             <svg viewBox="0 0 24 24" fill="none" strokeLinecap="round" className="w-24 h-24 md:w-32 md:h-32 shrink-0" aria-hidden="true">
-              <path d={LOOP} stroke="#e6192b" strokeOpacity="0.25" strokeWidth="1.6" />
-              {[0, 1.75].map((d) => (
-                <motion.path key={d} d={LOOP} stroke="#e6192b" strokeWidth="2"
-                  initial={{ pathLength: still ? 1 : 0 }} animate={still ? undefined : { pathLength: [0, 0.4, 0], pathOffset: [0, 0.6, 1] }}
-                  transition={{ duration: 3.5, repeat: Infinity, ease: 'easeInOut', delay: d }} />
-              ))}
+              <path d={LOOP} stroke="#e6192b" strokeOpacity="0.18" strokeWidth="1.8" />
+              <motion.path d={LOOP} stroke="#e6192b" strokeWidth="2.2"
+                initial={{ pathLength: still ? 1 : 0.35, pathOffset: 0 }} animate={still ? undefined : { pathOffset: [0, 1] }}
+                transition={{ duration: 3.2, repeat: Infinity, ease: 'linear' }} />
             </svg>
           </div>
-          <dl className="grid grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-10">
+          <dl className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
             {NUMBERS.map((n, i) => {
               const I = n.icon;
               return (
                 <motion.div key={n.label} initial={{ opacity: 0, y: 18 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }}
-                  className="border-l border-dashed border-white/20 pl-5">
-                  <I size={22} className="text-brand-red mb-5" aria-hidden="true" />
+                  className={`rounded-2xl p-5 md:p-6 flex flex-col ${i === 0 ? 'bg-brand-red text-white' : 'bg-canvas'}`}>
+                  <I size={22} className={`mb-8 ${i === 0 ? 'text-white' : 'text-brand-red'}`} aria-hidden="true" />
                   <dd className="text-[40px] md:text-[56px] leading-none font-semibold tracking-[-0.045em] tnum">{n.value}</dd>
-                  <dt className="mt-3 text-[14px] leading-[20px] text-white/70 max-w-[180px]">{n.label}</dt>
+                  <dt className={`mt-3 text-[14px] leading-[20px] max-w-[190px] ${i === 0 ? 'text-white/85' : 'text-muted'}`}>{n.label}</dt>
                 </motion.div>
               );
             })}
           </dl>
-          <div className="mt-12 md:mt-16"><CTA to={contactHref('strategy-call')} label="Get results like these" tone="light" id="home-numbers" /></div>
+          <div className="mt-10 md:mt-14"><CTA to={contactHref('strategy-call')} label="Get results like these" tone="dark" id="home-numbers" /></div>
         </div>
       </div>
     </section>
@@ -764,19 +761,19 @@ export function GrowthEngine() {
           </div>
         </div>
 
-        <div className="rounded-[24px] bg-ink text-white p-6 md:p-10">
-          <p className="text-[14px] font-medium text-white/70">Partner request</p>
+        <div className="rounded-[24px] bg-surface border border-line p-6 md:p-10">
+          <p className="text-[14px] font-medium text-muted">Partner request</p>
           <h3 className="mt-1 text-[28px] leading-[32px] font-semibold tracking-[-0.03em]">Request an audit</h3>
-          <p className="mt-6 text-[14px] text-white/70" id="obj-label">What do you want to fix first?</p>
+          <p className="mt-6 text-[14px] text-muted" id="obj-label">What do you want to fix first?</p>
           <div role="radiogroup" aria-labelledby="obj-label" className="mt-3 flex flex-wrap gap-2">
             {OBJECTIVES.map(([label], i) => (
               <button key={label} type="button" role="radio" aria-checked={obj === i} onClick={() => setObj(i)}
-                className={`rounded-full px-3.5 py-2 text-[14px] font-medium border transition-colors ${obj === i ? 'bg-white text-ink border-white' : 'border-white/25 text-white/85 hover:border-white/60'}`}>
+                className={`rounded-full px-3.5 py-2 text-[14px] font-medium border transition-colors ${obj === i ? 'bg-ink text-white border-ink' : 'bg-canvas border-line text-ink hover:border-ink/40'}`}>
                 {obj === i && <Check size={14} className="inline -mt-0.5 mr-1 text-brand-red" aria-hidden="true" />}{label}
               </button>
             ))}
           </div>
-          <ul className="mt-8 grid gap-3 text-[15px] text-white/80">
+          <ul className="mt-8 grid gap-3 text-[15px] text-ink">
             {['Who sells your products today, and at what price', 'Which channel to open or fix first', 'What it costs to run, in one monthly fee'].map((t) => (
               <li key={t} className="flex gap-2.5"><Check size={17} className="text-brand-red shrink-0 mt-0.5" aria-hidden="true" />{t}</li>
             ))}
