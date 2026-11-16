@@ -189,7 +189,7 @@ export function HomeHero() {
           <Eyebrow>Brand commerce partner for the UK</Eyebrow>
           <h1 className="font-semibold tracking-[-0.04em] text-balance text-[40px] leading-[44px] md:text-[60px] md:leading-[62px]">Your brand, run properly in the UK.</h1>
           <p className="text-[17px] md:text-[18px] leading-[28px] text-muted max-w-[540px] text-pretty">
-            We sell your products on Amazon, TikTok Shop, eBay, Temu and your own store, keep unauthorised sellers off your listings, and report every number in one dashboard.
+            We sell your products on Amazon, TikTok Shop, eBay and your own store, keep unauthorised sellers off your listings, and report every number in one dashboard.
           </p>
           <div className="flex flex-wrap gap-3">
             <CTA to={contactHref('strategy-call')} label="Book a strategy call" id="home-hero" />
