@@ -51,7 +51,7 @@ export default function Services() {
         ctas={<><CTA to={contactHref('strategy-call')} label="Book a strategy call" tone="red" id="services-hero" /><CTA to="/how-it-works" label="See how it works" tone="outline-dark" id="services-hero-how" /></>}
         meta={[{ k: 'Channels', v: 'Amazon, TikTok, eBay, Temu' }, { k: 'Direct', v: 'Shopify, WooCommerce' }, { k: 'Retail', v: 'UK wholesale and retail' }, { k: 'Reporting', v: 'Live brand dashboard' }]}
         image="aisle"
-        imageAlt="A warehouse aisle lined with racking"
+        imageAlt="Warehouse staff walking down a long aisle"
       />
 
       <Section eyebrow="What we do" title="Six services run by one team."

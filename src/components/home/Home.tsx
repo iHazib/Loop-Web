@@ -1,0 +1,780 @@
+import { useEffect, useState, type ReactNode } from 'react';
+import { Link } from 'react-router-dom';
+import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
+import { ArrowUpRight, BarChart3, Globe, Activity, Shield, TrendingUp, GitBranch, Package, RefreshCw, Users, Award, Search, Check } from 'lucide-react';
+import { FaAmazon } from 'react-icons/fa';
+import { SiTiktok, SiShopify } from 'react-icons/si';
+import { CTA, contactHref } from '../CTA';
+import { WRAP, H2, Eyebrow, Photo, type PhotoKey } from '../site/Page';
+
+/* Home page sections. Several are the earlier site's sections, rebuilt for the light theme. */
+
+const LOOP = 'M12 12c-2-2.67-4-4-6-4a4 4 0 1 0 0 8c2 0 4-1.33 6-4Zm0 0c2 2.67 4 4 6 4a4 4 0 0 0 0-8c-2 0-4 1.33-6 4Z';
+
+/* ───────────────────────── Channel marks ───────────────────────── */
+
+export function AmazonMark({ small = false }: { small?: boolean }) {
+  return (
+    <span className="inline-flex items-center gap-1.5 text-[#232f3e]">
+      <FaAmazon size={small ? 16 : 22} aria-hidden="true" />
+      <span className={`font-bold tracking-[-0.04em] ${small ? 'text-[14px]' : 'text-[20px]'}`}>amazon</span>
+    </span>
+  );
+}
+export function TikTokMark({ small = false }: { small?: boolean }) {
+  return (
+    <span className="inline-flex items-center gap-1.5 text-[#010101]">
+      <SiTiktok size={small ? 15 : 20} aria-hidden="true" style={{ filter: 'drop-shadow(1.5px 1px 0 #ff0050) drop-shadow(-1.5px -1px 0 #00f2ea)' }} />
+      <span className={`font-bold tracking-[-0.03em] ${small ? 'text-[14px]' : 'text-[19px]'}`}>TikTok Shop</span>
+    </span>
+  );
+}
+export function EbayMark({ small = false }: { small?: boolean }) {
+  const s = small ? 'text-[17px]' : 'text-[25px]';
+  return (
+    <span className={`font-bold tracking-[-0.07em] leading-none ${s}`} aria-label="eBay">
+      <span className="text-[#e53238]">e</span><span className="text-[#0064d2]">b</span><span className="text-[#f5af02]">a</span><span className="text-[#86b817]">y</span>
+    </span>
+  );
+}
+export function TemuMark({ small = false }: { small?: boolean }) {
+  return (
+    <span className={`inline-grid place-items-center rounded-[6px] bg-[#fb7701] text-white font-extrabold tracking-[0.02em] ${small ? 'text-[11px] px-1.5 py-0.5' : 'text-[15px] px-2.5 py-1'}`}>TEMU</span>
+  );
+}
+export function ShopifyMark({ small = false }: { small?: boolean }) {
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      <SiShopify size={small ? 16 : 22} className="text-[#95bf47]" aria-hidden="true" />
+      <span className={`font-bold tracking-[-0.03em] text-[#121614] ${small ? 'text-[14px]' : 'text-[19px]'}`}>shopify</span>
+    </span>
+  );
+}
+
+export function ChannelLogos() {
+  const marks: [string, ReactNode][] = [
+    ['Amazon UK', <AmazonMark />],
+    ['TikTok Shop', <TikTokMark />],
+    ['eBay', <EbayMark />],
+    ['Temu', <TemuMark />],
+    ['Shopify and your own store', <ShopifyMark />],
+  ];
+  return (
+    <div className={`${WRAP} pb-10 md:pb-14`}>
+      <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-8 border-t border-line pt-6">
+        <span className="text-[13px] text-muted shrink-0">Channels we run</span>
+        <ul className="flex flex-wrap items-center gap-x-9 gap-y-4">
+          {marks.map(([name, m]) => (
+            <li key={name} title={name} className="grayscale-0 opacity-90 hover:opacity-100 transition-opacity">{m}<span className="sr-only">{name}</span></li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  );
+}
+
+/* ───────────────────────── Hero with the animated loop ───────────────────────── */
+
+const ORBIT: [string, ReactNode][] = [
+  ['Amazon', <FaAmazon size={18} className="text-[#232f3e]" />],
+  ['TikTok Shop', <SiTiktok size={16} className="text-[#010101]" />],
+  ['eBay', <EbayMark small />],
+  ['Temu', <TemuMark small />],
+  ['Shopify', <SiShopify size={17} className="text-[#95bf47]" />],
+];
+
+export function LoopOrb({ proof }: { proof?: ReactNode }) {
+  const still = useReducedMotion();
+  return (
+    <div className="relative min-w-0">
+      <div className="relative aspect-square max-w-[500px] mx-auto grid place-items-center">
+        {/* rings */}
+        <div className="absolute inset-[4%] rounded-full border border-ink/[0.07]" />
+        <motion.div
+          className="absolute inset-[16%] rounded-full border border-dashed border-ink/15"
+          animate={still ? undefined : { rotate: 360 }}
+          transition={{ duration: 90, repeat: Infinity, ease: 'linear' }}
+        />
+        {/* channels riding the outer ring */}
+        <motion.div
+          className="absolute inset-[4%]"
+          animate={still ? undefined : { rotate: 360 }}
+          transition={{ duration: 60, repeat: Infinity, ease: 'linear' }}
+        >
+          {ORBIT.map(([name, icon], i) => {
+            const a = (i / ORBIT.length) * Math.PI * 2 - Math.PI / 2;
+            return (
+              <motion.span
+                key={name}
+                title={name}
+                className="absolute w-12 h-12 -ml-6 -mt-6 rounded-full bg-surface border border-line shadow-[0_10px_24px_-12px_rgba(18,22,20,0.35)] grid place-items-center"
+                style={{ left: `${50 + 50 * Math.cos(a)}%`, top: `${50 + 50 * Math.sin(a)}%` }}
+                animate={still ? undefined : { rotate: -360 }}
+                transition={{ duration: 60, repeat: Infinity, ease: 'linear' }}
+              >
+                {icon}
+              </motion.span>
+            );
+          })}
+        </motion.div>
+        {/* glow */}
+        <motion.div
+          className="absolute w-[46%] h-[46%] rounded-full bg-brand-red blur-[70px]"
+          animate={still ? { opacity: 0.35 } : { scale: [1, 1.15, 1], opacity: [0.25, 0.5, 0.25] }}
+          transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
+        />
+        {/* core */}
+        <motion.div
+          initial={{ scale: 0.85, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 1, ease: 'easeOut' }}
+          className="relative w-[44%] aspect-square rounded-full grid place-items-center overflow-hidden shadow-[0_24px_60px_-12px_rgba(230,25,43,0.55)]"
+          style={{ background: 'radial-gradient(circle at 30% 25%, #ff4a5c 0%, #e6192b 45%, #a3001a 100%)' }}
+        >
+          <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-transparent via-white/25 to-white/10 mix-blend-overlay" />
+          <svg viewBox="0 0 24 24" fill="none" strokeLinecap="round" strokeLinejoin="round" className="relative w-[48%] h-[48%] drop-shadow-[0_0_10px_rgba(255,255,255,0.7)]" aria-label="Loopretail loop">
+            <path d={LOOP} stroke="white" strokeOpacity="0.2" strokeWidth="1.5" />
+            {[0, 2].map((delay) => (
+              <motion.path
+                key={delay}
+                d={LOOP}
+                stroke="white"
+                strokeWidth="2"
+                initial={{ pathLength: still ? 1 : 0, pathOffset: 0 }}
+                animate={still ? undefined : { pathLength: [0, 0.4, 0], pathOffset: [0, 0.6, 1] }}
+                transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut', delay }}
+              />
+            ))}
+          </svg>
+        </motion.div>
+      </div>
+      {proof && (
+        <div className="relative -mt-6 mx-2 sm:mx-0 sm:absolute sm:mt-0 sm:left-0 sm:-bottom-10 sm:w-[min(310px,62%)] z-10">
+          <div className="bg-surface rounded-2xl border border-line shadow-[0_24px_60px_-24px_rgba(18,22,20,0.35)]">{proof}</div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export function HomeHero() {
+  return (
+    <section className={`${WRAP} pt-8 md:pt-12 pb-10 md:pb-12 overflow-x-clip`}>
+      <div className="grid lg:grid-cols-[1.02fr_1fr] gap-10 lg:gap-14 items-center">
+        <div className="flex flex-col gap-6 min-w-0">
+          <Eyebrow>Brand commerce partner for the UK</Eyebrow>
+          <h1 className="font-semibold tracking-[-0.04em] text-balance text-[40px] leading-[44px] md:text-[60px] md:leading-[62px]">Your brand, run properly in the UK.</h1>
+          <p className="text-[17px] md:text-[18px] leading-[28px] text-muted max-w-[540px] text-pretty">
+            We sell your products on Amazon, TikTok Shop, eBay, Temu and your own store, keep unauthorised sellers off your listings, and report every number in one dashboard.
+          </p>
+          <div className="flex flex-wrap gap-3">
+            <CTA to={contactHref('strategy-call')} label="Book a strategy call" id="home-hero" />
+            <CTA to="/portal/demo/home" label="Open the live demo" tone="outline-dark" id="home-hero-demo" />
+          </div>
+        </div>
+        <LoopOrb />
+      </div>
+    </section>
+  );
+}
+
+/* ───────────────────────── Built in motion. Always moving. ───────────────────────── */
+
+type Suite = { tag: string; title: string; body: string; to: string; cta: string; icon: typeof TrendingUp; variant: 'red' | 'image' | 'plain'; image?: PhotoKey; imageAlt?: string };
+const SUITE: Suite[] = [
+  { tag: 'Demand signals', title: 'Demand forecasting before stock lands.', body: 'SKU velocity, marketplace trends and rank movement turned into a buying plan, so stock arrives where it will sell.', to: '/retail-expansion', cta: 'Retail expansion', icon: TrendingUp, variant: 'red' },
+  { tag: 'Channel orchestration', title: 'One inventory pool. Every channel.', body: 'Products routed across Amazon, TikTok Shop, eBay, Temu and your own store from one stock position.', to: '/marketplace-control', cta: 'Marketplace control', icon: GitBranch, variant: 'image', image: 'amazon', imageAlt: 'Two Amazon shipping boxes' },
+  { tag: 'Smart fulfilment', title: 'Checked, tracked and ready to ship.', body: 'Barcode scans, weight checks and photo logs on every order, with dispatch times tracked against the promise.', to: '/dtc-growth', cta: 'DTC growth', icon: Package, variant: 'image', image: 'boxes', imageAlt: 'Parcels stacked in the back of a delivery van' },
+  { tag: 'Brand shield', title: 'Listings, price and trust protected.', body: 'Unauthorised sellers, grey market stock and price breaches found daily and taken to enforcement.', to: '/brand-protection', cta: 'Brand protection', icon: Shield, variant: 'plain' },
+];
+
+export function MotionSuite() {
+  const still = useReducedMotion();
+  return (
+    <section className="px-2 md:px-3 my-3">
+      <div className="rounded-[24px] bg-surface">
+        <div className={`${WRAP} py-12 md:py-[72px]`}>
+          <div className="mb-8 md:mb-10 grid md:grid-cols-[1.25fr_1fr] gap-4 md:gap-12 md:items-end">
+            <div className="flex flex-col gap-3">
+              <Eyebrow>How Loopretail works</Eyebrow>
+              <h2 className={`${H2} md:text-[46px] md:leading-[48px]`}>Built in motion.<br />Always moving.</h2>
+            </div>
+            <p className="text-[16px] leading-[25px] text-muted max-w-[460px] md:justify-self-end">
+              Four connected jobs in one operating loop. Demand is forecast, channels are switched on, fulfilment stays in sync and protection never switches off.
+            </p>
+          </div>
+
+          {/* the loop track: a red pulse travels across all four stages */}
+          <div aria-hidden="true" className="hidden lg:block relative h-6 mb-3 mx-[12.5%]">
+            <div className="absolute top-1/2 left-0 right-0 h-px bg-line" />
+            {SUITE.map((s, i) => (
+              <span key={s.tag} className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-2.5 h-2.5 rounded-full bg-surface border-2 border-control" style={{ left: `${(i / (SUITE.length - 1)) * 100}%` }} />
+            ))}
+            {!still && (
+              <motion.span
+                className="absolute top-1/2 -translate-y-1/2 -ml-[30px] w-[60px] h-[3px] rounded-full bg-gradient-to-r from-transparent via-brand-red to-transparent"
+                animate={{ left: ['0%', '100%'] }}
+                transition={{ duration: 3.2, repeat: Infinity, ease: 'easeInOut', repeatDelay: 0.4 }}
+              />
+            )}
+          </div>
+
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+            {SUITE.map((s, i) => {
+              const Icon = s.icon;
+              const red = s.variant === 'red';
+              return (
+                <motion.div
+                  key={s.tag}
+                  initial={{ opacity: 0, y: 18 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.45, delay: i * 0.08 }}
+                  className={`group relative rounded-2xl overflow-hidden flex flex-col min-h-[400px] transition-transform duration-300 hover:-translate-y-1 ${red ? 'text-white' : 'bg-canvas text-ink'}`}
+                  style={red ? { background: 'radial-gradient(circle at top right, #ff2d40 0%, #e6192b 48%, #b8001d 100%)' } : undefined}
+                >
+                  {red && (
+                    <motion.div
+                      aria-hidden="true"
+                      className="absolute top-0 right-0 w-64 h-64 border border-white/20 rounded-full translate-x-1/4 -translate-y-1/4"
+                      animate={still ? undefined : { scale: [1, 1.06, 1] }}
+                      transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
+                    >
+                      <div className="absolute inset-5 border border-white/10 rounded-full" />
+                      <div className="absolute inset-10 border border-white/5 rounded-full" />
+                    </motion.div>
+                  )}
+                  {s.variant === 'image' && s.image && (
+                    <div className="relative h-40 overflow-hidden shrink-0">
+                      <Photo k={s.image} alt={s.imageAlt ?? ''} w={700} h={400} className="grayscale group-hover:grayscale-0 group-hover:scale-105 transition-all duration-700" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-canvas via-canvas/10 to-transparent" />
+                      <span className="absolute -bottom-5 left-6 w-11 h-11 rounded-xl bg-surface border border-line shadow-[0_8px_20px_-8px_rgba(0,0,0,0.3)] grid place-items-center">
+                        <Icon size={18} className="text-brand-red" aria-hidden="true" />
+                      </span>
+                    </div>
+                  )}
+                  <div className="relative p-6 flex flex-col flex-1">
+                    {s.variant !== 'image' && (
+                      <span className={`w-11 h-11 rounded-xl grid place-items-center ${red ? 'bg-white/15 border border-white/25' : 'bg-red-tint'}`}>
+                        <Icon size={18} className={red ? 'text-white' : 'text-brand-red'} aria-hidden="true" />
+                      </span>
+                    )}
+                    <div className="mt-auto pt-8">
+                      <p className={`text-[13px] font-medium mb-2 ${red ? 'text-white/75' : 'text-red-text'}`}>{s.tag}</p>
+                      <h3 className="text-[20px] leading-[25px] font-semibold tracking-[-0.02em]">{s.title}</h3>
+                      <p className={`mt-2.5 text-[15px] leading-[23px] ${red ? 'text-white/85' : 'text-muted'}`}>{s.body}</p>
+                      <Link to={s.to} className={`mt-5 inline-flex items-center gap-1.5 text-[14px] font-medium ${red ? 'text-white' : 'text-red-text'}`}>
+                        {s.cta} <ArrowUpRight size={15} aria-hidden="true" />
+                      </Link>
+                    </div>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+          <div className="mt-8 flex flex-wrap gap-3">
+            <CTA to="/services" label="See all six services" tone="dark" id="home-suite-services" />
+            <CTA to={contactHref('strategy-call')} label="Talk to us about your brand" tone="outline-dark" id="home-suite" />
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ───────────────────────── Tools: tab bar and live previews ───────────────────────── */
+
+const TABS = [
+  { id: 'dashboard', label: 'Brand Dashboard', icon: BarChart3, href: '/tools/brand-dashboard' },
+  { id: 'protect', label: 'Loop Protect', icon: Shield, href: '/tools/loop-protect' },
+  { id: 'competitor', label: 'Competitor Analysis', icon: Search, href: '/tools/competitor-analysis' },
+] as const;
+type TabId = typeof TABS[number]['id'];
+
+function smooth(p: { x: number; y: number }[]) {
+  let d = `M ${p[0].x} ${p[0].y}`;
+  for (let i = 0; i < p.length - 1; i++) {
+    const p0 = p[i - 1] ?? p[i], p1 = p[i], p2 = p[i + 1], p3 = p[i + 2] ?? p2;
+    d += ` C ${(p1.x + (p2.x - p0.x) / 6).toFixed(2)} ${(p1.y + (p2.y - p0.y) / 6).toFixed(2)}, ${(p2.x - (p3.x - p1.x) / 6).toFixed(2)} ${(p2.y - (p3.y - p1.y) / 6).toFixed(2)}, ${p2.x.toFixed(2)} ${p2.y.toFixed(2)}`;
+  }
+  return d;
+}
+const SERIES = [40, 55, 50, 70, 65, 80, 75, 88, 85, 95, 90, 100];
+const PTS = SERIES.map((v, i) => ({ x: (i / (SERIES.length - 1)) * 100, y: 36 - (v / 100) * 32 }));
+const LINE = smooth(PTS);
+const AREA = `${LINE} L 100 40 L 0 40 Z`;
+const spark = (vals: number[]) => {
+  const mx = Math.max(...vals), mn = Math.min(...vals), r = mx - mn || 1;
+  return smooth(vals.map((v, i) => ({ x: (i / (vals.length - 1)) * 100, y: 28 - ((v - mn) / r) * 26 })));
+};
+
+const METRICS = [
+  { label: 'Revenue', value: '£47,820', change: 'Up 12.4%', icon: Globe, s: [30, 38, 35, 48, 52, 60, 72, 85] },
+  { label: 'Margin after fees', value: '31.2%', change: 'Up 2.1 pts', icon: Activity, s: [50, 52, 49, 55, 58, 60, 63, 68] },
+  { label: 'Sell through', value: '82%', change: 'Up 4.7 pts', icon: TrendingUp, s: [60, 64, 62, 70, 74, 78, 80, 86] },
+  { label: 'Open cases', value: '3', change: '1 high', icon: Shield, s: [44, 40, 43, 36, 38, 32, 30, 26], warn: true },
+];
+const FEED = [
+  { node: 'Amazon UK', event: 'Listing sync complete', time: '2m', tone: 'bg-success' },
+  { node: 'TikTok Shop', event: 'Demand spike on Oat Bites 500g', time: '8m', tone: 'bg-warning' },
+  { node: 'Loop Protect', event: 'New seller below minimum price', time: '14m', tone: 'bg-danger' },
+  { node: 'UK warehouse', event: '42 orders dispatched', time: '1h', tone: 'bg-success' },
+  { node: 'Own store', event: 'New order #10482', time: '2h', tone: 'bg-petrol' },
+];
+
+function DashboardPreview() {
+  const [nav, setNav] = useState('Overview');
+  const [hover, setHover] = useState<number | null>(null);
+  const still = useReducedMotion();
+  const navs: [string, typeof BarChart3][] = [['Overview', BarChart3], ['Channels', Globe], ['Ads', Activity], ['Stock', Package], ['Protection', Shield]];
+  return (
+    <div className="flex text-ink">
+      <aside className="hidden md:flex w-52 shrink-0 flex-col gap-1 border-r border-line p-3">
+        <div className="flex items-center gap-2 px-2 py-2 mb-3">
+          <span className="w-7 h-7 rounded-lg bg-brand-red text-white grid place-items-center text-[12px] font-semibold">H</span>
+          <span><span className="block text-[13px] font-semibold leading-tight">Halcyon Foods</span><span className="text-[11px] text-muted">Example brand</span></span>
+        </div>
+        {navs.map(([n, I]) => (
+          <button key={n} type="button" onClick={() => setNav(n)} className={`flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] font-medium text-left transition-colors ${nav === n ? 'bg-red-tint text-red-text' : 'text-muted hover:bg-canvas hover:text-ink'}`}>
+            <I size={14} aria-hidden="true" />{n}
+          </button>
+        ))}
+      </aside>
+      <div className="flex-1 min-w-0 p-4 md:p-5 bg-canvas/60">
+        <div className="flex items-center justify-between mb-4 gap-3">
+          <div>
+            <p className="text-[16px] font-semibold tracking-[-0.01em]">{nav}</p>
+            <p className="text-[12px] text-muted">All channels, last 28 days</p>
+          </div>
+          <Link to="/portal/demo/overview" className="text-[12px] font-medium text-red-text border border-brand-red/30 rounded-lg px-2.5 py-1.5 hover:bg-red-tint inline-flex items-center gap-1">Full report <ArrowUpRight size={12} aria-hidden="true" /></Link>
+        </div>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 mb-3">
+          {METRICS.map((m) => {
+            const I = m.icon;
+            return (
+              <div key={m.label} className="rounded-xl bg-surface border border-line p-3 group">
+                <div className="flex items-center justify-between mb-2">
+                  <I size={14} className="text-muted group-hover:text-brand-red transition-colors" aria-hidden="true" />
+                  <span className={`text-[11px] font-medium ${m.warn ? 'text-danger' : 'text-success'}`}>{m.change}</span>
+                </div>
+                <p className="text-[19px] font-semibold tracking-[-0.02em] tnum">{m.value}</p>
+                <p className="text-[11px] text-muted">{m.label}</p>
+                <svg viewBox="0 0 100 30" preserveAspectRatio="none" className="w-full h-6 mt-2 text-control group-hover:text-brand-red transition-colors" aria-hidden="true">
+                  <path d={spark(m.s)} fill="none" stroke="currentColor" strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
+                </svg>
+              </div>
+            );
+          })}
+        </div>
+        <div className="grid md:grid-cols-5 gap-2.5">
+          <div className="md:col-span-3 rounded-xl bg-surface border border-line p-4">
+            <div className="flex items-start justify-between mb-3">
+              <div>
+                <p className="text-[12px] font-medium">Weekly revenue, all channels</p>
+                <p className="mt-1 flex items-baseline gap-2"><span className="text-[22px] font-semibold tracking-[-0.02em] tnum">Up 150%</span><span className="text-[11px] text-success">since week 1</span></p>
+              </div>
+              <span className="text-[11px] text-muted">12 weeks</span>
+            </div>
+            <div className="relative h-28">
+              <svg viewBox="0 0 100 40" preserveAspectRatio="none" className="w-full h-full overflow-visible" aria-label="Revenue rising over 12 weeks">
+                <defs>
+                  <linearGradient id="hp-area" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="rgba(230,25,43,0.22)" /><stop offset="100%" stopColor="rgba(230,25,43,0)" /></linearGradient>
+                </defs>
+                {[4, 14, 24, 34].map((y) => <line key={y} x1="0" y1={y} x2="100" y2={y} stroke="#dfe2de" strokeWidth="0.5" vectorEffect="non-scaling-stroke" />)}
+                <path d={AREA} fill="url(#hp-area)" />
+                <motion.path d={LINE} fill="none" stroke="#e6192b" strokeWidth="2" strokeLinecap="round" vectorEffect="non-scaling-stroke"
+                  initial={{ pathLength: still ? 1 : 0 }} whileInView={{ pathLength: 1 }} viewport={{ once: true }} transition={{ duration: 1.3, ease: [0.16, 1, 0.3, 1] }} />
+              </svg>
+              <div className="absolute inset-0 flex">
+                {SERIES.map((_, i) => <div key={i} className="flex-1" onMouseEnter={() => setHover(i)} onMouseLeave={() => setHover(null)} />)}
+              </div>
+              {(() => {
+                const i = hover ?? SERIES.length - 1;
+                const left = `${PTS[i].x}%`, top = `${(PTS[i].y / 40) * 100}%`;
+                return (
+                  <div className="absolute inset-0 pointer-events-none">
+                    {hover !== null && <div className="absolute top-0 bottom-0 w-px bg-ink/15" style={{ left }} />}
+                    <span className="absolute w-2.5 h-2.5 -ml-[5px] -mt-[5px] rounded-full bg-brand-red ring-4 ring-brand-red/20" style={{ left, top }} />
+                    {hover === null && !still && <span className="absolute w-2.5 h-2.5 -ml-[5px] -mt-[5px] rounded-full bg-brand-red animate-ping" style={{ left, top }} />}
+                    {hover !== null && <span className="absolute -translate-x-1/2 -translate-y-[calc(100%+12px)] bg-ink text-white text-[11px] font-medium px-2 py-1 rounded-md whitespace-nowrap tnum" style={{ left, top }}>Week {i + 1}</span>}
+                  </div>
+                );
+              })()}
+            </div>
+          </div>
+          <div className="md:col-span-2 rounded-xl bg-surface border border-line p-4">
+            <p className="text-[12px] font-medium mb-3">Activity</p>
+            <ul className="grid gap-2.5">
+              {FEED.map((f) => (
+                <li key={f.event} className="flex items-start gap-2.5">
+                  <span className={`w-1.5 h-1.5 rounded-full mt-1.5 shrink-0 ${f.tone}`} aria-hidden="true" />
+                  <span className="min-w-0 flex-1"><span className="block text-[12px] font-medium truncate">{f.node}</span><span className="block text-[11px] text-muted truncate">{f.event}</span></span>
+                  <span className="text-[11px] text-muted shrink-0 tnum">{f.time}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ProtectPreview() {
+  const rows = [
+    { sev: 'High', seller: 'QuickDeals Trading', product: 'Oat Bites 500g', issue: '£4.97, below your £5.49 minimum', status: 'Notice sent' },
+    { sev: 'Medium', seller: 'EuroStock GmbH', product: 'Granola Mix 1kg', issue: 'EU label on UK listing, likely grey market', status: 'Test buy ordered' },
+    { sev: 'Medium', seller: 'Bargain Hub UK', product: 'Oat Bites 500g', issue: 'New seller, not on your authorised list', status: 'Evidence gathered' },
+    { sev: 'Low', seller: 'Prime Seller 22', product: 'Snack Box 12', issue: 'Title changed on your listing', status: 'Reverted' },
+  ];
+  const tone: Record<string, string> = { High: 'bg-red-tint text-danger', Medium: 'bg-[#fdf1e3] text-warning', Low: 'bg-sunken text-muted' };
+  return (
+    <div className="p-4 md:p-5 bg-canvas/60">
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+        <div><p className="text-[16px] font-semibold">Open cases</p><p className="text-[12px] text-muted">Checked today on Amazon UK</p></div>
+        <div className="flex gap-2 text-[12px]">
+          {[['Sellers on your listings', '9'], ['Authorised', '6'], ['Below minimum', '1']].map(([k, v]) => (
+            <span key={k} className="rounded-lg bg-surface border border-line px-2.5 py-1.5"><span className="font-semibold tnum">{v}</span> <span className="text-muted">{k}</span></span>
+          ))}
+        </div>
+      </div>
+      <div className="rounded-xl bg-surface border border-line overflow-x-auto">
+        <table className="w-full min-w-[620px] text-[13px]">
+          <thead className="text-left text-muted"><tr><th className="font-medium px-4 py-2.5">Severity</th><th className="font-medium px-4 py-2.5">Seller</th><th className="font-medium px-4 py-2.5">What we found</th><th className="font-medium px-4 py-2.5">Status</th></tr></thead>
+          <tbody>
+            {rows.map((r) => (
+              <tr key={r.seller} className="border-t border-line align-top">
+                <td className="px-4 py-3"><span className={`text-[11px] font-semibold rounded px-1.5 py-0.5 ${tone[r.sev]}`}>{r.sev}</span></td>
+                <td className="px-4 py-3"><span className="font-medium">{r.seller}</span><br /><span className="text-muted">{r.product}</span></td>
+                <td className="px-4 py-3 text-muted">{r.issue}</td>
+                <td className="px-4 py-3 whitespace-nowrap">{r.status}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+function CompetitorPreview() {
+  const rows = [
+    { name: 'Your listing: Oat Bites 500g', price: '£5.49', rank: '1,204', move: 'Steady', you: true },
+    { name: 'Brand A Oat Clusters 450g', price: '£4.99', rank: '860', move: 'Up 310 places' },
+    { name: 'Brand B Honey Oat Bites 500g', price: '£5.25', rank: '1,950', move: 'Down 120 places' },
+    { name: 'Brand C Oat Squares 6 pack', price: '£6.10', rank: '2,410', move: 'New this month' },
+  ];
+  return (
+    <div className="p-4 md:p-5 bg-canvas/60">
+      <div className="flex items-center gap-2 rounded-xl bg-surface border border-line px-3 py-2.5 mb-4 text-[14px] text-muted"><Search size={15} aria-hidden="true" />oat bites</div>
+      <div className="rounded-xl bg-surface border border-line overflow-x-auto">
+        <table className="w-full min-w-[560px] text-[13px]">
+          <thead className="text-left text-muted"><tr><th className="font-medium px-4 py-2.5">Product</th><th className="font-medium px-4 py-2.5">Price</th><th className="font-medium px-4 py-2.5">Sales rank</th><th className="font-medium px-4 py-2.5">This month</th></tr></thead>
+          <tbody>
+            {rows.map((r) => (
+              <tr key={r.name} className={`border-t border-line ${r.you ? 'bg-red-tint/50' : ''}`}>
+                <td className="px-4 py-3 font-medium">{r.name}</td>
+                <td className="px-4 py-3 tnum">{r.price}</td>
+                <td className="px-4 py-3 tnum">{r.rank}</td>
+                <td className={`px-4 py-3 ${r.move.startsWith('Up') ? 'text-success' : r.move.startsWith('Down') ? 'text-danger' : 'text-muted'}`}>{r.move}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p className="mt-3 text-[12px] text-muted">Market data from Keepa. Competitor names are hidden in this example.</p>
+    </div>
+  );
+}
+
+export function ToolsShowcase() {
+  const [tab, setTab] = useState<TabId>('dashboard');
+  const current = TABS.find((t) => t.id === tab)!;
+  return (
+    <section className="px-2 md:px-3 my-3">
+      <div className="rounded-[24px] bg-petrol text-white overflow-hidden">
+        <div className={`${WRAP} py-12 md:py-[72px]`}>
+          <div className="mb-8 grid md:grid-cols-[1.25fr_1fr] gap-4 md:gap-12 md:items-end">
+            <div className="flex flex-col gap-3">
+              <Eyebrow dark>Tools</Eyebrow>
+              <h2 className={H2}>See your market the way we see it.</h2>
+            </div>
+            <p className="text-[16px] leading-[25px] text-white/75 max-w-[460px] md:justify-self-end">
+              Every client gets a login. Amazon UK numbers update daily from Keepa; every other channel updates from your weekly sheets.
+            </p>
+          </div>
+
+          <div role="tablist" aria-label="Loopretail tools" className="inline-flex flex-wrap gap-1 rounded-xl bg-white/10 p-1 mb-4">
+            {TABS.map((t) => {
+              const I = t.icon;
+              const on = t.id === tab;
+              return (
+                <button key={t.id} role="tab" aria-selected={on} aria-controls="tool-panel" type="button" onClick={() => setTab(t.id)}
+                  className={`relative inline-flex items-center gap-2 rounded-lg px-3.5 py-2 text-[14px] font-medium transition-colors ${on ? 'text-ink' : 'text-white/80 hover:text-white'}`}>
+                  {on && <motion.span layoutId="tool-tab" className="absolute inset-0 rounded-lg bg-white" transition={{ type: 'spring', stiffness: 400, damping: 34 }} />}
+                  <I size={15} className="relative" aria-hidden="true" /><span className="relative">{t.label}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          <div id="tool-panel" role="tabpanel" className="rounded-2xl bg-surface overflow-hidden shadow-[0_40px_90px_-30px_rgba(0,0,0,0.6)]">
+            <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-line text-ink">
+              <div className="flex gap-1.5" aria-hidden="true"><span className="w-3 h-3 rounded-full bg-[#ff5f57]" /><span className="w-3 h-3 rounded-full bg-[#febc2e]" /><span className="w-3 h-3 rounded-full bg-[#28c840]" /></div>
+              <span className="flex items-center gap-2 rounded-lg bg-canvas border border-line px-3 py-1 text-[12px] text-muted"><span className="w-1.5 h-1.5 rounded-full bg-brand-red" />loopretail.io/portal/{tab === 'dashboard' ? 'overview' : tab === 'protect' ? 'protection' : 'competitors'}</span>
+              <span className="hidden sm:flex items-center gap-1.5 text-[12px] text-muted"><RefreshCw size={12} className="animate-spin [animation-duration:3s]" aria-hidden="true" />Live</span>
+            </div>
+            <AnimatePresence mode="wait">
+              <motion.div key={tab} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.22 }}>
+                {tab === 'dashboard' ? <DashboardPreview /> : tab === 'protect' ? <ProtectPreview /> : <CompetitorPreview />}
+              </motion.div>
+            </AnimatePresence>
+          </div>
+
+          <div className="mt-8 flex flex-wrap gap-3">
+            <CTA to="/portal/demo/home" label="Open the live demo" tone="light" id="home-tools-demo" />
+            <CTA to={current.href} label={`About ${current.label}`} tone="outline-light" id={`home-tools-${tab}`} />
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ───────────────────────── From audit to active pilot ───────────────────────── */
+
+const STAGES = [
+  { name: 'Audit', days: 'Days 1 to 7', body: 'Products, channels, pricing, competitors, stock readiness and protection needs.', h: 'h-24' },
+  { name: 'Commercial', days: 'Days 2 to 7', body: 'Wholesale, managed retail, hybrid or pilot structure agreed around your stock and goals.', h: 'h-36' },
+  { name: 'Setup', days: 'Days 8 to 14', body: 'Stock received, fulfilment prepared, listings built, reporting and seller rules loaded.', h: 'h-48' },
+  { name: 'Launch', days: 'Days 15 to 28', body: 'Live on the agreed marketplaces and your own channels, with full reporting.', h: 'h-60' },
+  { name: 'Live', days: 'Day 30', body: 'Sales, stock and margin signals used to scale what works and protect what matters.', h: 'h-72' },
+];
+const BUILT = [
+  'Seller sweeps across every marketplace we sell on, every week.',
+  'Test buy evidence packs ready for marketplace enforcement.',
+  'Minimum price enforcement, 72 hours from breach to marketplace notice.',
+  'Brand Registry set up on Amazon, TikTok Shop, eBay and more.',
+  'Monthly threat report in plain English, included in the fee.',
+];
+
+export function AuditToPilot() {
+  const [bar, setBar] = useState(0);
+  const [item, setItem] = useState(0);
+  const still = useReducedMotion();
+  useEffect(() => {
+    if (still) return;
+    const a = setInterval(() => setBar((i) => (i + 1) % STAGES.length), 2400);
+    const b = setInterval(() => setItem((i) => (i + 1) % BUILT.length), 2100);
+    return () => { clearInterval(a); clearInterval(b); };
+  }, [still]);
+  const s = STAGES[bar];
+  return (
+    <section className={`${WRAP} py-12 md:py-[72px]`}>
+      <div className="grid lg:grid-cols-[1.15fr_1fr] gap-10 lg:gap-12 items-start">
+        <div className="min-w-0">
+          <Eyebrow>Operating model</Eyebrow>
+          <h2 className={`${H2} mt-3 md:text-[46px] md:leading-[48px]`}>From audit to<br />active pilot.</h2>
+          <p className="mt-4 text-[16px] leading-[25px] text-muted max-w-[440px]">Five stages, one calendar month. A live operating model, built, configured and trading.</p>
+
+          <div className="mt-8 h-16" aria-live="polite">
+            <AnimatePresence mode="wait">
+              <motion.div key={bar} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.25 }} className="flex gap-3">
+                <span className="text-[13px] font-semibold text-red-text tnum mt-0.5">{bar + 1}/5</span>
+                <p className="text-[15px] leading-[22px]"><span className="font-semibold">{s.name}, {s.days.toLowerCase()}.</span> <span className="text-muted">{s.body}</span></p>
+              </motion.div>
+            </AnimatePresence>
+          </div>
+
+          <div className="flex items-end gap-1.5 md:gap-2.5 h-72">
+            {STAGES.map((st, i) => {
+              const on = i === bar;
+              const last = i === STAGES.length - 1;
+              return (
+                <motion.button
+                  type="button"
+                  key={st.name}
+                  onClick={() => setBar(i)}
+                  aria-pressed={on}
+                  initial={{ opacity: 0, scaleY: 0 }}
+                  whileInView={{ opacity: 1, scaleY: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.55, delay: i * 0.08 }}
+                  style={{ originY: 1 }}
+                  className={`flex-1 min-w-0 ${st.h} rounded-t-xl p-2 sm:p-3 flex flex-col text-left transition-colors duration-500 ${on ? (last ? 'bg-brand-red text-white' : 'bg-ink text-white') : 'bg-surface border border-line text-ink hover:border-ink/30'}`}
+                >
+                  <span className="text-[11px] sm:text-[14px] lg:text-[15px] font-semibold tracking-[-0.02em] break-words hyphens-auto">{st.name}</span>
+                  <span className={`text-[11px] md:text-[12px] mt-0.5 ${on ? 'text-white/70' : 'text-muted'}`}>{st.days.replace('Days ', '').replace('Day ', '')}</span>
+                </motion.button>
+              );
+            })}
+          </div>
+          <div className="mt-3 flex justify-between text-[12px] text-muted border-t border-line pt-3">
+            <span>Day 1</span><span className="hidden sm:inline">Day 7</span><span>Day 14</span><span className="hidden sm:inline">Day 28</span><span className="text-red-text font-medium">Day 30, live</span>
+          </div>
+          <div className="mt-8 flex flex-wrap items-center gap-2">
+            {['Fully managed', 'No long contracts', 'One monthly fee', 'Full reporting'].map((t) => (
+              <span key={t} className="text-[13px] font-medium rounded-full border border-line bg-surface px-3 py-1.5">{t}</span>
+            ))}
+          </div>
+          <div className="mt-6"><CTA to={contactHref('onboarding')} label="Start your 30 day onboarding" id="home-pilot" /></div>
+        </div>
+
+        <div className="rounded-[24px] bg-ink text-white p-6 md:p-10 relative overflow-hidden">
+          <div aria-hidden="true" className="absolute -top-24 -right-24 w-72 h-72 rounded-full bg-brand-red/30 blur-[80px]" />
+          <h3 className="relative text-[30px] leading-[34px] md:text-[42px] md:leading-[44px] font-semibold tracking-[-0.035em]">One partner.<br />Every channel.</h3>
+          <div className="relative mt-10 rounded-2xl bg-surface text-ink p-6 md:p-7">
+            <p className="text-[13px] font-medium text-muted">Why Loopretail</p>
+            <p className="mt-1 text-[24px] leading-[28px] font-semibold tracking-[-0.025em]">Built different. By design.</p>
+            <div className="flex gap-1.5 mt-5 mb-4">
+              {BUILT.map((_, i) => (
+                <button key={i} type="button" aria-label={`Show point ${i + 1}`} onClick={() => setItem(i)} className={`h-1 rounded-full transition-all duration-300 ${item === i ? 'w-6 bg-brand-red' : 'w-1.5 bg-ink/15'}`} />
+              ))}
+            </div>
+            <ol className="grid gap-2">
+              {BUILT.map((t, i) => {
+                const on = item === i;
+                return (
+                  <motion.li key={t} onClick={() => setItem(i)}
+                    animate={{ opacity: on ? 1 : Math.abs(item - i) === 1 ? 0.55 : 0.35, scale: on ? 1 : 0.985 }}
+                    transition={{ duration: 0.3 }}
+                    className={`flex items-center gap-4 rounded-xl px-4 py-3 cursor-pointer ${on ? (i === 0 ? 'bg-brand-red text-white' : 'bg-ink text-white') : 'bg-canvas'}`}>
+                    <span className="text-[18px] font-semibold tnum shrink-0">{String(i + 1).padStart(2, '0')}</span>
+                    <span className="text-[14px] leading-[19px]">{t}</span>
+                  </motion.li>
+                );
+              })}
+            </ol>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ───────────────────────── The numbers behind the loop ───────────────────────── */
+
+const NUMBERS = [
+  { value: '£9bn', label: 'Yearly UK cost of counterfeit goods', icon: RefreshCw },
+  { value: '100+', label: 'Brand partners onboarded', icon: Users },
+  { value: '£500m+', label: 'Total sales managed', icon: Globe },
+  { value: '72h', label: 'Breach to marketplace notice', icon: Award },
+];
+
+export function NumbersLoop() {
+  const still = useReducedMotion();
+  return (
+    <section className="px-2 md:px-3 my-3">
+      <div className="relative rounded-[24px] bg-ink text-white overflow-hidden">
+        <div aria-hidden="true" className="absolute -bottom-40 left-1/2 -translate-x-1/2 w-[140%] h-[360px] rounded-[100%] bg-brand-red/25 blur-3xl" />
+        <div aria-hidden="true" className="absolute -bottom-72 left-1/2 -translate-x-1/2 w-[120%] h-[400px] rounded-[100%] border-t border-brand-red/50" />
+        <div className={`${WRAP} relative py-14 md:py-24`}>
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12 md:mb-16">
+            <h2 className="text-[40px] leading-[42px] md:text-[72px] md:leading-[70px] font-semibold tracking-[-0.045em]">The numbers<br />behind the loop.</h2>
+            <svg viewBox="0 0 24 24" fill="none" strokeLinecap="round" className="w-24 h-24 md:w-32 md:h-32 shrink-0" aria-hidden="true">
+              <path d={LOOP} stroke="#e6192b" strokeOpacity="0.25" strokeWidth="1.6" />
+              {[0, 1.75].map((d) => (
+                <motion.path key={d} d={LOOP} stroke="#e6192b" strokeWidth="2"
+                  initial={{ pathLength: still ? 1 : 0 }} animate={still ? undefined : { pathLength: [0, 0.4, 0], pathOffset: [0, 0.6, 1] }}
+                  transition={{ duration: 3.5, repeat: Infinity, ease: 'easeInOut', delay: d }} />
+              ))}
+            </svg>
+          </div>
+          <dl className="grid grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-10">
+            {NUMBERS.map((n, i) => {
+              const I = n.icon;
+              return (
+                <motion.div key={n.label} initial={{ opacity: 0, y: 18 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }}
+                  className="border-l border-dashed border-white/20 pl-5">
+                  <I size={22} className="text-brand-red mb-5" aria-hidden="true" />
+                  <dd className="text-[40px] md:text-[56px] leading-none font-semibold tracking-[-0.045em] tnum">{n.value}</dd>
+                  <dt className="mt-3 text-[14px] leading-[20px] text-white/70 max-w-[180px]">{n.label}</dt>
+                </motion.div>
+              );
+            })}
+          </dl>
+          <div className="mt-12 md:mt-16"><CTA to={contactHref('strategy-call')} label="Get results like these" tone="light" id="home-numbers" /></div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ───────────────────────── Turn ___ into a controlled growth engine ───────────────────────── */
+
+const ENGINE_WORDS = ['marketplaces', 'your website', 'your D2C store'];
+const OBJECTIVES: [string, string][] = [
+  ['Marketplace control', 'marketplace-audit'],
+  ['Brand protection', 'protection-audit'],
+  ['D2C launch', 'dtc'],
+  ['Retail expansion', 'retail-expansion'],
+  ['Fulfilment', 'onboarding'],
+];
+
+export function GrowthEngine() {
+  const [w, setW] = useState(0);
+  const [obj, setObj] = useState(0);
+  const still = useReducedMotion();
+  useEffect(() => {
+    if (still) return;
+    const t = setInterval(() => setW((i) => (i + 1) % ENGINE_WORDS.length), 2400);
+    return () => clearInterval(t);
+  }, [still]);
+  return (
+    <section className={`${WRAP} py-12 md:py-[72px]`}>
+      <div className="grid lg:grid-cols-2 gap-10 lg:gap-14 items-start">
+        <div>
+          <span className="inline-flex items-center gap-2 text-[14px] font-medium text-red-text">
+            <span className="relative flex w-2 h-2"><span className="absolute inset-0 rounded-full bg-brand-red animate-ping opacity-60" /><span className="relative w-2 h-2 rounded-full bg-brand-red" /></span>
+            Start here
+          </span>
+          <h2 className="mt-4 text-[38px] leading-[42px] md:text-[60px] md:leading-[62px] font-semibold tracking-[-0.045em]">
+            Turn{' '}
+            <span className="inline-grid align-bottom overflow-hidden">
+              {ENGINE_WORDS.map((word, i) => (
+                <motion.span key={word} aria-hidden={i !== w} className="[grid-area:1/1] text-brand-red whitespace-nowrap"
+                  initial={false}
+                  animate={{ y: i === w ? '0%' : '-110%', opacity: i === w ? 1 : 0 }}
+                  transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}>
+                  {word}
+                </motion.span>
+              ))}
+            </span>
+            <br />into a controlled growth engine.
+          </h2>
+          <p className="mt-6 text-[16px] leading-[25px] text-muted max-w-[460px]">
+            Send your product category, current channels and the biggest issue you face today. The first thing you get back is a practical opportunity map, not a sales deck.
+          </p>
+          <div className="mt-8 grid grid-cols-2 gap-3 max-w-[460px]">
+            {[['24', 'h', 'Reply time'], ['100', '%', 'Read by a senior operator']].map(([v, sup, l]) => (
+              <div key={l} className="rounded-2xl bg-surface border border-line p-5">
+                <p className="text-[44px] leading-none font-semibold tracking-[-0.045em] tnum">{v}<sup className="text-brand-red text-[22px] ml-0.5">{sup}</sup></p>
+                <p className="mt-2 text-[13px] text-muted">{l}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="rounded-[24px] bg-ink text-white p-6 md:p-10">
+          <p className="text-[14px] font-medium text-white/70">Partner request</p>
+          <h3 className="mt-1 text-[28px] leading-[32px] font-semibold tracking-[-0.03em]">Request an audit</h3>
+          <p className="mt-6 text-[14px] text-white/70" id="obj-label">What do you want to fix first?</p>
+          <div role="radiogroup" aria-labelledby="obj-label" className="mt-3 flex flex-wrap gap-2">
+            {OBJECTIVES.map(([label], i) => (
+              <button key={label} type="button" role="radio" aria-checked={obj === i} onClick={() => setObj(i)}
+                className={`rounded-full px-3.5 py-2 text-[14px] font-medium border transition-colors ${obj === i ? 'bg-white text-ink border-white' : 'border-white/25 text-white/85 hover:border-white/60'}`}>
+                {obj === i && <Check size={14} className="inline -mt-0.5 mr-1 text-brand-red" aria-hidden="true" />}{label}
+              </button>
+            ))}
+          </div>
+          <ul className="mt-8 grid gap-3 text-[15px] text-white/80">
+            {['Who sells your products today, and at what price', 'Which channel to open or fix first', 'What it costs to run, in one monthly fee'].map((t) => (
+              <li key={t} className="flex gap-2.5"><Check size={17} className="text-brand-red shrink-0 mt-0.5" aria-hidden="true" />{t}</li>
+            ))}
+          </ul>
+          <div className="mt-8"><CTA to={contactHref(OBJECTIVES[obj][1])} label="Request my audit" id="home-engine" /></div>
+        </div>
+      </div>
+    </section>
+  );
+}

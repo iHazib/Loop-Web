@@ -59,7 +59,7 @@ export default function BrandProtection() {
         lead="We check every listing daily, find unauthorised sellers and grey market stock, gather the evidence and take them down. You see every case in your dashboard."
         ctas={<><CTA to={contactHref('protection-audit')} label="Get a free seller audit" id="bp-hero" /><CTA to="/tools/loop-protect" label="How Loop Protect works" tone="outline-dark" id="bp-hero-tool" /></>}
         image="parcel"
-        imageAlt="A sealed cardboard parcel ready for a test buy check"
+        imageAlt="Pallets of boxed stock on warehouse racking"
         aside={<CaseProof />}
       />
 

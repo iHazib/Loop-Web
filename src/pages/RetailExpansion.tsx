@@ -34,8 +34,8 @@ export default function RetailExpansion() {
         title="Get your brand ready for UK shop shelves."
         lead="Buyers want proof before they list a new brand. We fix the packaging, pricing and compliance gaps, test with independents, and prepare the pitch for chains."
         ctas={<><CTA to={contactHref('retail-expansion')} label="Check our retail readiness" id="re-hero" /><CTA to="/uk-market-entry" label="UK market entry" tone="outline-dark" id="re-hero-entry" /></>}
-        image="team"
-        imageAlt="A team reviewing a plan around a meeting table"
+        image="store"
+        imageAlt="A shopper picking a product from a shop shelf"
       />
 
       <Section tone="panel" eyebrow="The UK market" title="Most UK shopping still happens in store.">

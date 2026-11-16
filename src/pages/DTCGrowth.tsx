@@ -35,8 +35,8 @@ export default function DTCGrowth() {
         title="A UK direct store that feels local from the first order."
         lead="UK pricing, UK stock, quick dispatch and returns handled under UK rules. You own the brand and the customer data; we run the store day to day."
         ctas={<><CTA to={contactHref('dtc')} label="Get a free D2C audit" id="dtc-hero" /><CTA to="/portal/demo/channels" label="See D2C reporting" tone="outline-dark" id="dtc-hero-demo" /></>}
-        image="phone"
-        imageAlt="A shopper scrolling an online store on a phone"
+        image="shopify"
+        imageAlt="A Shopify store open on a laptop"
         aside={<OrderProof />}
       />
 

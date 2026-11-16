@@ -11,7 +11,7 @@ export default function UKMarketEntry() {
         ctas={<><CTA to={contactHref('strategy-call')} label="Plan your UK launch" tone="red" id="ukentry-hero" /><CTA to="/how-it-works" label="How we work" tone="outline-dark" id="ukentry-hero-how" /></>}
         meta={[{ k: 'Launch plan', v: 'Channel by channel' }, { k: 'Stock', v: 'Held in the UK' }, { k: 'Listings', v: 'Written for UK search' }, { k: 'Protection', v: 'From day one' }]}
         image="port"
-        imageAlt="Shipping containers stacked at a port"
+        imageAlt="Container ship and cranes at a port at dusk"
         crumb={{ label: 'Services', to: '/services' }}
       />
 

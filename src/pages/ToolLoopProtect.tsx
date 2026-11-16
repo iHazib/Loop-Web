@@ -20,7 +20,7 @@ export default function ToolLoopProtect() {
         ctas={<><CTA to={contactHref('brand-protection')} label="Get a free seller scan" tone="red" id="protect-hero" /><CTA to="/portal/demo/protection" label="See it in the demo" tone="outline-dark" id="protect-hero-demo" /></>}
         meta={[{ k: 'Checks', v: 'Daily' }, { k: 'Rules', v: 'Six' }, { k: 'Evidence', v: 'Saved per case' }, { k: 'Coverage', v: 'Amazon UK' }]}
         image="boxes"
-        imageAlt="A pile of taped cardboard boxes"
+        imageAlt="Parcels stacked in the back of a delivery van"
         crumb={{ label: 'Tools', to: '/tools' }}
       />
 

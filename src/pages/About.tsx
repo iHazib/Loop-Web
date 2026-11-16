@@ -1,5 +1,6 @@
 import { CTA, contactHref } from '../components/CTA';
-import { SitePage, PageHero, Section, CardGrid, Steps, Split, CTABand, Related } from '../components/site/Page';
+import { SitePage, PageHero, Section, Steps, Split, CTABand, Related } from '../components/site/Page';
+import { MoreThanSaas } from '../components/home/MoreThanSaas';
 
 /* About: who we are, what we believe, how the pieces fit. No invented history or headcount. */
 
@@ -12,13 +13,13 @@ export default function About() {
         lead="We connect marketplaces, brand protection, fulfilment, direct stores and retail into one operation, so a brand can grow in the UK without losing control of its price, its sellers or its customers."
         ctas={<><CTA to={contactHref('strategy-call')} label="Talk to us" id="about-hero" /><CTA to="/how-it-works" label="How we work" tone="outline-dark" id="about-how" /></>}
         image="aisle"
-        imageAlt="A long warehouse aisle lined with racking"
+        imageAlt="Warehouse staff walking down a long aisle"
       />
 
       <Section tone="panel">
         <Split
           image="forklift"
-          imageAlt="A forklift moving stock between racks"
+          imageAlt="Two warehouse staff checking stock in an aisle"
           eyebrow="What we believe"
           title="Brands do not only want sales. They want control."
           body={<>
@@ -28,16 +29,7 @@ export default function About() {
         />
       </Section>
 
-      <Section eyebrow="One operating model" title="Five capabilities, run on the same stock and data.">
-        <CardGrid cols={3} items={[
-          { title: 'Marketplace Control', body: 'Pricing, listings, sellers and stock across every marketplace.', href: '/marketplace-control' },
-          { title: 'Brand Protection', body: 'Unauthorised sellers, grey market stock and counterfeits caught before they cost trust.', href: '/brand-protection' },
-          { title: 'Retail Expansion', body: 'Find where the brand wins in UK retail and get it buyer ready.', href: '/retail-expansion' },
-          { title: 'DTC Growth', body: 'A UK direct channel: store, stock, fulfilment and returns.', href: '/dtc-growth' },
-          { title: 'Fulfilment', body: 'Stock, pick, pack, dispatch and returns from one UK operation.', href: '/services' },
-          { title: 'Reporting', body: 'One dashboard and a weekly report across all of it.', href: '/tools/brand-dashboard' },
-        ]} />
-      </Section>
+      <MoreThanSaas />
 
       <Section tone="panel" eyebrow="How we grow a brand" title="Controlled growth, in four moves.">
         <Steps steps={[

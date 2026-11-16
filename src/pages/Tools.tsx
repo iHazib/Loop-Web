@@ -27,7 +27,7 @@ export default function Tools() {
         lead="We built our own software so every brand we work with can see exactly what is happening on its channels, without waiting for a monthly report."
         ctas={<><CTA to="/portal/demo/overview" label="Open the live demo" tone="red" id="tools-hero-demo" /><CTA to="/portal/login" label="Client sign in" tone="outline-dark" id="tools-hero-login" /></>}
         image="card"
-        imageAlt="Someone checking an order on a laptop"
+        imageAlt="Someone paying for an order on a laptop"
       />
 
       <Section eyebrow="Three tools" title="Three tools inside one client login."
