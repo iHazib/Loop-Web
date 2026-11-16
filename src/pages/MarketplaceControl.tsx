@@ -35,8 +35,8 @@ export default function MarketplaceControl() {
         title="Own your listings, your price and your sellers."
         lead="We run Amazon, TikTok Shop, eBay and Temu for you: listings, pricing, ads, stock and the Buy Box. One accountable operator instead of a crowd of resellers."
         ctas={<><CTA to={contactHref('marketplace-audit')} label="Get a marketplace audit" id="mc-hero" /><CTA to="/portal/demo/channels" label="See the channel view" tone="outline-dark" id="mc-hero-demo" /></>}
-        image="amazon"
-        imageAlt="Two Amazon shipping boxes"
+        image="analytics"
+        imageAlt="Sales and traffic charts on a laptop"
         aside={<ListingProof />}
       />
 
@@ -55,7 +55,7 @@ export default function MarketplaceControl() {
       <Section>
         <Split
           image="stacked"
-          imageAlt="Cardboard boxes and packaging supplies in a stockroom"
+          imageAlt="A room stacked with cardboard boxes"
           eyebrow="The seller problem"
           title="Three kinds of seller erode a listing."
           body={<p>Each one takes the Buy Box at a lower price and leaves your brand with the reviews. We identify which kind you have before deciding how to deal with it.</p>}

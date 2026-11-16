@@ -13,13 +13,13 @@ export default function About() {
         lead="We connect marketplaces, brand protection, fulfilment, direct stores and retail into one operation, so a brand can grow in the UK without losing control of its price, its sellers or its customers."
         ctas={<><CTA to={contactHref('strategy-call')} label="Talk to us" id="about-hero" /><CTA to="/how-it-works" label="How we work" tone="outline-dark" id="about-how" /></>}
         image="aisle"
-        imageAlt="Warehouse staff walking down a long aisle"
+        imageAlt="A long warehouse aisle lined with racking"
       />
 
       <Section tone="panel">
         <Split
           image="forklift"
-          imageAlt="Two warehouse staff checking stock in an aisle"
+          imageAlt="A forklift moving stock between racks"
           eyebrow="What we believe"
           title="Brands do not only want sales. They want control."
           body={<>

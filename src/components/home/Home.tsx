@@ -208,7 +208,7 @@ type Suite = { tag: string; title: string; body: string; to: string; cta: string
 const SUITE: Suite[] = [
   { tag: 'Demand signals', title: 'Demand forecasting before stock lands.', body: 'SKU velocity, marketplace trends and rank movement turned into a buying plan, so stock arrives where it will sell.', to: '/retail-expansion', cta: 'Retail expansion', icon: TrendingUp, variant: 'red' },
   { tag: 'Channel orchestration', title: 'One inventory pool. Every channel.', body: 'Products routed across Amazon, TikTok Shop, eBay, Temu and your own store from one stock position.', to: '/marketplace-control', cta: 'Marketplace control', icon: GitBranch, variant: 'image', image: 'amazon', imageAlt: 'Two Amazon shipping boxes' },
-  { tag: 'Smart fulfilment', title: 'Checked, tracked and ready to ship.', body: 'Barcode scans, weight checks and photo logs on every order, with dispatch times tracked against the promise.', to: '/dtc-growth', cta: 'DTC growth', icon: Package, variant: 'image', image: 'boxes', imageAlt: 'Parcels stacked in the back of a delivery van' },
+  { tag: 'Smart fulfilment', title: 'Checked, tracked and ready to ship.', body: 'Barcode scans, weight checks and photo logs on every order, with dispatch times tracked against the promise.', to: '/dtc-growth', cta: 'DTC growth', icon: Package, variant: 'image', image: 'van', imageAlt: 'Parcels stacked in the back of a delivery van' },
   { tag: 'Brand shield', title: 'Listings, price and trust protected.', body: 'Unauthorised sellers, grey market stock and price breaches found daily and taken to enforcement.', to: '/brand-protection', cta: 'Brand protection', icon: Shield, variant: 'plain' },
 ];
 
@@ -511,26 +511,26 @@ function CompetitorPreview() {
   );
 }
 
-export function ToolsPreview() {
+export function ToolsPreview({ dark = false }: { dark?: boolean }) {
   const [tab, setTab] = useState<TabId>('dashboard');
   const current = TABS.find((t) => t.id === tab)!;
   return (
     <div className="mt-10">
       <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-        <div role="tablist" aria-label="Loopretail tools" className="inline-flex flex-wrap gap-1 rounded-xl bg-sunken p-1">
+        <div role="tablist" aria-label="Loopretail tools" className={`inline-flex flex-wrap gap-1 rounded-xl p-1 ${dark ? 'bg-white/10' : 'bg-sunken'}`}>
           {TABS.map((t) => {
             const I = t.icon;
             const on = t.id === tab;
             return (
               <button key={t.id} role="tab" aria-selected={on} aria-controls="tool-panel" type="button" onClick={() => setTab(t.id)}
-                className={`relative inline-flex items-center gap-2 rounded-lg px-3.5 py-2 text-[14px] font-medium transition-colors ${on ? 'text-ink' : 'text-muted hover:text-ink'}`}>
+                className={`relative inline-flex items-center gap-2 rounded-lg px-3.5 py-2 text-[14px] font-medium transition-colors ${on ? 'text-ink' : dark ? 'text-white/80 hover:text-white' : 'text-muted hover:text-ink'}`}>
                 {on && <motion.span layoutId="tool-tab" className="absolute inset-0 rounded-lg bg-surface shadow-[0_2px_8px_-2px_rgba(18,22,20,0.18)]" transition={{ type: 'spring', stiffness: 400, damping: 34 }} />}
                 <I size={15} className={`relative ${on ? 'text-brand-red' : ''}`} aria-hidden="true" /><span className="relative">{t.label}</span>
               </button>
             );
           })}
         </div>
-        <Link to={current.href} className="text-[14px] font-medium text-red-text inline-flex items-center gap-1 hover:underline">About {current.label} <ArrowUpRight size={15} aria-hidden="true" /></Link>
+        <Link to={current.href} className={`text-[14px] font-medium inline-flex items-center gap-1 hover:underline ${dark ? 'text-white' : 'text-red-text'}`}>About {current.label} <ArrowUpRight size={15} aria-hidden="true" /></Link>
       </div>
 
       <div id="tool-panel" role="tabpanel" className="rounded-2xl bg-surface border border-line overflow-hidden shadow-[0_30px_70px_-34px_rgba(18,22,20,0.35)]">

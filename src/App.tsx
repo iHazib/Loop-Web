@@ -1,6 +1,6 @@
 import { CTA, contactHref } from './components/CTA';
-import { SitePage, PageHero, Section, CardGrid, Split, Figures, CTABand } from './components/site/Page';
-import { ChannelLogos, LoopSection, MotionSuite, ToolsPreview, AuditToPilot, NumbersLoop, GrowthEngine } from './components/home/Home';
+import { SitePage, PageHero, Section, Split, CardGrid, Figures, CTABand } from './components/site/Page';
+import { ChannelLogos, MotionSuite, ToolsPreview, AuditToPilot, NumbersLoop, GrowthEngine } from './components/home/Home';
 
 /* Home. One job: show a brand owner what we run, prove it with the dashboard, get the call booked. */
 
@@ -39,22 +39,19 @@ export default function App() {
         title="Your brand, run properly in the UK."
         lead="We sell your products on Amazon, TikTok Shop, eBay and your own store, keep unauthorised sellers off your listings, and report every number in one dashboard."
         ctas={<><CTA to={contactHref('strategy-call')} label="Book a strategy call" id="home-hero" /><CTA to="/portal/demo/home" label="Open the live demo" tone="outline-dark" id="home-hero-demo" /></>}
-        image="shelves"
+        image="rack"
         imageAlt="Warehouse racking stacked with boxed stock"
         aside={<HeroProof />}
       />
 
       <ChannelLogos />
 
-      {/* Replaces the "Pick a service" section */}
       <MotionSuite />
-
-      <LoopSection />
 
       <Section>
         <Split
-          image="boxes"
-          imageAlt="Parcels stacked in the back of a delivery van"
+          image="amazon"
+          imageAlt="Two Amazon shipping boxes"
           eyebrow="The seller problem"
           title="Every extra seller on your listing costs you price and trust."
           body={<>
@@ -67,18 +64,17 @@ export default function App() {
         </Split>
       </Section>
 
-      <Section tone="panel" eyebrow="Tools" title="See your market the way we see it."
+      <Section tone="petrol" eyebrow="Tools" title="See your market the way we see it."
         lead="Every client gets a login. The numbers update daily from Keepa for Amazon UK, and from your weekly sheets for every other channel.">
         <CardGrid items={[
           { tag: 'Every client', title: 'Brand Dashboard', body: 'Sales by channel, ads, stock cover and rank in one place, with a weekly report you can save as a PDF.', href: '/tools/brand-dashboard' },
           { tag: 'Protection', title: 'Loop Protect', body: 'Who is on your listings, who is below your minimum price and which stock looks like grey market, emailed to your team.', href: '/tools/loop-protect' },
           { tag: 'Research', title: 'Competitor Analysis', body: 'Search any product to see who is cheaper, who is climbing in rank and which compatible listings went live this month.', href: '/tools/competitor-analysis' },
         ]} />
-        <ToolsPreview />
-        <div className="mt-8"><CTA to="/portal/demo/home" label="Open the live demo" tone="dark" id="home-tools-demo" /></div>
+        <ToolsPreview dark />
+        <div className="mt-8"><CTA to="/portal/demo/home" label="Open the live demo" tone="light" id="home-tools-demo" /></div>
       </Section>
 
-      {/* Replaces "From first call to live sales" */}
       <AuditToPilot />
 
       <Section tone="panel" eyebrow="What you can hold us to" title="Service levels you can check.">

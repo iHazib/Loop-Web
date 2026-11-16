@@ -11,7 +11,7 @@ export default function ToolCompetitorAnalysis() {
         ctas={<><CTA to={contactHref('competitor-analysis')} label="Get a free competitor scan" tone="red" id="comp-hero" /><CTA to="/portal/demo/analysis" label="See it in the demo" tone="outline-dark" id="comp-hero-demo" /></>}
         meta={[{ k: 'Per product', v: 'Up to 30 rivals' }, { k: 'History', v: '90 days' }, { k: 'Found by', v: 'Keepa search + AI' }, { k: 'Updated', v: 'Daily' }]}
         image="stacked"
-        imageAlt="Cardboard boxes and packaging supplies in a stockroom"
+        imageAlt="A room stacked with cardboard boxes"
         crumb={{ label: 'Tools', to: '/tools' }}
       />
 
