@@ -1,6 +1,6 @@
 import { CTA, contactHref } from './components/CTA';
 import { SitePage, Section, Split, CardGrid, Figures, CTABand } from './components/site/Page';
-import { HomeHero, ChannelLogos, MotionSuite, ToolsPreview, AuditToPilot, NumbersLoop, GrowthEngine } from './components/home/Home';
+import { HomeHero, ChannelsSection, MotionSuite, ToolsPreview, AuditToPilot, NumbersLoop, GrowthEngine } from './components/home/Home';
 
 /* Home. One job: show a brand owner what we run, prove it with the dashboard, get the call booked. */
 
@@ -9,7 +9,7 @@ export default function App() {
     <SitePage>
       <HomeHero />
 
-      <ChannelLogos />
+      <ChannelsSection />
 
       <MotionSuite />
 
