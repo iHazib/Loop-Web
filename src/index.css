@@ -57,3 +57,12 @@ body {
 @keyframes ticker { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
 .animate-ticker { animation: ticker 22s linear infinite; }
 .bg-dot-pattern { background-image: radial-gradient(circle, #cbd5e1 1px, transparent 1px); background-size: 24px 24px; }
+
+/* flowing dash on the highlighted channel line */
+@keyframes lr-flow { to { stroke-dashoffset: -36; } }
+.lr-flow { animation: lr-flow 0.9s linear infinite; }
+/* the channels diagram keeps moving even when the device asks for reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .lr-flow { animation-duration: 0.9s !important; }
+  .lr-ping { animation-duration: 1s !important; }
+}

@@ -5,6 +5,7 @@ import { ArrowUpRight, BarChart3, Globe, Activity, Shield, TrendingUp, GitBranch
 import { FaAmazon } from 'react-icons/fa';
 import { SiTiktok, SiShopify } from 'react-icons/si';
 import { CTA, contactHref } from '../CTA';
+import { FlickeringGrid } from './FlickeringGrid';
 import { WRAP, H2, Eyebrow, Photo, photo, type PhotoKey } from '../site/Page';
 
 /* Home page sections. Several are the earlier site's sections, rebuilt for the light theme. */
@@ -80,8 +81,8 @@ export function ChannelLogos() {
    Animation runs for everyone (it carries the message), but stays slow and small. */
 type Layout = { W: number; H: number; hub: { x: number; y: number }; brand: { x: number; y: number }; tileX: number; tileW: number; ys: number[] };
 // Wide stage for desktop (the diagram runs the full width), compact stage for phones and tablets.
-const WIDE: Layout = { W: 1120, H: 440, hub: { x: 540, y: 220 }, brand: { x: 150, y: 220 }, tileX: 840, tileW: 250, ys: [52, 136, 220, 304, 388] };
-const NARROW: Layout = { W: 560, H: 480, hub: { x: 226, y: 240 }, brand: { x: 70, y: 240 }, tileX: 350, tileW: 194, ys: [64, 152, 240, 328, 416] };
+const WIDE: Layout = { W: 1120, H: 440, hub: { x: 540, y: 220 }, brand: { x: 160, y: 220 }, tileX: 840, tileW: 250, ys: [52, 136, 220, 304, 388] };
+const NARROW: Layout = { W: 560, H: 480, hub: { x: 226, y: 240 }, brand: { x: 76, y: 240 }, tileX: 350, tileW: 194, ys: [64, 152, 240, 328, 416] };
 const TILES: { name: string; mark: ReactNode; event: string }[] = [
   { name: 'Amazon UK', mark: <AmazonMark />, event: 'Order synced' },
   { name: 'TikTok Shop', mark: <TikTokMark />, event: 'Stock updated' },
@@ -114,26 +115,28 @@ export function LoopFlow() {
   }, []);
   const bend = (TILE_X - HUB.x - 62) * 0.45;
   const toTile = (y: number) => `M ${HUB.x + 62} ${HUB.y} C ${HUB.x + 62 + bend} ${HUB.y}, ${TILE_X - bend} ${y}, ${TILE_X} ${y}`;
-  const fromBrand = `M ${BRAND.x + 62} ${BRAND.y} L ${HUB.x - 62} ${HUB.y}`;
+  const wide = L === WIDE;
+  const brandHalf = wide ? 100 : 66;
+  const fromBrand = `M ${BRAND.x + brandHalf} ${BRAND.y} L ${HUB.x - 62} ${HUB.y}`;
   const drawIn = (d: number) => ({ initial: { pathLength: 0 }, whileInView: { pathLength: 1 }, viewport: { once: true }, transition: { duration: 0.9, delay: d, ease: [0.16, 1, 0.3, 1] as const } });
   const popIn = (d: number, x = 0) => ({ initial: { opacity: 0, x, scale: 0.92 }, whileInView: { opacity: 1, x: 0, scale: 1 }, viewport: { once: true }, transition: { duration: 0.55, delay: d, ease: [0.16, 1, 0.3, 1] as const } });
   return (
     <div ref={ref} className="relative w-full" style={{ height: STAGE_H * k }}>
       <div className="absolute top-0 left-0 origin-top-left" style={{ width: STAGE_W, height: STAGE_H, transform: `scale(${k})` }}>
         <div aria-hidden="true" className="absolute inset-0 rounded-[28px] bg-surface border border-line overflow-hidden">
-          <motion.div className="absolute inset-[-18px]" style={{ backgroundImage: 'radial-gradient(#dfe2de 1px, transparent 1px)', backgroundSize: '18px 18px' }}
-            animate={{ x: [0, 18], y: [0, 18] }} transition={{ duration: 6, repeat: Infinity, ease: 'linear' }} />
-          <motion.div className="absolute w-[320px] h-[320px] rounded-full bg-brand-red/[0.07] blur-3xl" style={{ left: HUB.x - 160, top: HUB.y - 160 }}
-            animate={{ scale: [1, 1.2, 1] }} transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }} />
+          <FlickeringGrid className="absolute inset-0 [mask-image:radial-gradient(ellipse_70%_75%_at_50%_50%,black_25%,transparent_80%)]" maxOpacity={0.16} squareSize={3} gap={7} flicker={0.35} />
+          <motion.div className="absolute w-[420px] h-[420px] rounded-full blur-3xl" style={{ left: HUB.x - 210, top: HUB.y - 210, background: 'radial-gradient(circle, rgba(230,25,43,0.12) 0%, rgba(230,25,43,0) 65%)' }}
+            animate={{ scale: [1, 1.15, 1] }} transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }} />
+          <div className="absolute inset-y-0 right-0 w-1/3" style={{ background: 'linear-gradient(90deg, rgba(15,61,70,0) 0%, rgba(15,61,70,0.035) 100%)' }} />
         </div>
 
         <svg key={L.W} viewBox={`0 0 ${STAGE_W} ${STAGE_H}`} className="absolute inset-0 w-full h-full" aria-hidden="true">
           <motion.path d={fromBrand} stroke="#c9cec9" strokeWidth="1.5" fill="none" {...drawIn(0.2)} />
           {TILES.map((t, i) => <motion.path key={t.name} d={toTile(L.ys[i])} stroke="#c9cec9" strokeWidth="1.5" fill="none" {...drawIn(0.5 + i * 0.08)} />)}
-          {/* the active channel's line lights up red, with a flowing dash */}
-          <motion.path key={`hl-${active}-${L.W}`} d={toTile(L.ys[active])} stroke="#e6192b" strokeWidth="2" fill="none" strokeDasharray="6 8"
-            initial={{ pathLength: 0, opacity: 1 }} animate={{ pathLength: 1, strokeDashoffset: [0, -28] }}
-            transition={{ pathLength: { duration: 0.6, ease: 'easeOut' }, strokeDashoffset: { duration: 1, repeat: Infinity, ease: 'linear' } }} />
+          {/* the active channel's line lights up red, with dashes flowing towards the channel */}
+          <motion.path key={`hl-${active}-${L.W}`} d={toTile(L.ys[active])} stroke="#e6192b" strokeOpacity="0.35" strokeWidth="2.5" fill="none"
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }} />
+          <path key={`hd-${active}-${L.W}`} d={toTile(L.ys[active])} stroke="#e6192b" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeDasharray="8 10" className="lr-flow" />
           <circle r="4" fill="#121614">
             <animateMotion dur={L === WIDE ? '2.4s' : '1.6s'} repeatCount="indefinite" path={fromBrand} />
           </circle>
@@ -145,14 +148,36 @@ export function LoopFlow() {
         </svg>
 
         {/* your brand */}
-        <motion.div {...popIn(0, -16)} className="absolute w-[124px] rounded-2xl bg-surface border border-line shadow-[0_12px_30px_-18px_rgba(18,22,20,0.4)] p-3.5" style={{ left: BRAND.x - 62, top: BRAND.y - 58 }}>
-          <motion.span className="w-9 h-9 rounded-lg bg-canvas border border-line grid place-items-center"
-            animate={{ rotate: [0, -8, 8, 0] }} transition={{ duration: 1.2, repeat: Infinity, repeatDelay: 2.4 }}>
-            <Package size={18} className="text-ink" aria-hidden="true" />
-          </motion.span>
-          <p className="mt-2.5 text-[15px] font-semibold leading-tight">Your brand</p>
-          <p className="text-[12px] text-muted">Stock and rules</p>
-        </motion.div>
+        <div className="absolute -translate-x-1/2 -translate-y-1/2" style={{ left: BRAND.x, top: BRAND.y }}>
+          <motion.div {...popIn(0, -16)} className={`rounded-2xl bg-surface border border-line shadow-[0_18px_40px_-20px_rgba(18,22,20,0.45)] overflow-hidden ${wide ? 'w-[200px]' : 'w-[132px]'}`}>
+            <div className="h-1 bg-gradient-to-r from-ink via-ink/70 to-brand-red" />
+            <div className={wide ? 'p-4' : 'p-3'}>
+              <div className={`flex gap-2.5 ${wide ? 'items-center' : 'flex-col items-start'}`}>
+                <motion.span className={`rounded-xl bg-ink text-white grid place-items-center shrink-0 ${wide ? 'w-10 h-10' : 'w-8 h-8'}`}
+                  animate={{ rotate: [0, -6, 6, 0] }} transition={{ duration: 1.2, repeat: Infinity, repeatDelay: 3 }}>
+                  <Package size={wide ? 19 : 16} aria-hidden="true" />
+                </motion.span>
+                <span className="min-w-0">
+                  <span className={`block font-semibold leading-tight whitespace-nowrap ${wide ? 'text-[16px]' : 'text-[14px]'}`}>Your brand</span>
+                  <span className="block text-[12px] text-muted">Stock and rules</span>
+                </span>
+              </div>
+              {wide && (
+                <ul className="mt-3.5 grid gap-1.5">
+                  {['UK stock', 'Minimum prices', 'Authorised sellers'].map((r, i) => (
+                    <li key={r} className="flex items-center justify-between rounded-lg bg-canvas px-2.5 py-1.5 text-[12px] font-medium">
+                      {r}
+                      <motion.span className="w-4 h-4 rounded-full bg-success text-white grid place-items-center"
+                        animate={{ scale: [1, 1.25, 1] }} transition={{ duration: 0.6, repeat: Infinity, repeatDelay: 2.4, delay: i * 0.5 }}>
+                        <Check size={10} strokeWidth={3} aria-hidden="true" />
+                      </motion.span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </motion.div>
+        </div>
 
         {/* Loopretail hub */}
         <motion.div {...popIn(0.25)} className="absolute w-[124px] flex flex-col items-center" style={{ left: HUB.x - 62, top: HUB.y - 56 }}>
@@ -183,7 +208,7 @@ export function LoopFlow() {
                 className={`h-[60px] rounded-2xl bg-surface border pl-4 pr-3 flex items-center justify-between gap-3 transition-[border-color,box-shadow] duration-300 ${on ? 'border-brand-red/50 shadow-[0_16px_34px_-16px_rgba(230,25,43,0.45)]' : 'border-line shadow-[0_12px_30px_-18px_rgba(18,22,20,0.4)]'}`}>
                 <span className="flex items-center min-w-0">{t.mark}<span className="sr-only">{t.name}</span></span>
                 <span className="relative flex w-2 h-2 shrink-0" aria-hidden="true">
-                  <span className="absolute inset-0 rounded-full bg-success animate-ping opacity-50" />
+                  <span className="absolute inset-0 rounded-full bg-success animate-ping lr-ping opacity-50" />
                   <span className="relative w-2 h-2 rounded-full bg-success" />
                 </span>
               </motion.div>
