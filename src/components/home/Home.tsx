@@ -75,84 +75,93 @@ export function ChannelLogos() {
 
 /* ───────────────────────── Hero with the animated loop ───────────────────────── */
 
-const ORBIT: [string, ReactNode][] = [
-  ['Amazon', <FaAmazon size={18} className="text-[#232f3e]" />],
-  ['TikTok Shop', <SiTiktok size={16} className="text-[#010101]" />],
-  ['eBay', <EbayMark small />],
-  ['Temu', <TemuMark small />],
-  ['Shopify', <SiShopify size={17} className="text-[#95bf47]" />],
+/* Hero diagram: your brand -> Loopretail -> every channel, with orders moving along the lines.
+   Drawn on a fixed 560 x 480 stage and scaled to fit, so the SVG lines and the HTML tiles always line up. */
+const STAGE_W = 560;
+const STAGE_H = 480;
+const HUB = { x: 226, y: 240 };
+const BRAND = { x: 70, y: 240 };
+const TILES: { name: string; mark: ReactNode; y: number }[] = [
+  { name: 'Amazon UK', mark: <AmazonMark />, y: 64 },
+  { name: 'TikTok Shop', mark: <TikTokMark />, y: 152 },
+  { name: 'eBay', mark: <EbayMark />, y: 240 },
+  { name: 'Temu', mark: <TemuMark />, y: 328 },
+  { name: 'Your own store', mark: <ShopifyMark />, y: 416 },
 ];
+const TILE_X = 350; // left edge of the channel tiles
 
-export function LoopOrb({ proof }: { proof?: ReactNode }) {
+function useStageScale() {
+  const [el, setEl] = useState<HTMLDivElement | null>(null);
+  const [k, setK] = useState(1);
+  useEffect(() => {
+    if (!el) return;
+    const ro = new ResizeObserver(([e]) => setK(Math.min(1, e.contentRect.width / STAGE_W)));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [el]);
+  return [setEl, k] as const;
+}
+
+export function LoopFlow() {
   const still = useReducedMotion();
+  const [ref, k] = useStageScale();
+  const toTile = (y: number) => `M ${HUB.x + 62} ${HUB.y} C ${HUB.x + 90} ${HUB.y}, ${TILE_X - 40} ${y}, ${TILE_X} ${y}`;
+  const fromBrand = `M ${BRAND.x + 62} ${BRAND.y} L ${HUB.x - 62} ${HUB.y}`;
   return (
-    <div className="relative min-w-0">
-      <div className="relative aspect-square max-w-[500px] mx-auto grid place-items-center">
-        {/* rings */}
-        <div className="absolute inset-[4%] rounded-full border border-ink/[0.07]" />
-        <motion.div
-          className="absolute inset-[16%] rounded-full border border-dashed border-ink/15"
-          animate={still ? undefined : { rotate: 360 }}
-          transition={{ duration: 90, repeat: Infinity, ease: 'linear' }}
-        />
-        {/* channels riding the outer ring */}
-        <motion.div
-          className="absolute inset-[4%]"
-          animate={still ? undefined : { rotate: 360 }}
-          transition={{ duration: 60, repeat: Infinity, ease: 'linear' }}
-        >
-          {ORBIT.map(([name, icon], i) => {
-            const a = (i / ORBIT.length) * Math.PI * 2 - Math.PI / 2;
-            return (
-              <motion.span
-                key={name}
-                title={name}
-                className="absolute w-12 h-12 -ml-6 -mt-6 rounded-full bg-surface border border-line shadow-[0_10px_24px_-12px_rgba(18,22,20,0.35)] grid place-items-center"
-                style={{ left: `${50 + 50 * Math.cos(a)}%`, top: `${50 + 50 * Math.sin(a)}%` }}
-                animate={still ? undefined : { rotate: -360 }}
-                transition={{ duration: 60, repeat: Infinity, ease: 'linear' }}
-              >
-                {icon}
-              </motion.span>
-            );
-          })}
-        </motion.div>
-        {/* glow */}
-        <motion.div
-          className="absolute w-[46%] h-[46%] rounded-full bg-brand-red blur-[70px]"
-          animate={still ? { opacity: 0.35 } : { scale: [1, 1.15, 1], opacity: [0.25, 0.5, 0.25] }}
-          transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
-        />
-        {/* core */}
-        <motion.div
-          initial={{ scale: 0.85, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 1, ease: 'easeOut' }}
-          className="relative w-[44%] aspect-square rounded-full grid place-items-center overflow-hidden shadow-[0_24px_60px_-12px_rgba(230,25,43,0.55)]"
-          style={{ background: 'radial-gradient(circle at 30% 25%, #ff4a5c 0%, #e6192b 45%, #a3001a 100%)' }}
-        >
-          <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-transparent via-white/25 to-white/10 mix-blend-overlay" />
-          <svg viewBox="0 0 24 24" fill="none" strokeLinecap="round" strokeLinejoin="round" className="relative w-[48%] h-[48%] drop-shadow-[0_0_10px_rgba(255,255,255,0.7)]" aria-label="Loopretail loop">
-            <path d={LOOP} stroke="white" strokeOpacity="0.2" strokeWidth="1.5" />
-            {[0, 2].map((delay) => (
-              <motion.path
-                key={delay}
-                d={LOOP}
-                stroke="white"
-                strokeWidth="2"
-                initial={{ pathLength: still ? 1 : 0, pathOffset: 0 }}
-                animate={still ? undefined : { pathLength: [0, 0.4, 0], pathOffset: [0, 0.6, 1] }}
-                transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut', delay }}
-              />
-            ))}
-          </svg>
-        </motion.div>
-      </div>
-      {proof && (
-        <div className="relative -mt-6 mx-2 sm:mx-0 sm:absolute sm:mt-0 sm:left-0 sm:-bottom-10 sm:w-[min(310px,62%)] z-10">
-          <div className="bg-surface rounded-2xl border border-line shadow-[0_24px_60px_-24px_rgba(18,22,20,0.35)]">{proof}</div>
+    <div ref={ref} className="relative w-full max-w-[560px] mx-auto lg:mr-0" style={{ height: STAGE_H * k }}>
+      <div className="absolute top-0 left-0 origin-top-left" style={{ width: STAGE_W, height: STAGE_H, transform: `scale(${k})` }}>
+        <div aria-hidden="true" className="absolute inset-0 rounded-[28px] bg-surface border border-line" style={{ backgroundImage: 'radial-gradient(#dfe2de 1px, transparent 1px)', backgroundSize: '18px 18px' }} />
+
+        <svg viewBox={`0 0 ${STAGE_W} ${STAGE_H}`} className="absolute inset-0 w-full h-full" aria-hidden="true">
+          <path d={fromBrand} stroke="#c9cec9" strokeWidth="1.5" fill="none" />
+          {TILES.map((t) => <path key={t.name} d={toTile(t.y)} stroke="#c9cec9" strokeWidth="1.5" fill="none" />)}
+          {!still && (
+            <>
+              <circle r="4" fill="#121614">
+                <animateMotion dur="1.8s" repeatCount="indefinite" path={fromBrand} />
+              </circle>
+              {TILES.map((t, i) => (
+                <circle key={t.name} r="4" fill="#e6192b">
+                  <animateMotion dur="2.4s" begin={`${i * 0.45}s`} repeatCount="indefinite" path={toTile(t.y)} keyPoints="0;1" keyTimes="0;1" calcMode="linear" />
+                </circle>
+              ))}
+            </>
+          )}
+        </svg>
+
+        {/* your brand */}
+        <div className="absolute w-[124px] -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-surface border border-line shadow-[0_12px_30px_-18px_rgba(18,22,20,0.4)] p-3.5" style={{ left: BRAND.x, top: BRAND.y }}>
+          <span className="w-9 h-9 rounded-lg bg-canvas border border-line grid place-items-center"><Package size={18} className="text-ink" aria-hidden="true" /></span>
+          <p className="mt-2.5 text-[15px] font-semibold leading-tight">Your brand</p>
+          <p className="text-[12px] text-muted">Stock and rules</p>
         </div>
-      )}
+
+        {/* Loopretail hub */}
+        <div className="absolute w-[124px] -translate-x-1/2 -translate-y-1/2 flex flex-col items-center" style={{ left: HUB.x, top: HUB.y }}>
+          <span className="w-[112px] h-[112px] rounded-[28px] bg-brand-red grid place-items-center shadow-[0_18px_40px_-16px_rgba(230,25,43,0.7)]">
+            <svg viewBox="0 0 24 24" fill="none" strokeLinecap="round" strokeLinejoin="round" className="w-[72px] h-[72px]" aria-label="Loopretail">
+              <path d={LOOP} stroke="white" strokeOpacity="0.35" strokeWidth="2.2" />
+              <motion.path d={LOOP} stroke="white" strokeWidth="2.6"
+                initial={{ pathLength: still ? 1 : 0.35, pathOffset: 0 }}
+                animate={still ? undefined : { pathOffset: [0, 1] }}
+                transition={{ duration: 2.8, repeat: Infinity, ease: 'linear' }} />
+            </svg>
+          </span>
+          <p className="mt-3 text-[15px] font-semibold">Loopretail</p>
+          <p className="text-[12px] text-muted">One operator</p>
+        </div>
+
+        {/* channels */}
+        {TILES.map((t) => (
+          <div key={t.name} className="absolute h-[60px] -translate-y-1/2 rounded-2xl bg-surface border border-line shadow-[0_12px_30px_-18px_rgba(18,22,20,0.4)] pl-4 pr-3 flex items-center justify-between gap-3" style={{ left: TILE_X, top: t.y, width: STAGE_W - TILE_X - 16 }}>
+            <span className="flex items-center min-w-0">{t.mark}<span className="sr-only">{t.name}</span></span>
+            <span className="relative flex w-2 h-2 shrink-0" aria-hidden="true">
+              {!still && <span className="absolute inset-0 rounded-full bg-success animate-ping opacity-50" />}
+              <span className="relative w-2 h-2 rounded-full bg-success" />
+            </span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -172,7 +181,7 @@ export function HomeHero() {
             <CTA to="/portal/demo/home" label="Open the live demo" tone="outline-dark" id="home-hero-demo" />
           </div>
         </div>
-        <LoopOrb />
+        <LoopFlow />
       </div>
     </section>
   );
