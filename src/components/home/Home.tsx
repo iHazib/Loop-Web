@@ -571,11 +571,10 @@ export function AuditToPilot() {
   const [item, setItem] = useState(0);
   const still = useReducedMotion();
   useEffect(() => {
-    if (still) return;
     const a = setInterval(() => setBar((i) => (i + 1) % STAGES.length), 2400);
     const b = setInterval(() => setItem((i) => (i + 1) % BUILT.length), 2100);
     return () => { clearInterval(a); clearInterval(b); };
-  }, [still]);
+  }, []);
   const s = STAGES[bar];
   return (
     <section className={`${WRAP} py-12 md:py-[72px]`}>
@@ -722,10 +721,9 @@ export function GrowthEngine() {
   const [obj, setObj] = useState(0);
   const still = useReducedMotion();
   useEffect(() => {
-    if (still) return;
     const t = setInterval(() => setW((i) => (i + 1) % ENGINE_WORDS.length), 2400);
     return () => clearInterval(t);
-  }, [still]);
+  }, []);
   return (
     <section className={`${WRAP} py-12 md:py-[72px]`}>
       <div className="grid lg:grid-cols-2 gap-10 lg:gap-14 items-start">
@@ -741,7 +739,7 @@ export function GrowthEngine() {
                 <motion.span key={word} aria-hidden={i !== w} className="[grid-area:1/1] text-brand-red whitespace-nowrap"
                   initial={false}
                   animate={{ y: i === w ? '0%' : '-110%', opacity: i === w ? 1 : 0 }}
-                  transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}>
+                  transition={still ? { duration: 0 } : { duration: 0.45, ease: [0.16, 1, 0.3, 1] }}>
                   {word}
                 </motion.span>
               ))}
