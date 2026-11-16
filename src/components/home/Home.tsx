@@ -5,7 +5,7 @@ import { ArrowUpRight, BarChart3, Globe, Activity, Shield, TrendingUp, GitBranch
 import { FaAmazon } from 'react-icons/fa';
 import { SiTiktok, SiShopify } from 'react-icons/si';
 import { CTA, contactHref } from '../CTA';
-import { WRAP, H2, Eyebrow, Photo, type PhotoKey } from '../site/Page';
+import { WRAP, H2, Eyebrow, Photo, photo, type PhotoKey } from '../site/Page';
 
 /* Home page sections. Several are the earlier site's sections, rebuilt for the light theme. */
 
@@ -75,20 +75,21 @@ export function ChannelLogos() {
 
 /* ───────────────────────── Hero with the animated loop ───────────────────────── */
 
-/* Hero diagram: your brand -> Loopretail -> every channel, with orders moving along the lines.
-   Drawn on a fixed 560 x 480 stage and scaled to fit, so the SVG lines and the HTML tiles always line up. */
+/* Channels diagram: your brand -> Loopretail -> every channel.
+   Drawn on a fixed 560 x 480 stage and scaled to fit, so the SVG lines and the HTML tiles always line up.
+   Animation runs for everyone (it carries the message), but stays slow and small. */
 const STAGE_W = 560;
 const STAGE_H = 480;
 const HUB = { x: 226, y: 240 };
 const BRAND = { x: 70, y: 240 };
-const TILES: { name: string; mark: ReactNode; y: number }[] = [
-  { name: 'Amazon UK', mark: <AmazonMark />, y: 64 },
-  { name: 'TikTok Shop', mark: <TikTokMark />, y: 152 },
-  { name: 'eBay', mark: <EbayMark />, y: 240 },
-  { name: 'Temu', mark: <TemuMark />, y: 328 },
-  { name: 'Your own store', mark: <ShopifyMark />, y: 416 },
+const TILES: { name: string; mark: ReactNode; y: number; event: string }[] = [
+  { name: 'Amazon UK', mark: <AmazonMark />, y: 64, event: 'Order synced' },
+  { name: 'TikTok Shop', mark: <TikTokMark />, y: 152, event: 'Stock updated' },
+  { name: 'eBay', mark: <EbayMark />, y: 240, event: 'Price checked' },
+  { name: 'Temu', mark: <TemuMark />, y: 328, event: 'Listing live' },
+  { name: 'Your own store', mark: <ShopifyMark />, y: 416, event: 'Order synced' },
 ];
-const TILE_X = 350; // left edge of the channel tiles
+const TILE_X = 350;
 
 function useStageScale() {
   const [el, setEl] = useState<HTMLDivElement | null>(null);
@@ -103,100 +104,147 @@ function useStageScale() {
 }
 
 export function LoopFlow() {
-  const still = useReducedMotion();
   const [ref, k] = useStageScale();
+  const [active, setActive] = useState(0);
+  useEffect(() => {
+    const t = setInterval(() => setActive((i) => (i + 1) % TILES.length), 1800);
+    return () => clearInterval(t);
+  }, []);
   const toTile = (y: number) => `M ${HUB.x + 62} ${HUB.y} C ${HUB.x + 90} ${HUB.y}, ${TILE_X - 40} ${y}, ${TILE_X} ${y}`;
   const fromBrand = `M ${BRAND.x + 62} ${BRAND.y} L ${HUB.x - 62} ${HUB.y}`;
+  const drawIn = (d: number) => ({ initial: { pathLength: 0 }, whileInView: { pathLength: 1 }, viewport: { once: true }, transition: { duration: 0.9, delay: d, ease: [0.16, 1, 0.3, 1] as const } });
+  const popIn = (d: number, x = 0) => ({ initial: { opacity: 0, x, scale: 0.92 }, whileInView: { opacity: 1, x: 0, scale: 1 }, viewport: { once: true }, transition: { duration: 0.55, delay: d, ease: [0.16, 1, 0.3, 1] as const } });
   return (
     <div ref={ref} className="relative w-full max-w-[560px] mx-auto lg:mr-0" style={{ height: STAGE_H * k }}>
       <div className="absolute top-0 left-0 origin-top-left" style={{ width: STAGE_W, height: STAGE_H, transform: `scale(${k})` }}>
-        <div aria-hidden="true" className="absolute inset-0 rounded-[28px] bg-surface border border-line" style={{ backgroundImage: 'radial-gradient(#dfe2de 1px, transparent 1px)', backgroundSize: '18px 18px' }} />
+        <div aria-hidden="true" className="absolute inset-0 rounded-[28px] bg-surface border border-line overflow-hidden">
+          <motion.div className="absolute inset-[-18px]" style={{ backgroundImage: 'radial-gradient(#dfe2de 1px, transparent 1px)', backgroundSize: '18px 18px' }}
+            animate={{ x: [0, 18], y: [0, 18] }} transition={{ duration: 6, repeat: Infinity, ease: 'linear' }} />
+          <motion.div className="absolute w-[320px] h-[320px] rounded-full bg-brand-red/[0.07] blur-3xl" style={{ left: HUB.x - 160, top: HUB.y - 160 }}
+            animate={{ scale: [1, 1.2, 1] }} transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }} />
+        </div>
 
         <svg viewBox={`0 0 ${STAGE_W} ${STAGE_H}`} className="absolute inset-0 w-full h-full" aria-hidden="true">
-          <path d={fromBrand} stroke="#c9cec9" strokeWidth="1.5" fill="none" />
-          {TILES.map((t) => <path key={t.name} d={toTile(t.y)} stroke="#c9cec9" strokeWidth="1.5" fill="none" />)}
-          {!still && (
-            <>
-              <circle r="4" fill="#121614">
-                <animateMotion dur="1.8s" repeatCount="indefinite" path={fromBrand} />
-              </circle>
-              {TILES.map((t, i) => (
-                <circle key={t.name} r="4" fill="#e6192b">
-                  <animateMotion dur="2.4s" begin={`${i * 0.45}s`} repeatCount="indefinite" path={toTile(t.y)} keyPoints="0;1" keyTimes="0;1" calcMode="linear" />
-                </circle>
-              ))}
-            </>
-          )}
+          <motion.path d={fromBrand} stroke="#c9cec9" strokeWidth="1.5" fill="none" {...drawIn(0.2)} />
+          {TILES.map((t, i) => <motion.path key={t.name} d={toTile(t.y)} stroke="#c9cec9" strokeWidth="1.5" fill="none" {...drawIn(0.5 + i * 0.08)} />)}
+          {/* the active channel's line lights up red, with a flowing dash */}
+          <motion.path key={`hl-${active}`} d={toTile(TILES[active].y)} stroke="#e6192b" strokeWidth="2" fill="none" strokeDasharray="6 8"
+            initial={{ pathLength: 0, opacity: 1 }} animate={{ pathLength: 1, strokeDashoffset: [0, -28] }}
+            transition={{ pathLength: { duration: 0.6, ease: 'easeOut' }, strokeDashoffset: { duration: 1, repeat: Infinity, ease: 'linear' } }} />
+          <circle r="4" fill="#121614">
+            <animateMotion dur="1.6s" repeatCount="indefinite" path={fromBrand} />
+          </circle>
+          {TILES.map((t, i) => (
+            <circle key={t.name} r={i === active ? 5 : 3.5} fill="#e6192b" opacity={i === active ? 1 : 0.55}>
+              <animateMotion dur="2.2s" begin={`${i * 0.4}s`} repeatCount="indefinite" path={toTile(t.y)} />
+            </circle>
+          ))}
         </svg>
 
         {/* your brand */}
-        <div className="absolute w-[124px] -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-surface border border-line shadow-[0_12px_30px_-18px_rgba(18,22,20,0.4)] p-3.5" style={{ left: BRAND.x, top: BRAND.y }}>
-          <span className="w-9 h-9 rounded-lg bg-canvas border border-line grid place-items-center"><Package size={18} className="text-ink" aria-hidden="true" /></span>
+        <motion.div {...popIn(0, -16)} className="absolute w-[124px] rounded-2xl bg-surface border border-line shadow-[0_12px_30px_-18px_rgba(18,22,20,0.4)] p-3.5" style={{ left: BRAND.x - 62, top: BRAND.y - 58 }}>
+          <motion.span className="w-9 h-9 rounded-lg bg-canvas border border-line grid place-items-center"
+            animate={{ rotate: [0, -8, 8, 0] }} transition={{ duration: 1.2, repeat: Infinity, repeatDelay: 2.4 }}>
+            <Package size={18} className="text-ink" aria-hidden="true" />
+          </motion.span>
           <p className="mt-2.5 text-[15px] font-semibold leading-tight">Your brand</p>
           <p className="text-[12px] text-muted">Stock and rules</p>
-        </div>
+        </motion.div>
 
         {/* Loopretail hub */}
-        <div className="absolute w-[124px] -translate-x-1/2 -translate-y-1/2 flex flex-col items-center" style={{ left: HUB.x, top: HUB.y }}>
-          <span className="w-[112px] h-[112px] rounded-[28px] bg-brand-red grid place-items-center shadow-[0_18px_40px_-16px_rgba(230,25,43,0.7)]">
-            <svg viewBox="0 0 24 24" fill="none" strokeLinecap="round" strokeLinejoin="round" className="w-[72px] h-[72px]" aria-label="Loopretail">
-              <path d={LOOP} stroke="white" strokeOpacity="0.35" strokeWidth="2.2" />
-              <motion.path d={LOOP} stroke="white" strokeWidth="2.6"
-                initial={{ pathLength: still ? 1 : 0.35, pathOffset: 0 }}
-                animate={still ? undefined : { pathOffset: [0, 1] }}
-                transition={{ duration: 2.8, repeat: Infinity, ease: 'linear' }} />
-            </svg>
+        <motion.div {...popIn(0.25)} className="absolute w-[124px] flex flex-col items-center" style={{ left: HUB.x - 62, top: HUB.y - 56 }}>
+          <span className="relative w-[112px] h-[112px]">
+            {[0, 1].map((r) => (
+              <motion.span key={r} aria-hidden="true" className="absolute inset-0 rounded-[28px] border-2 border-brand-red"
+                animate={{ scale: [1, 1.45], opacity: [0.45, 0] }} transition={{ duration: 2.4, repeat: Infinity, ease: 'easeOut', delay: r * 1.2 }} />
+            ))}
+            <span className="absolute inset-0 rounded-[28px] bg-brand-red grid place-items-center shadow-[0_18px_40px_-16px_rgba(230,25,43,0.7)]">
+              <svg viewBox="0 0 24 24" fill="none" strokeLinecap="round" strokeLinejoin="round" className="w-[72px] h-[72px]" aria-label="Loopretail">
+                <path d={LOOP} stroke="white" strokeOpacity="0.35" strokeWidth="2.2" />
+                <motion.path d={LOOP} stroke="white" strokeWidth="2.6"
+                  initial={{ pathLength: 0.35, pathOffset: 0 }} animate={{ pathOffset: [0, 1] }}
+                  transition={{ duration: 2.6, repeat: Infinity, ease: 'linear' }} />
+              </svg>
+            </span>
           </span>
           <p className="mt-3 text-[15px] font-semibold">Loopretail</p>
           <p className="text-[12px] text-muted">One operator</p>
-        </div>
+        </motion.div>
 
         {/* channels */}
-        {TILES.map((t) => (
-          <div key={t.name} className="absolute h-[60px] -translate-y-1/2 rounded-2xl bg-surface border border-line shadow-[0_12px_30px_-18px_rgba(18,22,20,0.4)] pl-4 pr-3 flex items-center justify-between gap-3" style={{ left: TILE_X, top: t.y, width: STAGE_W - TILE_X - 16 }}>
-            <span className="flex items-center min-w-0">{t.mark}<span className="sr-only">{t.name}</span></span>
-            <span className="relative flex w-2 h-2 shrink-0" aria-hidden="true">
-              {!still && <span className="absolute inset-0 rounded-full bg-success animate-ping opacity-50" />}
-              <span className="relative w-2 h-2 rounded-full bg-success" />
-            </span>
-          </div>
-        ))}
+        {TILES.map((t, i) => {
+          const on = i === active;
+          return (
+            <motion.div key={t.name} {...popIn(0.55 + i * 0.08, 16)} className="absolute" style={{ left: TILE_X, top: t.y - 30, width: STAGE_W - TILE_X - 16 }}>
+              <motion.div animate={{ x: on ? -6 : 0, scale: on ? 1.03 : 1 }} transition={{ type: 'spring', stiffness: 300, damping: 22 }}
+                className={`h-[60px] rounded-2xl bg-surface border pl-4 pr-3 flex items-center justify-between gap-3 transition-[border-color,box-shadow] duration-300 ${on ? 'border-brand-red/50 shadow-[0_16px_34px_-16px_rgba(230,25,43,0.45)]' : 'border-line shadow-[0_12px_30px_-18px_rgba(18,22,20,0.4)]'}`}>
+                <span className="flex items-center min-w-0">{t.mark}<span className="sr-only">{t.name}</span></span>
+                <span className="relative flex w-2 h-2 shrink-0" aria-hidden="true">
+                  <span className="absolute inset-0 rounded-full bg-success animate-ping opacity-50" />
+                  <span className="relative w-2 h-2 rounded-full bg-success" />
+                </span>
+              </motion.div>
+              <AnimatePresence>
+                {on && (
+                  <motion.span key={`ev-${active}`} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.3 }}
+                    className="absolute -top-3 right-6 rounded-full bg-ink text-white text-[11px] font-medium px-2 py-0.5 whitespace-nowrap">
+                    {t.event}
+                  </motion.span>
+                )}
+              </AnimatePresence>
+            </motion.div>
+          );
+        })}
       </div>
     </div>
   );
 }
 
-export function LoopSection() {
+/* Replaces the "Channels we run" logo row. */
+export function ChannelsSection() {
   return (
-    <section className={`${WRAP} py-12 md:py-[72px] overflow-x-clip`}>
+    <section className={`${WRAP} py-12 md:py-16 overflow-x-clip`}>
       <div className="grid lg:grid-cols-[0.9fr_1.1fr] gap-10 lg:gap-14 items-center">
-        <div className="flex flex-col gap-4">
-          <Eyebrow>The loop</Eyebrow>
+        <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.6 }} className="flex flex-col gap-4">
+          <Eyebrow>Channels we run</Eyebrow>
           <h2 className={H2}>One operator between your brand and every channel.</h2>
-          <p className="text-[16px] leading-[25px] text-muted max-w-[460px]">Your stock and your rules go in once. We run every channel from them and send the orders, prices and seller checks back to you in one dashboard.</p>
-        </div>
+          <p className="text-[16px] leading-[25px] text-muted max-w-[460px]">Your stock and your rules go in once. We run Amazon UK, TikTok Shop, eBay, Temu and your own store from them, and send orders, prices and seller checks back to you in one dashboard.</p>
+        </motion.div>
         <LoopFlow />
       </div>
     </section>
   );
 }
 
+/* Home hero: same copy and buttons, now over a full width photo. */
 export function HomeHero() {
   return (
-    <section className={`${WRAP} pt-8 md:pt-12 pb-10 md:pb-12 overflow-x-clip`}>
-      <div className="grid lg:grid-cols-[1.02fr_1fr] gap-10 lg:gap-14 items-center">
-        <div className="flex flex-col gap-6 min-w-0">
-          <Eyebrow>Brand commerce partner for the UK</Eyebrow>
-          <h1 className="font-semibold tracking-[-0.04em] text-balance text-[40px] leading-[44px] md:text-[60px] md:leading-[62px]">Your brand, run properly in the UK.</h1>
-          <p className="text-[17px] md:text-[18px] leading-[28px] text-muted max-w-[540px] text-pretty">
-            We sell your products on Amazon, TikTok Shop, eBay and your own store, keep unauthorised sellers off your listings, and report every number in one dashboard.
-          </p>
-          <div className="flex flex-wrap gap-3">
-            <CTA to={contactHref('strategy-call')} label="Book a strategy call" id="home-hero" />
-            <CTA to="/portal/demo/home" label="Open the live demo" tone="outline-dark" id="home-hero-demo" />
-          </div>
+    <section className="px-2 md:px-3 pt-2">
+      <div className="relative rounded-[28px] overflow-hidden min-h-[560px] md:min-h-[620px] flex items-center">
+        <motion.img
+          src={photo('floor', 2200, 1200)}
+          alt=""
+          aria-hidden="true"
+          className="absolute inset-0 w-full h-full object-cover object-[70%_50%]"
+          initial={{ scale: 1.12 }}
+          animate={{ scale: [1.12, 1.04] }}
+          transition={{ duration: 14, ease: 'easeOut' }}
+        />
+        <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-r from-canvas via-canvas/90 to-canvas/20 md:via-canvas/80 md:to-transparent" />
+        <div aria-hidden="true" className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-canvas/70 to-transparent" />
+        <div className={`${WRAP} relative w-full py-14 md:py-20`}>
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }} className="flex flex-col gap-6 max-w-[620px]">
+            <Eyebrow>Brand commerce partner for the UK</Eyebrow>
+            <h1 className="font-semibold tracking-[-0.045em] text-balance text-[42px] leading-[46px] md:text-[68px] md:leading-[68px]">Your brand, run properly in the UK.</h1>
+            <p className="text-[17px] md:text-[19px] leading-[28px] md:leading-[30px] text-ink/75 max-w-[540px] text-pretty">
+              We sell your products on Amazon, TikTok Shop, eBay and your own store, keep unauthorised sellers off your listings, and report every number in one dashboard.
+            </p>
+            <div className="flex flex-wrap gap-3">
+              <CTA to={contactHref('strategy-call')} label="Book a strategy call" id="home-hero" />
+              <CTA to="/portal/demo/home" label="Open the live demo" tone="outline-dark" id="home-hero-demo" />
+            </div>
+          </motion.div>
         </div>
-        <LoopFlow />
       </div>
     </section>
   );

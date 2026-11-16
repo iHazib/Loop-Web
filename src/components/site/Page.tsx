@@ -12,6 +12,7 @@ import { CTA, contactHref } from '../CTA';
 /* Photography: Unsplash (free licence), served from their CDN at the size we need. */
 export const PHOTO = {
   rack: '1587293852726-70cdb56c2866',
+  floor: '1586528116022-aeda1613c63d',
   van: '1580674285054-bed31e145f59',
   amazon: '1633174524827-db00a6b7bc74',
   shelves: '1627915589334-14a3c3e3a741',
