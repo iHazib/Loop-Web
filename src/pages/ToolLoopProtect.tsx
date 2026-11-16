@@ -14,21 +14,23 @@ export default function ToolLoopProtect() {
   return (
     <SitePage>
       <PageHero
-        eyebrow="Tools · Loop Protect"
-        tag="Amazon UK · daily"
-        title={<><span className="font-light text-white/50">See the signal.</span><br />Verify the facts. Act.</>}
+        eyebrow="Loop Protect"
+        title="See who is on your listings. Act the same day."
         lead="Loop Protect checks every seller on your Amazon UK listings each day. When something breaks your rules it opens a case with the evidence, so your team or ours can act the same day."
-        ctas={<><CTA to={contactHref('brand-protection')} label="Get a free seller scan" tone="red" id="protect-hero" /><CTA to="/portal/demo/protection" label="See it in the demo" tone="outline-light" id="protect-hero-demo" /></>}
+        ctas={<><CTA to={contactHref('brand-protection')} label="Get a free seller scan" tone="red" id="protect-hero" /><CTA to="/portal/demo/protection" label="See it in the demo" tone="outline-dark" id="protect-hero-demo" /></>}
         meta={[{ k: 'Checks', v: 'Daily' }, { k: 'Rules', v: 'Six' }, { k: 'Evidence', v: 'Saved per case' }, { k: 'Coverage', v: 'Amazon UK' }]}
+        image="boxes"
+        imageAlt="A pile of taped cardboard boxes"
+        crumb={{ label: 'Tools', to: '/tools' }}
       />
 
-      <Section eyebrow="What it watches" title={<>Six rules.<br />Each one opens a case.</>}
+      <Section eyebrow="What it watches" title="Six rules that open a case."
         lead="Rules run against your own authorised seller list and minimum prices. Until that list exists, sellers are shown but not flagged, so you are never flooded with false alarms.">
         <CardGrid items={rules} />
       </Section>
 
       <Section tone="dark" eyebrow="From alert to resolved" title="Every case follows the same path.">
-        <Steps dark steps={[
+        <Steps steps={[
           { title: 'Flagged', body: 'A rule fires. The case records the seller, price, fulfilment method, listing and the date, plus the data that triggered it.', time: 'Same day' },
           { title: 'Reviewed', body: 'Your manager or our team checks the evidence. New authorised partners are cleared; real problems move forward.', time: 'Within 1 day' },
           { title: 'Action', body: 'Seller contact, test buy, Amazon Report a Violation through Brand Registry, or a cease and desist letter. Each action is logged on the case.', time: 'Days 1 to 7' },

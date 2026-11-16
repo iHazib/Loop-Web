@@ -45,28 +45,29 @@ export default function Services() {
   return (
     <SitePage>
       <PageHero
-        eyebrow="Services · Loop Retail"
-        tag="One operating model"
-        title={<><span className="font-light text-white/50">Everything a brand needs</span><br />to sell in the UK. In one place.</>}
+        eyebrow="Services"
+        title="Everything a brand needs to sell in the UK, run by one team."
         lead="Most brands piece together a marketplace agency, a 3PL, a protection vendor and a DTC freelancer. We run all of it as one connected operation, measured in one dashboard."
-        ctas={<><CTA to={contactHref('strategy-call')} label="Book a strategy call" tone="red" id="services-hero" /><CTA to="/how-it-works" label="See how it works" tone="outline-light" id="services-hero-how" /></>}
+        ctas={<><CTA to={contactHref('strategy-call')} label="Book a strategy call" tone="red" id="services-hero" /><CTA to="/how-it-works" label="See how it works" tone="outline-dark" id="services-hero-how" /></>}
         meta={[{ k: 'Channels', v: 'Amazon, TikTok, eBay, Temu' }, { k: 'Direct', v: 'Shopify, WooCommerce' }, { k: 'Retail', v: 'UK wholesale and retail' }, { k: 'Reporting', v: 'Live brand dashboard' }]}
+        image="aisle"
+        imageAlt="A warehouse aisle lined with racking"
       />
 
-      <Section eyebrow="What we do" title={<>Six services.<br />One team running them.</>}
+      <Section eyebrow="What we do" title="Six services run by one team."
         lead="Take one service or all of them. Each one plugs into the same stock, the same data and the same people, so nothing falls between suppliers.">
         <CardGrid items={services} />
       </Section>
 
-      <Section tone="dark" eyebrow="Fulfilment and operations" title={<>The physical side,<br />handled in the UK.</>}
+      <Section tone="dark" eyebrow="Fulfilment and operations" title="The physical side, handled in the UK."
         lead="Every service above sits on our own UK operation, so a sale on any channel ships from the same stock.">
-        <CardGrid items={fulfilment} cols={4} dark />
+        <CardGrid items={fulfilment} cols={4} />
       </Section>
 
       <Section tone="off" eyebrow="Why one partner" title="What changes when it is all connected."
         lead="The same problems keep appearing when channels are run by different suppliers. This is how a single operating model compares.">
         <Compare
-          columns={['Loop Retail', 'Separate agencies', 'Distributor', 'Doing it in house']}
+          columns={['Loopretail', 'Separate agencies', 'Distributor', 'Doing it in house']}
           rows={[
             { label: 'Marketplaces, DTC and retail in one plan', cells: [true, false, 'Retail mainly', 'If you hire for it'] },
             { label: 'Brand protection built in', cells: [true, 'Extra vendor', false, 'Manual'] },

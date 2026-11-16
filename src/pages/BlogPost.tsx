@@ -1,13 +1,22 @@
-import { useEffect } from 'react';
-import { motion } from 'motion/react';
 import { Link, useParams } from 'react-router-dom';
-import { ArrowLeft, ArrowRight } from 'lucide-react';
-import { NavBar } from '../components/NavBar';
-import { Footer } from '../components/Footer';
+import { ArrowLeft } from 'lucide-react';
+import { SitePage, WRAP, CTABand } from '../components/site/Page';
 import { getPostBySlug, getPublishedPosts, usePosts, useReady, formatDate } from '../lib/store';
 import { renderMarkdown } from '../lib/markdown';
 
-const PAPER = 'bg-[#f6f5f1]';
+const PROSE = `text-[17px] leading-[29px] text-ink/90
+  [&_h2]:text-[26px] [&_h2]:leading-[32px] [&_h2]:font-semibold [&_h2]:tracking-[-0.025em] [&_h2]:text-ink [&_h2]:mt-12 [&_h2]:mb-3
+  [&_h3]:text-[20px] [&_h3]:leading-[27px] [&_h3]:font-semibold [&_h3]:text-ink [&_h3]:mt-9 [&_h3]:mb-2
+  [&_p]:my-5
+  [&_a]:text-red-text [&_a]:underline [&_a]:underline-offset-2
+  [&_strong]:font-semibold [&_strong]:text-ink
+  [&_ul]:my-5 [&_ul]:grid [&_ul]:gap-2 [&_ul]:list-disc [&_ul]:pl-5
+  [&_ol]:my-5 [&_ol]:grid [&_ol]:gap-2 [&_ol]:list-decimal [&_ol]:pl-5
+  [&_li]:marker:text-brand-red
+  [&_blockquote]:border-l-2 [&_blockquote]:border-brand-red [&_blockquote]:pl-5 [&_blockquote]:my-8 [&_blockquote]:text-[21px] [&_blockquote]:leading-[30px] [&_blockquote]:font-medium [&_blockquote]:text-ink
+  [&_code]:bg-sunken [&_code]:rounded [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:text-[0.9em]
+  [&_hr]:my-10 [&_hr]:border-line
+  [&_img]:my-8 [&_img]:rounded-2xl`;
 
 export default function BlogPost() {
   usePosts();
@@ -15,159 +24,64 @@ export default function BlogPost() {
   const { slug } = useParams<{ slug: string }>();
   const post = slug ? getPostBySlug(slug) : null;
 
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [slug]);
-
   if (!ready) {
-    return (
-      <div className={`w-full min-h-screen ${PAPER} font-sans`}>
-        <NavBar />
-        <div className="max-w-[760px] mx-auto px-6 pt-44 pb-32 flex justify-center">
-          <span className="font-mono text-[11px] tracking-widest text-brand-dark/30 uppercase animate-pulse">Setting the press…</span>
-        </div>
-        <Footer />
-      </div>
-    );
+    return <SitePage><p className={`${WRAP} py-32 text-center text-muted`}>Loading post</p></SitePage>;
   }
 
   if (!post || post.status !== 'published') {
     return (
-      <div className={`w-full min-h-screen ${PAPER} font-sans`}>
-        <NavBar />
-        <div className="max-w-[760px] mx-auto px-6 pt-44 pb-32 text-center">
-          <span className="font-mono text-[11px] tracking-widest text-brand-red uppercase">404</span>
-          <h1 className="font-display font-bold tracking-tight text-brand-dark text-4xl mt-4 mb-6">Article not found.</h1>
-          <Link to="/blog" className="inline-flex items-center gap-2 text-sm font-mono tracking-widest text-brand-dark/50 hover:text-brand-red uppercase">
-            <ArrowLeft size={14} /> Back to the journal
-          </Link>
+      <SitePage>
+        <div className={`${WRAP} py-28 text-center`}>
+          <h1 className="text-[34px] font-semibold tracking-[-0.03em]">This post is not available.</h1>
+          <p className="mt-2 text-muted">It may have been moved or unpublished.</p>
+          <Link to="/blog" className="mt-6 inline-flex items-center gap-2 text-[15px] font-medium text-red-text hover:underline"><ArrowLeft size={16} /> All posts</Link>
         </div>
-        <Footer />
-      </div>
+      </SitePage>
     );
   }
 
   const related = getPublishedPosts().filter((p) => p.id !== post.id && p.category === post.category).slice(0, 3);
 
   return (
-    <div className={`w-full min-h-screen ${PAPER} font-sans overflow-x-hidden`}>
-      <NavBar />
-
-      <div className="max-w-[1000px] mx-auto px-6 pt-28 pb-20">
-
-        {/* Masthead strip */}
-        <div className="flex items-center justify-between border-y-2 border-black py-1.5 text-[10px] font-mono tracking-widest uppercase text-brand-dark">
-          <Link to="/blog" className="inline-flex items-center gap-1.5 hover:text-brand-red transition-colors">
-            <ArrowLeft size={12} /> The Loop Journal
-          </Link>
-          <span className="hidden sm:block text-brand-red">{post.category}</span>
-          <span>{formatDate(post.publishedAt)}</span>
-        </div>
-
-        {/* Article header */}
-        <header className="max-w-[760px] mx-auto text-center pt-12">
-          <span className="text-[10px] font-mono tracking-widest text-brand-red uppercase">
-            {post.category} · {post.readMinutes} min read
-          </span>
-          <motion.h1 initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
-            className="font-display font-bold tracking-tight text-brand-dark leading-[1.02] mt-3 mb-5"
-            style={{ fontSize: 'clamp(2.1rem, 5vw, 4rem)' }}>
-            {post.title}
-          </motion.h1>
-          <p className="text-brand-dark/65 font-light text-lg leading-relaxed">{post.excerpt}</p>
-
-          {/* Byline bar */}
-          <div className="flex items-center justify-between border-y border-black/20 mt-8 py-3 text-[10px] font-mono tracking-widest uppercase text-brand-dark/55">
-            <span>By {post.author}</span>
-            <span>Filed {formatDate(post.publishedAt)}</span>
-          </div>
+    <SitePage>
+      <article>
+        <header className="max-w-[760px] mx-auto px-4 md:px-6 pt-8 md:pt-12">
+          <Link to="/blog" className="inline-flex items-center gap-1.5 text-[14px] text-muted hover:text-ink"><ArrowLeft size={15} /> Blog</Link>
+          <p className="mt-6 text-[14px] font-medium text-red-text">{post.category}</p>
+          <h1 className="mt-2 font-semibold tracking-[-0.035em] text-balance text-[34px] leading-[39px] md:text-[46px] md:leading-[50px]">{post.title}</h1>
+          {post.excerpt && <p className="mt-4 text-[19px] leading-[29px] text-muted">{post.excerpt}</p>}
+          <p className="mt-5 text-[14px] text-muted">{post.author} · {formatDate(post.publishedAt)} · {post.readMinutes} min read</p>
         </header>
-
-        {/* Cover */}
         {post.coverImage && (
-          <figure className="mt-10">
-            <div className="aspect-[21/9] overflow-hidden border border-black/15">
-              <img src={post.coverImage} alt={post.title} className="w-full h-full object-cover grayscale" />
-            </div>
-            <figcaption className="text-[10px] font-mono tracking-widest text-brand-dark/40 uppercase mt-2 text-center italic">
-              {post.category} — Loopretail Journal
-            </figcaption>
-          </figure>
-        )}
-
-        {/* Body */}
-        <div
-          className="max-w-[680px] mx-auto py-14 text-brand-dark/80 text-[1.06rem] leading-[1.8]
-            [&_h2]:font-display [&_h2]:font-bold [&_h2]:tracking-tight [&_h2]:text-brand-dark [&_h2]:text-2xl [&_h2]:mt-12 [&_h2]:mb-4 [&_h2]:pt-6 [&_h2]:border-t [&_h2]:border-black/15
-            [&_h3]:font-display [&_h3]:font-bold [&_h3]:text-brand-dark [&_h3]:text-lg [&_h3]:mt-9 [&_h3]:mb-2.5
-            [&_p]:mb-6
-            [&>p:first-of-type]:first-letter:float-left [&>p:first-of-type]:first-letter:font-display [&>p:first-of-type]:first-letter:font-bold [&>p:first-of-type]:first-letter:text-brand-red [&>p:first-of-type]:first-letter:text-[4.2rem] [&>p:first-of-type]:first-letter:leading-[0.78] [&>p:first-of-type]:first-letter:mr-3 [&>p:first-of-type]:first-letter:mt-1
-            [&_a]:text-brand-red [&_a]:underline [&_a]:underline-offset-2 hover:[&_a]:text-[#c0001f]
-            [&_strong]:text-brand-dark [&_strong]:font-semibold
-            [&_ul]:my-6 [&_ul]:space-y-2 [&_ul]:list-disc [&_ul]:pl-5
-            [&_ol]:my-6 [&_ol]:space-y-2 [&_ol]:list-decimal [&_ol]:pl-5
-            [&_li]:marker:text-brand-red/60
-            [&_blockquote]:border-l-2 [&_blockquote]:border-brand-red [&_blockquote]:pl-6 [&_blockquote]:my-9 [&_blockquote]:font-display [&_blockquote]:font-medium [&_blockquote]:text-brand-dark [&_blockquote]:text-2xl [&_blockquote]:leading-snug
-            [&_code]:bg-black/5 [&_code]:text-brand-red [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:text-[0.9em] [&_code]:font-mono
-            [&_hr]:my-12 [&_hr]:border-black/15
-            [&_img]:my-8 [&_img]:border [&_img]:border-black/15 [&_img]:grayscale"
-          dangerouslySetInnerHTML={{ __html: renderMarkdown(post.content) }}
-        />
-
-        {/* Filed under */}
-        {post.tags.length > 0 && (
-          <div className="max-w-[680px] mx-auto flex flex-wrap items-center gap-2 border-t border-black/15 pt-6">
-            <span className="text-[10px] font-mono tracking-widest text-brand-dark/40 uppercase mr-1">Filed under</span>
-            {post.tags.map((t) => (
-              <span key={t} className="text-[10px] font-mono tracking-widest text-brand-dark/60 border border-black/20 px-2.5 py-1 uppercase">
-                {t}
-              </span>
-            ))}
+          <div className="max-w-[1040px] mx-auto px-4 md:px-6 mt-8">
+            <div className="aspect-[2/1] rounded-[20px] overflow-hidden bg-sunken"><img src={post.coverImage} alt="" className="w-full h-full object-cover" /></div>
           </div>
         )}
-      </div>
+        <div className="max-w-[680px] mx-auto px-4 md:px-6 py-8">
+          <div className={PROSE} dangerouslySetInnerHTML={{ __html: renderMarkdown(post.content) }} />
+          {post.tags.length > 0 && (
+            <div className="mt-10 pt-6 border-t border-line flex flex-wrap gap-2">
+              {post.tags.map((t) => <span key={t} className="text-[13px] rounded-md bg-sunken px-2 py-0.5 text-muted">{t}</span>)}
+            </div>
+          )}
+        </div>
+      </article>
 
-      {/* Related — newspaper columns */}
       {related.length > 0 && (
-        <section className="w-full px-6 pb-8">
-          <div className="max-w-[1000px] mx-auto">
-            <div className="flex items-center justify-between border-y-2 border-black py-2 mb-8">
-              <h2 className="font-display font-bold tracking-tight text-brand-dark text-lg">More from {post.category}</h2>
-              <Link to="/blog" className="text-[10px] font-mono tracking-widest text-brand-red uppercase hover:underline">All sections</Link>
-            </div>
-            <div className="grid sm:grid-cols-3 gap-x-8 divide-y sm:divide-y-0 sm:divide-x divide-black/15">
-              {related.map((p, i) => (
-                <Link key={p.id} to={`/blog/${p.slug}`} className={`group block ${i > 0 ? 'pt-8 sm:pt-0 sm:pl-8' : ''}`}>
-                  {p.coverImage && (
-                    <div className="aspect-[16/10] overflow-hidden border border-black/10 mb-3">
-                      <img src={p.coverImage} alt={p.title} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500" />
-                    </div>
-                  )}
-                  <span className="text-[9px] font-mono tracking-widest text-brand-red uppercase">{p.category}</span>
-                  <h3 className="font-display font-bold text-brand-dark group-hover:text-brand-red transition-colors leading-tight mt-1">{p.title}</h3>
-                  <p className="text-brand-dark/55 text-xs font-light leading-relaxed mt-2 line-clamp-2">{p.excerpt}</p>
-                </Link>
-              ))}
-            </div>
+        <section className={`${WRAP} pb-12`}>
+          <h2 className="text-[20px] font-semibold tracking-[-0.02em] mb-4">More on {post.category}</h2>
+          <div className="grid md:grid-cols-3 gap-3">
+            {related.map((r) => (
+              <Link key={r.id} to={`/blog/${r.slug}`} className="rounded-2xl bg-surface border border-line p-5 hover:border-ink/30">
+                <span className="block text-[16px] font-semibold leading-[22px]">{r.title}</span>
+                <span className="block mt-2 text-[13px] text-muted">{formatDate(r.publishedAt)} · {r.readMinutes} min read</span>
+              </Link>
+            ))}
           </div>
         </section>
       )}
 
-      {/* CTA — From the Desk */}
-      <section className="w-full px-6 pb-20">
-        <div className="max-w-[1000px] mx-auto bg-brand-dark text-white px-8 py-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5">
-          <div>
-            <p className="text-[9px] font-mono tracking-widest uppercase text-brand-red mb-2">From the Desk</p>
-            <p className="font-display font-bold text-2xl leading-tight max-w-md">A UK retail challenge worth solving?</p>
-          </div>
-          <Link to="/contact"
-            className="shrink-0 inline-flex items-center gap-2 bg-brand-red text-white px-7 py-3.5 rounded-full font-semibold text-sm hover:bg-[#c0001f] transition-colors group">
-            Work with Loop Retail <ArrowRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
-          </Link>
-        </div>
-      </section>
-
-      <Footer />
-    </div>
+      <CTABand title="Want this looked at for your brand?" body="Tell us where you sell today and what is going wrong. We reply within one working day." topic="strategy-call" label="Talk to us" />
+    </SitePage>
   );
 }

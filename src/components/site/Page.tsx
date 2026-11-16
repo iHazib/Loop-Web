@@ -1,64 +1,124 @@
-import type { ReactNode } from 'react';
-import { motion } from 'motion/react';
+import { createContext, useContext, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Check, Minus, Plus, X } from 'lucide-react';
-import { useState } from 'react';
+import { ArrowUpRight, Check, Minus, Plus } from 'lucide-react';
 import { NavBar } from '../NavBar';
 import { Footer } from '../Footer';
 import { CTA, contactHref } from '../CTA';
 
-/* Shared building blocks for the detail pages (services, tools, guides).
-   Same visual language as About / service pages: dark hero, mono eyebrows, red accent. */
+/* Building blocks for every public page.
+   Light canvas, white panels, Geist, one red action per view, petrol for the quiet dark band.
+   Spacing: sections 72px top and bottom on desktop, 48px on phones. Heroes size to content. */
 
-const DOT_GRID = 'radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px)';
-const ease = [0.16, 1, 0.3, 1] as const;
+/* Photography: Unsplash (free licence), served from their CDN at the size we need. */
+export const PHOTO = {
+  rack: '1587293852726-70cdb56c2866',
+  van: '1580674285054-bed31e145f59',
+  amazon: '1633174524827-db00a6b7bc74',
+  shelves: '1627915589334-14a3c3e3a741',
+  aisle: '1553413077-190dd305871c',
+  parcel: '1786026632781-5d580ee117c6',
+  carry: '1449247666642-264389f5f5b1',
+  boxes: '1766040923580-16ad32fae8b4',
+  analytics: '1551288049-bebda4e38f71',
+  phone: '1768987439370-bd60d3d0b28b',
+  team: '1542744173-8e7e53415bb0',
+  port: '1773126378915-793b5c48fb38',
+  loading: '1620455800201-7f00aeef12ed',
+  forklift: '1645736315000-6f788915923b',
+  stacked: '1757837593538-b4a8654132f1',
+  card: '1563013544-824ae1b704d3',
+} as const;
+export type PhotoKey = keyof typeof PHOTO;
+export const photo = (k: PhotoKey, w = 1200, h?: number) =>
+  `https://images.unsplash.com/photo-${PHOTO[k]}?auto=format&fit=crop&w=${w}${h ? `&h=${h}` : ''}&q=70`;
+
+export function Photo({ k, alt, className = '', w = 1200, h, eager = false }: { k: PhotoKey; alt: string; className?: string; w?: number; h?: number; eager?: boolean }) {
+  return (
+    <img
+      src={photo(k, w, h)}
+      srcSet={`${photo(k, Math.round(w / 2), h ? Math.round(h / 2) : undefined)} ${Math.round(w / 2)}w, ${photo(k, w, h)} ${w}w`}
+      sizes="(max-width: 768px) 100vw, 50vw"
+      alt={alt}
+      loading={eager ? 'eager' : 'lazy'}
+      decoding="async"
+      className={`w-full h-full object-cover ${className}`}
+    />
+  );
+}
+
+export const WRAP = 'max-w-[1248px] mx-auto px-4 md:px-6';
+export const H2 = 'font-semibold tracking-[-0.03em] text-balance text-[28px] leading-[32px] md:text-[38px] md:leading-[42px]';
 
 export function SitePage({ children }: { children: ReactNode }) {
   return (
-    <div className="w-full min-h-screen bg-white font-sans overflow-x-hidden">
-      <NavBar darkHero />
-      {children}
+    <div className="min-h-screen bg-canvas text-ink">
+      <NavBar />
+      <main>{children}</main>
       <Footer />
     </div>
   );
 }
 
-export function PageHero({ eyebrow, tag, title, lead, ctas, meta }: {
+/** Small label above a heading: sentence case with the red dot. */
+export function Eyebrow({ children, dark = false }: { children: ReactNode; dark?: boolean }) {
+  return (
+    <span className={`inline-flex items-center gap-2 text-[14px] font-medium ${dark ? 'text-white/80' : 'text-muted'}`}>
+      <span aria-hidden="true" className="w-1.5 h-1.5 rounded-full bg-brand-red" />
+      {children}
+    </span>
+  );
+}
+
+export function PageHero({ eyebrow, title, lead, ctas, image, imageAlt = '', aside, meta, crumb }: {
   eyebrow: string;
+  /** Kept for older pages; not shown. */
   tag?: string;
   title: ReactNode;
   lead: ReactNode;
   ctas?: ReactNode;
+  image?: PhotoKey;
+  imageAlt?: string;
+  /** A proof card that sits over the photo (a dashboard panel, a case, a number). */
+  aside?: ReactNode;
   meta?: { k: string; v: string }[];
+  crumb?: { label: string; to: string };
 }) {
   return (
-    <section className="relative w-full bg-brand-dark overflow-hidden px-6 md:px-8 pt-36 pb-20">
-      <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(120% 120% at 50% -10%, #18181a 0%, #0b0b0c 55%, #050506 100%)' }} />
-      <div className="absolute inset-0 pointer-events-none opacity-70"
-        style={{ backgroundImage: DOT_GRID, backgroundSize: '30px 30px', maskImage: 'radial-gradient(ellipse 70% 60% at 30% 20%, #000, transparent 75%)', WebkitMaskImage: 'radial-gradient(ellipse 70% 60% at 30% 20%, #000, transparent 75%)' }} />
-      <div className="absolute -bottom-56 -left-44 w-[820px] h-[640px] rounded-full pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(230,25,43,0.22) 0%, transparent 60%)', filter: 'blur(50px)' }} />
-      <div className="max-w-[1200px] mx-auto relative z-10">
-        <div className="flex items-center justify-between border-b border-white/10 pb-5 mb-12 gap-4">
-          <span className="font-mono text-[11px] tracking-widest text-brand-red uppercase">{eyebrow}</span>
-          {tag && <span className="hidden sm:block font-mono text-[11px] tracking-widest text-white/30 uppercase">{tag}</span>}
+    <section className={`${WRAP} pt-8 md:pt-12 pb-12 md:pb-16`}>
+      {crumb && (
+        <nav aria-label="Breadcrumb" className="mb-5 text-[13px] text-muted">
+          <Link to={crumb.to} className="hover:text-ink">{crumb.label}</Link> <span aria-hidden="true">/</span> <span className="text-ink">{eyebrow}</span>
+        </nav>
+      )}
+      <div className="grid lg:grid-cols-[1.02fr_1fr] gap-10 lg:gap-14 items-center">
+        <div className="flex flex-col gap-6 min-w-0">
+          <Eyebrow>{eyebrow}</Eyebrow>
+          <h1 className="font-semibold tracking-[-0.04em] text-balance text-[38px] leading-[42px] md:text-[54px] md:leading-[56px]">{title}</h1>
+          <p className="text-[17px] md:text-[18px] leading-[28px] text-muted max-w-[540px] text-pretty">{lead}</p>
+          {ctas && <div className="flex flex-wrap gap-3">{ctas}</div>}
+          {meta && (
+            <dl className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-line rounded-xl overflow-hidden border border-line mt-1">
+              {meta.map((m) => (
+                <div key={m.k} className="bg-surface px-4 py-3">
+                  <dt className="text-[12px] text-muted">{m.k}</dt>
+                  <dd className="text-[14px] font-semibold mt-0.5">{m.v}</dd>
+                </div>
+              ))}
+            </dl>
+          )}
         </div>
-        <motion.h1 initial={{ opacity: 0, y: 22 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, ease }}
-          className="font-display tracking-tight text-white leading-[1.04] max-w-4xl" style={{ fontSize: 'clamp(2.4rem, 5.2vw, 4.6rem)' }}>
-          {title}
-        </motion.h1>
-        <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3, duration: 0.7 }}
-          className="mt-7 text-white/55 font-light text-lg max-w-2xl leading-relaxed">
-          {lead}
-        </motion.p>
-        {ctas && <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.45 }} className="mt-10 flex flex-wrap gap-3">{ctas}</motion.div>}
-        {meta && (
-          <div className="mt-14 grid grid-cols-2 md:grid-cols-4 max-w-3xl border-t border-white/10">
-            {meta.map((m) => (
-              <div key={m.k} className="py-5 pr-5">
-                <p className="font-mono text-[9px] tracking-widest text-white/35 uppercase mb-1.5">{m.k}</p>
-                <p className="font-display font-semibold text-white text-sm md:text-base">{m.v}</p>
+        {(image || aside) && (
+          <div className="relative min-w-0">
+            {image ? (
+              <div className="rounded-[24px] overflow-hidden aspect-[5/4] bg-sunken">
+                <Photo k={image} alt={imageAlt} w={1100} h={880} eager />
               </div>
-            ))}
+            ) : null}
+            {aside && (
+              <div className={image ? 'relative -mt-24 mx-4 sm:mx-0 sm:absolute sm:mt-0 sm:-left-8 sm:bottom-6 sm:w-[min(400px,85%)]' : ''}>
+                <div className="bg-surface rounded-2xl border border-line shadow-[0_24px_60px_-24px_rgba(18,22,20,0.35)]">{aside}</div>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -66,78 +126,105 @@ export function PageHero({ eyebrow, tag, title, lead, ctas, meta }: {
   );
 }
 
-const TONES = {
-  white: 'bg-white text-brand-dark',
-  off: 'bg-surface-light text-brand-dark',
-  dark: 'bg-brand-dark text-white',
-};
+type Tone = 'white' | 'off' | 'dark' | 'petrol' | 'ink' | 'canvas' | 'panel';
+const norm = (t: Tone): 'panel' | 'canvas' | 'petrol' | 'ink' =>
+  t === 'white' || t === 'panel' ? 'panel' : t === 'off' || t === 'canvas' ? 'canvas' : t === 'dark' || t === 'petrol' ? 'petrol' : 'ink';
+const ToneCtx = createContext<'panel' | 'canvas' | 'petrol' | 'ink'>('canvas');
+const useTone = () => useContext(ToneCtx);
+const isDark = (t: string) => t === 'petrol' || t === 'ink';
 
-export function Section({ tone = 'white', eyebrow, title, lead, children, id }: {
-  tone?: keyof typeof TONES; eyebrow?: string; title?: ReactNode; lead?: ReactNode; children?: ReactNode; id?: string;
+export function SectionHead({ eyebrow, title, lead, dark = false }: { eyebrow?: string; title?: ReactNode; lead?: ReactNode; dark?: boolean }) {
+  if (!eyebrow && !title && !lead) return null;
+  return (
+    <div className="mb-8 md:mb-10 grid md:grid-cols-[1.25fr_1fr] gap-4 md:gap-12 md:items-end">
+      <div className="flex flex-col gap-3">
+        {eyebrow && <Eyebrow dark={dark}>{eyebrow}</Eyebrow>}
+        {title && <h2 className={H2}>{title}</h2>}
+      </div>
+      {lead && <p className={`text-[16px] leading-[25px] max-w-[460px] md:justify-self-end text-pretty ${dark ? 'text-white/75' : 'text-muted'}`}>{lead}</p>}
+    </div>
+  );
+}
+
+export function Section({ tone = 'canvas', eyebrow, title, lead, children, id }: {
+  tone?: Tone; eyebrow?: string; title?: ReactNode; lead?: ReactNode; children?: ReactNode; id?: string;
 }) {
-  const dark = tone === 'dark';
+  const t = norm(tone);
+  const dark = isDark(t);
+  const bg = t === 'panel' ? 'bg-surface' : t === 'petrol' ? 'bg-petrol text-white' : t === 'ink' ? 'bg-ink text-white' : '';
+  const inner = (
+    <div className={`${WRAP} py-12 md:py-[72px]`}>
+      <SectionHead eyebrow={eyebrow} title={title} lead={lead} dark={dark} />
+      <ToneCtx.Provider value={t}>{children}</ToneCtx.Provider>
+    </div>
+  );
+  if (t === 'canvas') return <section id={id} className="scroll-mt-20">{inner}</section>;
   return (
-    <section id={id} className={`w-full px-6 md:px-8 py-24 ${TONES[tone]} ${dark ? '' : 'border-b border-black/5'}`}>
-      <div className="max-w-[1200px] mx-auto">
-        {(eyebrow || title || lead) && (
-          <div className="mb-14 grid md:grid-cols-[1.2fr_1fr] gap-6 md:items-end">
-            <div>
-              {eyebrow && <span className="block font-mono text-[10px] tracking-widest text-brand-red uppercase mb-4">{eyebrow}</span>}
-              {title && <h2 className={`font-display font-bold tracking-tighter leading-[1.02] ${dark ? 'text-white' : 'text-brand-dark'}`} style={{ fontSize: 'clamp(2rem, 4vw, 3.6rem)' }}>{title}</h2>}
-            </div>
-            {lead && <p className={`text-sm md:text-base font-light leading-relaxed max-w-md md:justify-self-end ${dark ? 'text-white/50' : 'text-brand-dark/55'}`}>{lead}</p>}
-          </div>
-        )}
-        {children}
-      </div>
+    <section id={id} className="px-2 md:px-3 my-3 scroll-mt-20">
+      <div className={`rounded-[24px] ${bg}`}>{inner}</div>
     </section>
   );
 }
 
-export interface CardItem { title: string; body: string; tag?: string; href?: string; points?: string[] }
+export interface CardItem { title: string; body: string; tag?: string; href?: string; points?: string[]; image?: PhotoKey; imageAlt?: string }
 
-export function CardGrid({ items, cols = 3, dark = false }: { items: CardItem[]; cols?: 2 | 3 | 4; dark?: boolean }) {
-  const grid = cols === 2 ? 'md:grid-cols-2' : cols === 4 ? 'md:grid-cols-2 lg:grid-cols-4' : 'md:grid-cols-2 lg:grid-cols-3';
+export function CardGrid({ items, cols = 3 }: { items: CardItem[]; cols?: 2 | 3 | 4; dark?: boolean }) {
+  const t = useTone();
+  const dark = isDark(t);
+  const grid = cols === 2 ? 'md:grid-cols-2' : cols === 4 ? 'sm:grid-cols-2 lg:grid-cols-4' : 'sm:grid-cols-2 lg:grid-cols-3';
+  const card = dark ? 'bg-white/[0.07]' : t === 'panel' ? 'bg-canvas' : 'bg-surface border border-line';
   return (
-    <div className={`grid ${grid} gap-5`}>
-      {items.map((it, i) => {
-        const inner = (
+    <div className={`grid ${grid} gap-3 md:gap-4`}>
+      {items.map((it) => {
+        const body = (
           <>
-            {it.tag && <span className={`font-mono text-[9px] tracking-widest uppercase ${dark ? 'text-brand-red' : 'text-brand-red'}`}>{it.tag}</span>}
-            <h3 className={`font-display font-bold text-xl mt-2 mb-2.5 ${dark ? 'text-white' : 'text-brand-dark'}`}>{it.title}</h3>
-            <p className={`text-sm font-light leading-relaxed ${dark ? 'text-white/55' : 'text-brand-dark/60'}`}>{it.body}</p>
+            {it.image && (
+              <div className="-mx-6 -mt-6 mb-5 aspect-[16/10] overflow-hidden rounded-t-2xl bg-sunken">
+                <Photo k={it.image} alt={it.imageAlt ?? ''} w={720} h={450} />
+              </div>
+            )}
+            {it.tag && <span className={`self-start text-[12px] font-medium rounded-md px-2 py-0.5 mb-4 ${dark ? 'bg-white/10 text-white/85' : 'bg-red-tint text-red-text'}`}>{it.tag}</span>}
+            <h3 className="text-[19px] leading-[25px] font-semibold tracking-[-0.015em]">{it.title}</h3>
+            <p className={`mt-2 text-[15px] leading-[23px] ${dark ? 'text-white/75' : 'text-muted'}`}>{it.body}</p>
             {it.points && (
-              <ul className="mt-4 space-y-2">
+              <ul className="mt-4 grid gap-2">
                 {it.points.map((p) => (
-                  <li key={p} className={`flex gap-2 text-sm ${dark ? 'text-white/70' : 'text-brand-dark/70'}`}><Check size={15} className="text-brand-red shrink-0 mt-0.5" />{p}</li>
+                  <li key={p} className={`flex gap-2.5 text-[14px] leading-[20px] ${dark ? 'text-white/85' : 'text-ink'}`}>
+                    <Check size={16} className="text-brand-red shrink-0 mt-0.5" aria-hidden="true" />{p}
+                  </li>
                 ))}
               </ul>
             )}
-            {it.href && <span className="mt-5 inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-brand-red">Learn more <ArrowRight size={13} className="group-hover:translate-x-0.5 transition-transform" /></span>}
+            {it.href && (
+              <span className={`mt-auto pt-5 inline-flex items-center gap-1.5 text-[14px] font-medium ${dark ? 'text-white' : 'text-red-text'}`}>
+                Read more <span className="sr-only">about {it.title}</span><ArrowUpRight size={15} aria-hidden="true" />
+              </span>
+            )}
           </>
         );
-        const cls = `group block rounded-3xl border p-8 transition-colors ${dark ? 'bg-white/[0.03] border-white/10 hover:border-brand-red/40' : 'bg-surface-offwhite/60 border-black/6 hover:border-brand-red/25'}`;
-        return (
-          <motion.div key={it.title} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: (i % 4) * 0.07 }}>
-            {it.href ? <Link to={it.href} className={cls}>{inner}</Link> : <div className={cls}>{inner}</div>}
-          </motion.div>
-        );
+        const cls = `h-full flex flex-col rounded-2xl p-6 overflow-hidden ${card} ${it.href ? 'transition-colors hover:border-ink/30' : ''}`;
+        return it.href
+          ? <Link key={it.title} to={it.href} className={cls}>{body}</Link>
+          : <div key={it.title} className={cls}>{body}</div>;
       })}
     </div>
   );
 }
 
-export function Steps({ steps, dark = false }: { steps: { title: string; body: string; time?: string }[]; dark?: boolean }) {
+/** A real sequence: numbered rows with a time tag. */
+export function Steps({ steps }: { steps: { title: string; body: string; time?: string }[]; dark?: boolean }) {
+  const t = useTone();
+  const dark = isDark(t);
+  const row = dark ? 'bg-white/[0.07]' : t === 'panel' ? 'bg-canvas' : 'bg-surface border border-line';
   return (
-    <ol className={`border-t ${dark ? 'border-white/10' : 'border-black/10'}`}>
+    <ol className="grid gap-2">
       {steps.map((s, i) => (
-        <motion.li key={s.title} initial={{ opacity: 0, x: -12 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.06 }}
-          className={`grid grid-cols-[48px_1fr] md:grid-cols-[80px_1.1fr_2fr_120px] gap-x-6 gap-y-2 py-7 border-b ${dark ? 'border-white/10' : 'border-black/10'}`}>
-          <span className="font-mono text-sm text-brand-red">{String(i + 1).padStart(2, '0')}</span>
-          <h3 className={`font-display font-bold text-lg ${dark ? 'text-white' : 'text-brand-dark'}`}>{s.title}</h3>
-          <p className={`col-start-2 md:col-start-auto text-sm font-light leading-relaxed ${dark ? 'text-white/55' : 'text-brand-dark/60'}`}>{s.body}</p>
-          {s.time && <span className={`col-start-2 md:col-start-auto font-mono text-[11px] tracking-widest uppercase md:text-right ${dark ? 'text-white/35' : 'text-brand-dark/40'}`}>{s.time}</span>}
-        </motion.li>
+        <li key={s.title} className={`grid grid-cols-[36px_1fr] md:grid-cols-[48px_220px_1fr_auto] gap-x-4 gap-y-1 items-start md:items-center rounded-xl px-4 md:px-5 py-4 ${row}`}>
+          <span className={`w-8 h-8 rounded-full grid place-items-center text-[13px] font-semibold tnum ${i === 0 ? 'bg-brand-red text-white' : dark ? 'bg-white/15 text-white' : 'bg-sunken text-ink'}`}>{i + 1}</span>
+          <h3 className="text-[16px] font-semibold leading-[22px] self-center">{s.title}</h3>
+          <p className={`col-start-2 md:col-start-auto text-[15px] leading-[22px] ${dark ? 'text-white/75' : 'text-muted'}`}>{s.body}</p>
+          {s.time && <span className={`col-start-2 md:col-start-auto justify-self-start md:justify-self-end text-[13px] font-medium whitespace-nowrap ${dark ? 'text-white/70' : 'text-red-text'}`}>{s.time}</span>}
+        </li>
       ))}
     </ol>
   );
@@ -145,41 +232,42 @@ export function Steps({ steps, dark = false }: { steps: { title: string; body: s
 
 export function FAQ({ items }: { items: { q: string; a: string }[] }) {
   const [open, setOpen] = useState<number | null>(0);
+  const t = useTone();
   return (
-    <div className="border-t border-black/10">
-      {items.map((it, i) => (
-        <div key={it.q} className="border-b border-black/10">
-          <button onClick={() => setOpen(open === i ? null : i)} className="w-full flex items-center justify-between gap-6 py-6 text-left">
-            <span className="font-display font-semibold text-lg text-brand-dark">{it.q}</span>
-            {open === i ? <Minus size={18} className="text-brand-red shrink-0" /> : <Plus size={18} className="text-brand-dark/40 shrink-0" />}
-          </button>
-          {open === i && <p className="pb-6 -mt-2 text-sm text-brand-dark/60 font-light leading-relaxed max-w-3xl">{it.a}</p>}
-        </div>
-      ))}
+    <div className="grid md:grid-cols-2 gap-x-10 border-t border-line">
+      {items.map((it, i) => {
+        const o = open === i;
+        return (
+          <div key={it.q} className="border-b border-line">
+            <button type="button" onClick={() => setOpen(o ? null : i)} aria-expanded={o} className="w-full flex items-start justify-between gap-6 py-5 text-left">
+              <span className="text-[16px] font-semibold leading-[22px]">{it.q}</span>
+              <span className={`w-7 h-7 rounded-full grid place-items-center shrink-0 ${o ? 'bg-ink text-white' : t === 'panel' ? 'bg-canvas' : 'bg-surface border border-line'}`}>{o ? <Minus size={14} /> : <Plus size={14} />}</span>
+            </button>
+            {o && <p className="-mt-1 pb-5 pr-10 text-[15px] leading-[23px] text-muted">{it.a}</p>}
+          </div>
+        );
+      })}
     </div>
   );
 }
 
-/** Feature comparison. Cells: true / false / text. */
 export function Compare({ columns, rows, highlight = 0 }: { columns: string[]; rows: { label: string; cells: (boolean | string)[] }[]; highlight?: number }) {
   return (
-    <div className="overflow-x-auto -mx-6 px-6">
-      <table className="w-full min-w-[720px] text-sm">
+    <div className="overflow-x-auto rounded-2xl border border-line bg-surface">
+      <table className="w-full min-w-[680px] text-[14px] border-collapse">
         <thead>
-          <tr>
-            <th className="text-left py-4 pr-4 font-mono text-[10px] tracking-widest uppercase text-brand-dark/40 font-medium w-[28%]" />
-            {columns.map((c, i) => (
-              <th key={c} className={`py-4 px-4 text-left font-display font-bold ${i === highlight ? 'text-brand-red' : 'text-brand-dark'}`}>{c}</th>
-            ))}
+          <tr className="bg-canvas">
+            <th className="text-left font-medium text-muted px-5 py-3.5 w-[30%]"><span className="sr-only">Feature</span></th>
+            {columns.map((c, i) => <th key={c} className={`text-left px-5 py-3.5 font-semibold ${i === highlight ? 'text-ink' : 'text-ink/80'}`}>{c}</th>)}
           </tr>
         </thead>
         <tbody>
           {rows.map((r) => (
-            <tr key={r.label} className="border-t border-black/8 align-top">
-              <td className="py-4 pr-4 text-brand-dark font-medium">{r.label}</td>
+            <tr key={r.label} className="border-t border-line align-top">
+              <th scope="row" className="text-left font-medium px-5 py-3.5">{r.label}</th>
               {r.cells.map((c, i) => (
-                <td key={i} className={`py-4 px-4 ${i === highlight ? 'bg-brand-red/[0.04]' : ''}`}>
-                  {c === true ? <Check size={17} className="text-brand-red" /> : c === false ? <X size={17} className="text-brand-dark/25" /> : <span className="text-brand-dark/65 font-light">{c}</span>}
+                <td key={i} className="px-5 py-3.5 text-muted">
+                  {c === true ? <Check size={17} className="text-success" aria-label="Yes" /> : c === false ? <Minus size={17} className="text-control" aria-label="No" /> : c}
                 </td>
               ))}
             </tr>
@@ -190,46 +278,85 @@ export function Compare({ columns, rows, highlight = 0 }: { columns: string[]; r
   );
 }
 
+/** Photo and text side by side. */
+export function Split({ image, imageAlt, eyebrow, title, body, points, reverse = false, children }: {
+  image: PhotoKey; imageAlt: string; eyebrow?: string; title: ReactNode; body?: ReactNode; points?: string[]; reverse?: boolean; children?: ReactNode;
+}) {
+  return (
+    <div className="grid lg:grid-cols-2 gap-8 lg:gap-14 items-center">
+      <div className={`rounded-[20px] overflow-hidden aspect-[4/3] bg-sunken ${reverse ? 'lg:order-2' : ''}`}><Photo k={image} alt={imageAlt} w={1000} h={750} /></div>
+      <div className="flex flex-col gap-4 min-w-0">
+        {eyebrow && <Eyebrow>{eyebrow}</Eyebrow>}
+        <h2 className={H2}>{title}</h2>
+        {body && <div className="text-[16px] leading-[25px] text-muted max-w-[520px] grid gap-3">{body}</div>}
+        {points && (
+          <ul className="grid gap-2.5 mt-1">
+            {points.map((p) => <li key={p} className="flex gap-2.5 text-[15px] leading-[22px]"><Check size={17} className="text-brand-red shrink-0 mt-0.5" aria-hidden="true" />{p}</li>)}
+          </ul>
+        )}
+        {children}
+      </div>
+    </div>
+  );
+}
+
+/** A row of plain figures with their source or meaning. */
+export function Figures({ items }: { items: { value: string; label: string; note?: string }[] }) {
+  const t = useTone();
+  const dark = isDark(t);
+  return (
+    <dl className={`grid grid-cols-2 lg:grid-cols-4 gap-px rounded-2xl overflow-hidden ${dark ? 'bg-white/15' : 'bg-line border border-line'}`}>
+      {items.map((f) => (
+        <div key={f.label} className={`p-5 md:p-6 ${dark ? 'bg-petrol' : 'bg-surface'}`}>
+          <dd className="text-[30px] md:text-[36px] leading-none font-semibold tracking-[-0.03em] tnum">{f.value}</dd>
+          <dt className="mt-3 text-[14px] font-medium">{f.label}</dt>
+          {f.note && <p className={`mt-1 text-[12px] ${dark ? 'text-white/65' : 'text-muted'}`}>{f.note}</p>}
+        </div>
+      ))}
+    </dl>
+  );
+}
+
 export function CTABand({ title, body, topic, label = 'Book a strategy call', secondary }: {
   title: ReactNode; body: string; topic: string; label?: string; secondary?: { to: string; label: string };
 }) {
   return (
-    <section className="w-full bg-brand-red px-6 md:px-8 py-24 relative overflow-hidden">
-      <div className="absolute -top-40 -right-40 w-[520px] h-[520px] rounded-full bg-white/10 blur-[90px] pointer-events-none" />
-      <div className="max-w-[1000px] mx-auto text-center relative z-10">
-        <h2 className="font-display font-bold tracking-tighter text-white leading-[1.0]" style={{ fontSize: 'clamp(2.2rem, 5vw, 4.4rem)' }}>{title}</h2>
-        <p className="text-white/75 font-light mt-6 max-w-xl mx-auto leading-relaxed">{body}</p>
-        <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-3">
-          <CTA to={contactHref(topic)} label={label} tone="dark" id={`band-${topic}`} />
-          {secondary && <CTA to={secondary.to} label={secondary.label} tone="outline-light" id={`band-${topic}-secondary`} />}
+    <section className="px-2 md:px-3 my-3">
+      <div className="rounded-[24px] bg-ink text-white">
+        <div className={`${WRAP} py-12 md:py-16 grid md:grid-cols-[1.4fr_1fr] gap-8 md:items-end`}>
+          <div>
+            <h2 className="font-semibold tracking-[-0.035em] text-balance text-[30px] leading-[34px] md:text-[44px] md:leading-[48px]">{title}</h2>
+            <p className="mt-4 text-[16px] md:text-[17px] leading-[26px] text-white/75 max-w-[560px]">{body}</p>
+          </div>
+          <div className="flex flex-wrap gap-3 md:justify-end">
+            <CTA to={contactHref(topic)} label={label} tone="red" id={`band-${topic}`} />
+            {secondary && <CTA to={secondary.to} label={secondary.label} tone="outline-light" id={`band-${topic}-2`} />}
+          </div>
         </div>
       </div>
     </section>
   );
 }
 
-/** Small "related pages" row to keep every page connected. */
 export function Related({ links }: { links: { to: string; label: string; body: string }[] }) {
   return (
-    <section className="w-full bg-white px-6 md:px-8 py-20 border-t border-black/5">
-      <div className="max-w-[1200px] mx-auto">
-        <span className="block font-mono text-[10px] tracking-widest text-brand-red uppercase mb-6">Keep exploring</span>
-        <div className="grid md:grid-cols-3 gap-4">
-          {links.map((l) => (
-            <Link key={l.to} to={l.to} className="group rounded-2xl border border-black/8 p-6 hover:border-brand-red/30 transition-colors">
-              <div className="flex items-center justify-between">
-                <span className="font-display font-bold text-brand-dark group-hover:text-brand-red transition-colors">{l.label}</span>
-                <ArrowRight size={15} className="text-brand-dark/30 group-hover:text-brand-red group-hover:translate-x-0.5 transition-all" />
-              </div>
-              <p className="text-sm text-brand-dark/55 font-light mt-2">{l.body}</p>
-            </Link>
-          ))}
-        </div>
+    <section className={`${WRAP} py-12 md:py-16`}>
+      <h2 className="text-[20px] font-semibold tracking-[-0.02em] mb-5">Related</h2>
+      <div className="grid md:grid-cols-3 gap-3">
+        {links.map((l) => (
+          <Link key={l.to} to={l.to} className="group rounded-2xl bg-surface border border-line p-5 flex items-start justify-between gap-4 hover:border-ink/30">
+            <span>
+              <span className="block text-[16px] font-semibold">{l.label}</span>
+              <span className="block text-[14px] text-muted mt-1">{l.body}</span>
+            </span>
+            <ArrowUpRight size={18} className="text-muted group-hover:text-red-text shrink-0" aria-hidden="true" />
+          </Link>
+        ))}
       </div>
     </section>
   );
 }
 
 export function Note({ children }: { children: ReactNode }) {
-  return <p className="mt-8 text-xs text-brand-dark/45 font-light leading-relaxed max-w-3xl">{children}</p>;
+  return <p className="mt-6 text-[13px] leading-[20px] text-muted max-w-3xl">{children}</p>;
 }

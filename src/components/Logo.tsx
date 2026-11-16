@@ -18,32 +18,17 @@ export function Logo({ size = 28, className = '' }: LogoProps) {
       style={{ width: size, height: size }}
       className={className}
     >
-      {/* Faint track */}
-      <path
-        d={INFINITY_PATH}
-        stroke="#e6192b"
-        strokeOpacity="0.25"
-        strokeWidth="1.8"
-      />
+      {/* Full loop, always visible */}
+      <path d={INFINITY_PATH} stroke="#e6192b" strokeOpacity="0.3" strokeWidth="2.2" />
 
-      {/* Orbiting pass 1 */}
+      {/* A bright segment that keeps travelling round the loop */}
       <motion.path
         d={INFINITY_PATH}
         stroke="#e6192b"
-        strokeWidth="2.2"
-        initial={{ pathLength: 0, pathOffset: 0 }}
-        animate={{ pathLength: [0, 0.4, 0], pathOffset: [0, 0.6, 1] }}
-        transition={{ duration: 3.5, repeat: Infinity, ease: 'easeInOut' }}
-      />
-
-      {/* Orbiting pass 2 (offset) */}
-      <motion.path
-        d={INFINITY_PATH}
-        stroke="#e6192b"
-        strokeWidth="2.2"
-        initial={{ pathLength: 0, pathOffset: 0 }}
-        animate={{ pathLength: [0, 0.4, 0], pathOffset: [0, 0.6, 1] }}
-        transition={{ duration: 3.5, repeat: Infinity, ease: 'easeInOut', delay: 1.75 }}
+        strokeWidth="2.6"
+        initial={{ pathLength: 0.32, pathOffset: 0 }}
+        animate={{ pathOffset: [0, 1] }}
+        transition={{ duration: 2.6, repeat: Infinity, ease: 'linear' }}
       />
     </svg>
   );

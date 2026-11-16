@@ -5,14 +5,15 @@ export default function HowItWorks() {
   return (
     <SitePage>
       <PageHero
-        eyebrow="How it works · Loop Retail"
-        tag="Partnership models"
-        title={<><span className="font-light text-white/50">You keep the brand.</span><br />We run the UK operation.</>}
+        eyebrow="How it works"
+        title="You keep the brand. We run the UK operation."
         lead="Two ways to work with us, one onboarding process and one dashboard. You set the brand rules, prices and priorities; we run the day to day and report on it."
-        ctas={<><CTA to={contactHref('strategy-call')} label="Book a strategy call" tone="red" id="how-hero" /><CTA to="/portal/demo/overview" label="See the dashboard" tone="outline-light" id="how-hero-demo" /></>}
+        ctas={<><CTA to={contactHref('strategy-call')} label="Book a strategy call" tone="red" id="how-hero" /><CTA to="/portal/demo/overview" label="See the dashboard" tone="outline-dark" id="how-hero-demo" /></>}
+        image="carry"
+        imageAlt="A person packing a box at a workbench"
       />
 
-      <Section eyebrow="Partnership models" title={<>Two ways<br />to work together.</>}
+      <Section eyebrow="Partnership models" title="Two ways to work together."
         lead="The right model depends on how much of the UK operation you want to own. Many brands start with one and move to the other.">
         <CardGrid cols={2} items={[
           {
@@ -30,7 +31,7 @@ export default function HowItWorks() {
           <Compare
             columns={['Authorised UK partner', 'Managed service']}
             rows={[
-              { label: 'Who owns the stock in the UK', cells: ['Loop Retail', 'You'] },
+              { label: 'Who owns the stock in the UK', cells: ['Loopretail', 'You'] },
               { label: 'Whose seller account', cells: ['Ours, as your authorised partner', 'Yours'] },
               { label: 'How we are paid', cells: ['Margin on agreed trade terms', 'Monthly fee'] },
               { label: 'Who sets prices and brand rules', cells: ['You', 'You'] },
@@ -42,7 +43,7 @@ export default function HowItWorks() {
       </Section>
 
       <Section tone="dark" eyebrow="Onboarding" title="The first 30 days.">
-        <Steps dark steps={[
+        <Steps steps={[
           { title: 'Discovery call', body: 'Your products, channels, margins and what is going wrong today.', time: 'Day 1' },
           { title: 'Audit and opportunity map', body: 'Sellers, prices, listings, stock and compliance reviewed across UK channels. You get a short written plan.', time: 'Days 2 to 10' },
           { title: 'Agreement', body: 'Partnership model, services, minimum prices, authorised sellers and reporting cadence agreed.', time: 'Days 10 to 14' },
