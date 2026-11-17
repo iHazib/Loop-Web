@@ -26,7 +26,7 @@ export function FlickeringGrid({ color = '230, 25, 43', squareSize = 4, gap = 6,
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
 
     const size = () => {
-      const { width, height } = el.getBoundingClientRect();
+      const width = el.clientWidth, height = el.clientHeight;
       cv.width = Math.max(1, Math.floor(width * dpr));
       cv.height = Math.max(1, Math.floor(height * dpr));
       cv.style.width = `${width}px`;

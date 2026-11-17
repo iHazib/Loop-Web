@@ -62,7 +62,11 @@ body {
 @keyframes lr-flow { to { stroke-dashoffset: -36; } }
 .lr-flow { animation: lr-flow 0.9s linear infinite; }
 /* the channels diagram keeps moving even when the device asks for reduced motion */
+/* travelling segment on the infinity loop logo (path has pathLength=100) */
+@keyframes lr-loop { to { stroke-dashoffset: -100; } }
+.lr-loop { stroke-dasharray: 30 20; animation: lr-loop 3.2s linear infinite; }
 @media (prefers-reduced-motion: reduce) {
+  .lr-loop { animation-duration: 3.2s !important; }
   .lr-flow { animation-duration: 0.9s !important; }
   .lr-ping { animation-duration: 1s !important; }
 }
