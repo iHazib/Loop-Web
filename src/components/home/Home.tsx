@@ -261,7 +261,6 @@ export function HomeHero() {
         <div aria-hidden="true" className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-canvas/70 to-transparent" />
         <div className={`${WRAP} relative w-full py-14 md:py-20`}>
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }} className="flex flex-col gap-6 max-w-[620px]">
-            <Eyebrow>Brand commerce partner for the UK</Eyebrow>
             <h1 className="font-semibold tracking-[-0.045em] text-balance text-[42px] leading-[46px] md:text-[68px] md:leading-[68px]">Your brand, run properly in the UK.</h1>
             <p className="text-[17px] md:text-[19px] leading-[28px] md:leading-[30px] text-ink/75 max-w-[540px] text-pretty">
               We sell your products on Amazon, TikTok Shop, eBay and your own store, keep unauthorised sellers off your listings, and report every number in one dashboard.
