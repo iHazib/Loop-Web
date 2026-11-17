@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
+import { motion, AnimatePresence, useReducedMotion, useScroll, useTransform } from 'motion/react';
 import { ArrowUpRight, BarChart3, Globe, Activity, Shield, TrendingUp, GitBranch, Package, RefreshCw, Users, Award, Search, Check } from 'lucide-react';
 import { FaAmazon } from 'react-icons/fa';
 import { SiTiktok, SiShopify } from 'react-icons/si';
@@ -103,6 +103,58 @@ function useWidth() {
   return [setEl, w] as const;
 }
 
+/* Live background for the channels diagram: slow drifting colour fields in the brand palette
+   (red, petrol, a warm rose), light beams that sweep across, a masked flickering dot grid and fine grain.
+   Pattern after the Aceternity "Background Beams" and Magic UI "Flickering Grid" components. */
+const BEAMS = [
+  'M -40 380 C 180 300, 320 120, 620 60 S 1000 20, 1200 -40',
+  'M -40 440 C 220 380, 420 240, 700 200 S 1040 120, 1200 60',
+  'M -40 120 C 200 160, 380 300, 640 320 S 980 400, 1200 470',
+  'M 100 520 C 260 400, 420 330, 620 300 S 960 240, 1180 140',
+  'M -40 260 C 240 240, 420 210, 640 240 S 1000 300, 1200 260',
+];
+function AuroraBeams({ w, h, hub }: { w: number; h: number; hub: { x: number; y: number } }) {
+  const sx = w / 1120, sy = h / 440;
+  return (
+    <>
+      {/* colour fields */}
+      <motion.div className="absolute rounded-full blur-[70px]" style={{ width: w * 0.55, height: h * 0.9, left: -w * 0.1, top: -h * 0.25, background: 'radial-gradient(closest-side, rgba(230,25,43,0.22), rgba(230,25,43,0))' }}
+        animate={{ x: [0, w * 0.12, 0], y: [0, h * 0.15, 0], scale: [1, 1.12, 1] }} transition={{ duration: 16, repeat: Infinity, ease: 'easeInOut' }} />
+      <motion.div className="absolute rounded-full blur-[70px]" style={{ width: w * 0.5, height: h * 0.95, right: -w * 0.08, bottom: -h * 0.3, background: 'radial-gradient(closest-side, rgba(15,61,70,0.18), rgba(15,61,70,0))' }}
+        animate={{ x: [0, -w * 0.1, 0], y: [0, -h * 0.12, 0], scale: [1.05, 0.95, 1.05] }} transition={{ duration: 19, repeat: Infinity, ease: 'easeInOut' }} />
+      <motion.div className="absolute rounded-full blur-[60px]" style={{ width: w * 0.32, height: h * 0.7, left: hub.x - w * 0.16, top: hub.y - h * 0.35, background: 'radial-gradient(closest-side, rgba(255,107,122,0.28), rgba(255,107,122,0))' }}
+        animate={{ scale: [1, 1.25, 1], opacity: [0.8, 1, 0.8] }} transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut' }} />
+      <motion.div className="absolute rounded-full blur-[60px]" style={{ width: w * 0.28, height: h * 0.6, left: w * 0.55, top: -h * 0.2, background: 'radial-gradient(closest-side, rgba(245,158,11,0.12), rgba(245,158,11,0))' }}
+        animate={{ x: [0, -w * 0.15, 0], y: [0, h * 0.2, 0] }} transition={{ duration: 22, repeat: Infinity, ease: 'easeInOut' }} />
+
+      {/* dot grid that flickers, faded towards the edges */}
+      <FlickeringGrid className="absolute inset-0 [mask-image:radial-gradient(ellipse_75%_80%_at_50%_50%,black_30%,transparent_85%)]" maxOpacity={0.22} squareSize={2} gap={9} flicker={0.4} />
+
+      {/* light beams */}
+      <svg viewBox={`0 0 ${w} ${h}`} className="absolute inset-0 w-full h-full">
+        <defs>
+          <linearGradient id="beam-glow" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stopColor="#e6192b" stopOpacity="0" />
+            <stop offset="50%" stopColor="#e6192b" stopOpacity="0.55" />
+            <stop offset="100%" stopColor="#ff6b7a" stopOpacity="0" />
+          </linearGradient>
+        </defs>
+        <g transform={`scale(${sx} ${sy})`}>
+          {BEAMS.map((d, i) => <path key={`b${i}`} d={d} fill="none" stroke="#e6192b" strokeOpacity="0.06" strokeWidth="1" />)}
+          {BEAMS.map((d, i) => (
+            <motion.path key={`g${i}`} d={d} fill="none" stroke="url(#beam-glow)" strokeWidth="2" strokeLinecap="round"
+              initial={{ pathLength: 0.18, pathOffset: -0.2 }} animate={{ pathOffset: [-0.2, 1.05] }}
+              transition={{ duration: 5 + i * 0.9, repeat: Infinity, ease: 'easeInOut', delay: i * 1.3, repeatDelay: 1.5 }} />
+          ))}
+        </g>
+      </svg>
+
+      {/* fine grain so the colour fields read as texture, not flat gradients */}
+      <div className="absolute inset-0 opacity-[0.05] mix-blend-multiply" style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")" }} />
+    </>
+  );
+}
+
 export function LoopFlow() {
   const [ref, width] = useWidth();
   const L = width >= 900 ? WIDE : NARROW;
@@ -123,11 +175,8 @@ export function LoopFlow() {
   return (
     <div ref={ref} className="relative w-full" style={{ height: STAGE_H * k }}>
       <div className="absolute top-0 left-0 origin-top-left" style={{ width: STAGE_W, height: STAGE_H, transform: `scale(${k})` }}>
-        <div aria-hidden="true" className="absolute inset-0 rounded-[28px] bg-surface border border-line overflow-hidden">
-          <FlickeringGrid className="absolute inset-0 [mask-image:radial-gradient(ellipse_70%_75%_at_50%_50%,black_25%,transparent_80%)]" maxOpacity={0.16} squareSize={3} gap={7} flicker={0.35} />
-          <motion.div className="absolute w-[420px] h-[420px] rounded-full blur-3xl" style={{ left: HUB.x - 210, top: HUB.y - 210, background: 'radial-gradient(circle, rgba(230,25,43,0.12) 0%, rgba(230,25,43,0) 65%)' }}
-            animate={{ scale: [1, 1.15, 1] }} transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }} />
-          <div className="absolute inset-y-0 right-0 w-1/3" style={{ background: 'linear-gradient(90deg, rgba(15,61,70,0) 0%, rgba(15,61,70,0.035) 100%)' }} />
+        <div aria-hidden="true" className="absolute inset-0 rounded-[28px] border border-line overflow-hidden bg-[#fbfbfa]">
+          <AuroraBeams w={STAGE_W} h={STAGE_H} hub={HUB} />
         </div>
 
         <svg key={L.W} viewBox={`0 0 ${STAGE_W} ${STAGE_H}`} className="absolute inset-0 w-full h-full" aria-hidden="true">
@@ -245,14 +294,20 @@ export function ChannelsSection() {
 
 /* Home hero: same copy and buttons, now over a full width photo. */
 export function HomeHero() {
+  // gentle parallax: the photo drifts slower than the page and the copy eases up and fades as you scroll away
+  const { scrollY } = useScroll();
+  const imgY = useTransform(scrollY, [0, 700], [0, 140]);
+  const copyY = useTransform(scrollY, [0, 500], [0, -50]);
+  const copyO = useTransform(scrollY, [0, 450], [1, 0.25]);
   return (
     <section className="px-2 md:px-3 pt-2">
       <div className="relative rounded-[28px] overflow-hidden min-h-[560px] md:min-h-[620px] flex items-center">
         <motion.img
+          style={{ y: imgY }}
           src={photo('floor', 2200, 1200)}
           alt=""
           aria-hidden="true"
-          className="absolute inset-0 w-full h-full object-cover object-[70%_50%]"
+          className="absolute -inset-y-16 inset-x-0 w-full h-[calc(100%+8rem)] object-cover object-[70%_50%]"
           initial={{ scale: 1.12 }}
           animate={{ scale: [1.12, 1.04] }}
           transition={{ duration: 14, ease: 'easeOut' }}
@@ -260,6 +315,7 @@ export function HomeHero() {
         <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-r from-canvas via-canvas/90 to-canvas/20 md:via-canvas/80 md:to-transparent" />
         <div aria-hidden="true" className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-canvas/70 to-transparent" />
         <div className={`${WRAP} relative w-full py-14 md:py-20`}>
+          <motion.div style={{ y: copyY, opacity: copyO }}>
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }} className="flex flex-col gap-6 max-w-[620px]">
             <h1 className="font-semibold tracking-[-0.045em] text-balance text-[42px] leading-[46px] md:text-[68px] md:leading-[68px]">Your brand, run properly in the UK.</h1>
             <p className="text-[17px] md:text-[19px] leading-[28px] md:leading-[30px] text-ink/75 max-w-[540px] text-pretty">
@@ -269,6 +325,7 @@ export function HomeHero() {
               <CTA to={contactHref('strategy-call')} label="Book a strategy call" id="home-hero" />
               <CTA to="/portal/demo/home" label="Open the live demo" tone="outline-dark" id="home-hero-demo" />
             </div>
+          </motion.div>
           </motion.div>
         </div>
       </div>
