@@ -187,6 +187,34 @@ export async function handlePortal(req: PortalReq): Promise<PortalRes | null> {
     }
   }
 
+  /* ── Staff admin: bulk brand import from CSV. Existing names are skipped, not duplicated. ── */
+  if (parts[0] === 'admin' && parts[1] === 'brands' && parts[2] === 'bulk' && method === 'POST') {
+    if (!acc.isStaff(who)) return err(403, 'Only Loopretail staff can add brands.');
+    const rows = Array.isArray(body.rows) ? (body.rows as Record<string, unknown>[]) : [];
+    if (!rows.length) return err(400, 'The file has no rows.');
+    if (rows.length > 500) return err(400, 'Upload at most 500 brands at a time.');
+    const norm = (h: string) => h.toLowerCase().replace(/\(.*\)/g, '').replace(/[^a-z]/g, '');
+    const ALIAS: Record<string, string> = { brandname: 'name', name: 'name', brand: 'name', plan: 'plan', status: 'status', accountmanager: 'accountManager', accountmanageremail: 'accountManagerEmail', brandcontactemail: 'contactEmail', contactemail: 'contactEmail', notes: 'notes' };
+    const existing = new Set((await db.listBrands()).map((b) => b.name.trim().toLowerCase()));
+    let accepted = 0; const rejected: { row: number; reason: string }[] = [];
+    for (const [i, raw] of rows.entries()) {
+      const r: Record<string, string> = {};
+      for (const [k, v] of Object.entries(raw)) { const f = ALIAS[norm(k)]; if (f) r[f] = String(v ?? '').trim(); }
+      const row = i + 2;
+      if (!r.name) { rejected.push({ row, reason: 'Brand name is empty.' }); continue; }
+      if (existing.has(r.name.toLowerCase())) { rejected.push({ row, reason: `${r.name} already exists, skipped.` }); continue; }
+      const input: Record<string, unknown> = {};
+      if (r.status) input.status = r.status.toLowerCase();
+      for (const k of ['accountManager', 'accountManagerEmail', 'contactEmail', 'notes'] as const) if (r[k]) input[k] = r[k];
+      const fields = brandFields(input);
+      if (typeof fields === 'string') { rejected.push({ row, reason: fields }); continue; }
+      const brand = await db.createBrand(r.name.slice(0, 80), (r.plan ?? '').slice(0, 60), { status: 'onboarding', accountManager: who!.name || who!.email, accountManagerEmail: who!.email, ...fields });
+      await db.addEvents(brand.id, [{ at: new Date().toISOString(), source: 'Loopretail', message: `Brand created by ${who!.email} (bulk CSV)`, level: 'info' }]);
+      existing.add(r.name.toLowerCase()); accepted++;
+    }
+    return ok({ accepted, rejected });
+  }
+
   /* ── Staff admin: every onboarded brand ── */
   if (parts[0] === 'admin') {
     if (!acc.isStaff(who)) return err(who ? 403 : 401, 'Staff only.');

@@ -6,6 +6,7 @@ import type { Brand, ProtectionCase } from '../../server/portal/types';
 import { BRAND_STATUSES, CASE_LABELS } from '../../server/portal/types';
 import { useView, portalFetch } from '../portal/api';
 import { STATUS_STYLE, HEALTH, input, ago } from './AdminBrands';
+import { BulkCsv } from './BulkCsv';
 import { ProductsTab, EmailsTab, SettingsTab, SellersTab, CompetitorsTab, SheetsLoaded } from './BrandTabs';
 import { Protection, Ads } from '../portal/views';
 import { DataTab } from '../portal/DataTab';
@@ -116,7 +117,7 @@ export default function AdminBrandDetail() {
       {tab === 'competitors' && <CompetitorsTab brandId={id} />}
       {tab === 'data' && <div className="grid gap-6"><DataTab brandId={id} status={status ?? null} canEdit isStaff onChanged={() => setDataRev((x) => x + 1)} /><SheetsLoaded key={dataRev} brandId={id} /></div>}
       {tab === 'protection' && <Protection brandId={id} canEdit />}
-      {tab === 'ads' && <Ads brandId={id} canEdit />}
+      {tab === 'ads' && <div className="grid gap-5"><BulkCsv kind="ads" brandId={id} label="Weekly ad spend from CSV" help="One row per campaign per week, any channel. The search term report upload is further down." onDone={() => setDataRev((x) => x + 1)} /><Ads key={dataRev} brandId={id} canEdit /></div>}
       {tab === 'overview' && <>
 
       <div className="grid grid-cols-2 lg:grid-cols-6 gap-3 mb-6">

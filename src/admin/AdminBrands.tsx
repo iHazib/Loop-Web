@@ -4,6 +4,7 @@ import { Plus, Search, X, AlertTriangle, ArrowRight, Copy } from 'lucide-react';
 import type * as M from '../../server/portal/metrics';
 import { BRAND_STATUSES } from '../../server/portal/types';
 import { useView, portalFetch } from '../portal/api';
+import { BulkCsv } from './BulkCsv';
 
 /* Staff admin: every onboarded brand in one place. */
 
@@ -115,6 +116,7 @@ export default function AdminBrands() {
       </header>
 
       {error && <p className="text-sm text-brand-red mb-6">{error}</p>}
+      <div className="mb-6"><BulkCsv kind="brands" label="Add brands in bulk" help="One row per brand. Names that already exist are skipped. Products, sellers and sales go in on each brand's page." onDone={() => setRev((x) => x + 1)} /></div>
 
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
         {[

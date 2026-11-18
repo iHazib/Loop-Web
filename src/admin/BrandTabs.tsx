@@ -3,6 +3,7 @@ import { ChevronDown, ChevronRight, ExternalLink, Eye, X, Mail } from 'lucide-re
 import type * as M from '../../server/portal/metrics';
 import { useView, portalFetch } from '../portal/api';
 import { input } from './AdminBrands';
+import { BulkCsv } from './BulkCsv';
 
 /* Staff tabs on the admin brand page. Everything a brand sees on its dashboard is set from here:
    settings and visible tabs, products and listings, authorised sellers, competitors, uploaded weeks,
@@ -81,6 +82,7 @@ export function ProductsTab({ brandId }: { brandId: string }) {
           ))}
         </div>
         <button onClick={addProduct} disabled={!add.sku || !add.name} className="mt-3 rounded-lg bg-brand-red text-white px-4 py-2 text-sm font-semibold disabled:opacity-40">Add product</button>
+        <div className="mt-4"><BulkCsv kind="products" brandId={brandId} help="Many products at once with SKU, name, ASIN, EAN, cost, RRP and minimum price. A SKU that exists is updated." onDone={() => setRev((x) => x + 1)} /></div>
       </Box>
 
       <Box title="Products on every marketplace" right={<span className="text-xs text-brand-dark/40">Amazon UK and EU from Keepa ({data?.euMarkets || 'DE,FR,IT,ES'}), other channels from the sales sheet</span>}>
@@ -394,6 +396,7 @@ export function SellersTab({ brandId }: { brandId: string }) {
           {f.originalName && <button onClick={() => setF(EMPTY_SELLER)} className="text-sm text-brand-dark/60">Cancel</button>}
           {msg && <span className="text-sm text-brand-dark/75">{msg}</span>}
         </div>
+        <div className="mt-4"><BulkCsv kind="sellers" brandId={brandId} help="The whole authorised list at once. A seller name that exists is updated. SKUs: All, or SKUs separated by ;" onDone={reload} /></div>
       </Box>
       <Box title="Authorised sellers" right={<span className="text-xs text-brand-dark/40">{data.sellers.length} {data.sellers.length === 1 ? "seller" : "sellers"}, anyone else on the listings opens a case</span>}>
         {!data.sellers.length ? <p className="text-sm text-brand-dark/40">No authorised sellers yet, so seller alerts are off for this brand.</p> : (
@@ -465,6 +468,7 @@ export function CompetitorsTab({ brandId }: { brandId: string }) {
           <button onClick={discover} disabled={busy || !f.sku} className="rounded-lg border border-black/10 px-4 py-2 text-sm disabled:opacity-40">{busy ? 'Searching…' : 'Find them for me'}</button>
         </div>
         {msg && <p className="mt-3 text-sm text-brand-dark/75">{msg}</p>}
+        <div className="mt-4"><BulkCsv kind="competitors" brandId={brandId} help="Our SKU, their ASIN, and Kind (competitor or compatible). The SKU must already be in Products." onDone={reload} /></div>
       </Box>
       <Box title="Competitor list" right={
         <select className={`${input} w-56`} value={filter} onChange={(e) => setFilter(e.target.value)} aria-label="Filter by product"><option value="">All products ({data.competitors.length})</option>{data.products.map((p) => <option key={p.sku} value={p.sku}>{p.name}</option>)}</select>
@@ -515,6 +519,7 @@ export function SheetsLoaded({ brandId }: { brandId: string }) {
       </div>
     }>
       {msg && <p className="mb-3 text-sm text-brand-dark/75">{msg}</p>}
+      <div className="mb-4"><BulkCsv key={kind} kind={kind} brandId={brandId} label={`Upload ${kind === 'd2c' ? 'D2C store' : kind} weeks from CSV`} help="Uploading a week that is already loaded replaces those rows." onDone={reload} /></div>
       {!weeks.length ? <p className="text-sm text-brand-dark/40">Nothing loaded for this sheet yet.</p> : (
         <table className="w-full text-sm">
           <thead><tr className="text-left text-[11px] uppercase tracking-wider text-brand-dark/40">{['Week starting', 'Rows', kind === 'ads' ? 'Spend' : 'Revenue', ''].map((h) => <th key={h} className="px-2 pb-2 font-medium">{h}</th>)}</tr></thead>
