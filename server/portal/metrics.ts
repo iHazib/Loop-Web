@@ -510,3 +510,41 @@ export function adminSummary(ds: Dataset, users: number, now = new Date()) {
     gmvChange: ov ? ov.kpis.find((k) => k.key === 'gmv')?.change ?? null : null,
   };
 }
+
+
+/* ───────────── Admin: each ASIN on every marketplace ───────────── */
+const EU_HOST: Record<string, string> = { DE: 'amazon.de', FR: 'amazon.fr', IT: 'amazon.it', ES: 'amazon.es' };
+export function listings(ds: Dataset) {
+  const idx = snapshotIndex(ds.snapshots);
+  const weeks = weeksOf(ds.sales);
+  const last4 = new Set(weeks.slice(-4));
+  const lastWeek = weeks.at(-1);
+  const authIds = new Set(ds.sellers.map((s) => s.amazonSellerId).filter(Boolean));
+  return ds.products.map((p) => {
+    const s = p.asin ? idx.latest(p.asin) : undefined;
+    const offers = s?.offers ?? [];
+    const channels = CHANNELS.map((ch) => {
+      const rows = ds.sales.filter((r) => r.sku === p.sku && r.channel === ch);
+      const recent = rows.filter((r) => last4.has(r.weekStart));
+      return {
+        channel: ch,
+        units4w: sum(recent.map((r) => r.units)),
+        revenue4w: round(sum(recent.map((r) => r.revenue))),
+        stock: sum(rows.filter((r) => r.weekStart === lastWeek).map((r) => r.stock)),
+        lastWeek: rows.length ? rows.map((r) => r.weekStart).sort().at(-1)! : null,
+      };
+    }).filter((c) => c.lastWeek);
+    return {
+      sku: p.sku, name: p.name, asin: p.asin, ean: p.ean, cost: p.cost, rrp: p.rrp, mapPrice: p.mapPrice,
+      uk: s ? {
+        url: `https://www.amazon.co.uk/dp/${p.asin}`,
+        day: s.day, title: s.title, price: s.price, bsr: s.bsr, rating: s.rating, reviews: s.reviews,
+        sellers: offers.length,
+        unauthorised: authIds.size ? offers.filter((o) => !o.isAmazon && !authIds.has(o.sellerId)).length : null,
+        buyBoxOk: s.buyBoxSellerId == null ? null : authIds.has(s.buyBoxSellerId) || ['A3P5ROKL5A1OLE', 'ATVPDKIKX0DER'].includes(s.buyBoxSellerId),
+      } : null,
+      eu: (s?.eu ?? []).map((e) => ({ ...e, url: `https://www.${EU_HOST[e.market]}/dp/${p.asin}`, gapPct: e.gbp != null && s?.price ? round(((s.price - e.gbp) / s.price) * 100, 1) : null })),
+      channels,
+    };
+  });
+}

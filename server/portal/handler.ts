@@ -9,6 +9,7 @@ import * as acc from './access.js';
 import { verifyGoogleToken } from '../auth.js';
 import { BRAND_STATUSES, TEST_BUY_VERDICTS, type Dataset, type ProtectionCase, type CaseStatus, type Brand, type BrandStatus, type TestBuy, type TestBuyVerdict } from './types.js';
 import { newCases, autoResolve } from './protection.js';
+import * as email from './email.js';
 
 /* Router for /api/portal/*, shared by Express (server/app.ts) and Vercel (api/index.ts).
    Who can do what:
@@ -206,12 +207,45 @@ export async function handlePortal(req: PortalReq): Promise<PortalRes | null> {
       const id = parts[2];
       const brand = await db.getBrand(id);
       if (!brand) return err(404, 'Brand not found.');
-      if (method === 'GET') {
+      /* Products on every marketplace */
+      if (parts[3] === 'listings' && method === 'GET') {
+        const ds = await db.loadDataset(id);
+        return ok({ listings: metrics.listings(ds!), euMarkets: process.env.KEEPA_EU_MARKETS ?? 'DE,FR,IT,ES' });
+      }
+      /* Email permissions: which alerts and reports go to the brand */
+      if (parts[3] === 'email') {
+        const missing = (e: Error) => /email_settings|portal_email_log|column|relation/i.test(e.message);
+        if (parts[4] === 'preview' && method === 'GET') {
+          const kind = String(query.kind ?? '') as email.AlertKind | email.ReportKind;
+          if (![...email.ALERT_KINDS, ...email.REPORT_KINDS].includes(kind)) return err(400, 'Unknown email type.');
+          const ds = await db.loadDataset(id);
+          return ok(email.preview(ds!, kind));
+        }
+        if (method === 'GET') {
+          const users = await db.brandUsers(id);
+          const available = [...new Set([...users.users.map((u: { email: string }) => u.email), brand.contactEmail].filter(Boolean) as string[])];
+          let settings = email.defaultSettings(), log: Awaited<ReturnType<typeof db.emailLog>> = [], ready = true;
+          try { const c = email.cleanSettings(await db.getEmailSettings(id)); if (typeof c !== 'string') settings = c; log = await db.emailLog(id); }
+          catch (e) { if (!missing(e as Error)) throw e; ready = false; }
+          if (!settings.recipients.length && !settings.updatedAt) settings.recipients = available;
+          return ok({ settings, available, log, ready, labels: email.EMAIL_LABELS, alertKinds: email.ALERT_KINDS, reportKinds: email.REPORT_KINDS, sending: Boolean(process.env.RESEND_API_KEY || process.env.POSTMARK_TOKEN) });
+        }
+        if (method === 'PATCH') {
+          const c = email.cleanSettings(body);
+          if (typeof c === 'string') return err(400, c);
+          c.updatedAt = new Date().toISOString(); c.updatedBy = who!.email;
+          try { await db.saveEmailSettings(id, c); }
+          catch (e) { if (missing(e as Error)) return err(500, 'Email settings are missing in the database. Run supabase/portal.sql again.'); throw e; }
+          await db.addEvents(id, [{ at: c.updatedAt, source: 'Loopretail', message: `Email permissions updated by ${who!.email}`, level: 'info' }]);
+          return ok(c);
+        }
+      }
+      if (method === 'GET' && !parts[3]) {
         const ds = await db.loadDataset(id);
         const users = await db.brandUsers(id);
         return ok({ brand, summary: metrics.adminSummary(ds!, users.users.length), home: metrics.home(ds!), users, openCases: ds!.cases.filter((c) => c.status === 'flagged' || c.status === 'reviewing').slice(0, 30) });
       }
-      if (method === 'PATCH') {
+      if (method === 'PATCH' && !parts[3]) {
         const fields = brandFields(body);
         if (typeof fields === 'string') return err(400, fields);
         if (body.name !== undefined) { const n = String(body.name).trim(); if (!n) return err(400, 'Brand name cannot be empty.'); fields.name = n.slice(0, 80); }
@@ -221,7 +255,7 @@ export async function handlePortal(req: PortalReq): Promise<PortalRes | null> {
         if (fields.status && fields.status !== brand.status) await db.addEvents(id, [{ at: new Date().toISOString(), source: 'Loopretail', message: `Status changed to ${fields.status} by ${who!.email}`, level: 'info' }]);
         return ok(await db.getBrand(id));
       }
-      if (method === 'DELETE') {
+      if (method === 'DELETE' && !parts[3]) {
         if (query.confirm !== id) return err(400, 'Confirm by sending the brand id.');
         await db.deleteBrand(id);
         return ok({ deleted: true });

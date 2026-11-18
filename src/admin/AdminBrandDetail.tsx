@@ -6,6 +6,7 @@ import type { Brand, ProtectionCase } from '../../server/portal/types';
 import { BRAND_STATUSES, CASE_LABELS } from '../../server/portal/types';
 import { useView, portalFetch } from '../portal/api';
 import { STATUS_STYLE, HEALTH, input, ago } from './AdminBrands';
+import { ProductsTab, EmailsTab } from './BrandTabs';
 
 type Detail = {
   brand: Brand;
@@ -35,6 +36,7 @@ export default function AdminBrandDetail() {
   const [busy, setBusy] = useState('');
   const [invite, setInvite] = useState({ email: '', role: 'manager' });
   const [link, setLink] = useState('');
+  const [tab, setTab] = useState<'overview' | 'products' | 'emails'>('overview');
 
   useEffect(() => {
     if (!data) return;
@@ -89,6 +91,16 @@ export default function AdminBrandDetail() {
         </div>
       </header>
       {msg && <div className="mb-6 rounded-xl border border-black/10 bg-surface-offwhite px-4 py-3 text-sm text-brand-dark/80">{msg}</div>}
+
+      <div role="tablist" aria-label="Brand sections" className="mb-6 flex gap-1 border-b border-black/8">
+        {([['overview', 'Overview'], ['products', 'Products and listings'], ['emails', 'Emails']] as const).map(([k, label]) => (
+          <button key={k} role="tab" aria-selected={tab === k} onClick={() => setTab(k)}
+            className={`-mb-px px-4 py-2.5 text-sm font-medium border-b-2 ${tab === k ? 'border-brand-red text-brand-dark' : 'border-transparent text-brand-dark/50 hover:text-brand-dark'}`}>{label}</button>
+        ))}
+      </div>
+      {tab === 'products' && <ProductsTab brandId={id} />}
+      {tab === 'emails' && <EmailsTab brandId={id} />}
+      {tab === 'overview' && <>
 
       <div className="grid grid-cols-2 lg:grid-cols-6 gap-3 mb-6">
         {[['Setup', `${s.setupDone}/${s.setupTotal}`], ['Products', s.products], ['Logins', s.users], ['Open cases', s.openCases], ['Keepa', ago(s.lastKeepa)], ['Sales sheet', ago(s.lastSales)]].map(([k, v]) => (
@@ -172,6 +184,7 @@ export default function AdminBrandDetail() {
           </Box>
         </div>
       </div>
+      </>}
     </div>
   );
 }

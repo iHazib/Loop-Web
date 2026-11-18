@@ -163,3 +163,18 @@ alter table portal_competitors enable row level security;
 alter table portal_keepa_snapshots enable row level security;
 alter table portal_cases enable row level security;
 alter table portal_events enable row level security;
+
+-- Email permissions per brand (admin → brand → Emails) and the log of every email sent.
+alter table portal_brands add column if not exists email_settings jsonb not null default '{}'::jsonb;
+create table if not exists portal_email_log (
+  id bigserial primary key,
+  brand_id text references portal_brands(id) on delete cascade,
+  at timestamptz not null default now(),
+  kind text not null,
+  subject text not null,
+  recipients text[] not null default '{}',
+  status text not null default 'sent', -- sent / failed / skipped
+  detail text default ''
+);
+create index if not exists portal_email_log_brand on portal_email_log (brand_id, at desc);
+alter table portal_email_log enable row level security;

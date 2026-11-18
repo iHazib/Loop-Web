@@ -93,6 +93,22 @@ export async function deleteBrand(id: string) {
   check(await sb().from('portal_brands').delete().eq('id', id));
 }
 
+/* ── Email permissions and log ── */
+export async function getEmailSettings(brandId: string): Promise<unknown> {
+  const rows = check<any[]>(await sb().from('portal_brands').select('email_settings').eq('id', brandId));
+  return rows[0]?.email_settings ?? {};
+}
+export async function saveEmailSettings(brandId: string, settings: unknown) {
+  check(await sb().from('portal_brands').update({ email_settings: settings }).eq('id', brandId));
+}
+export async function emailLog(brandId: string, limit = 50) {
+  const rows = check<any[]>(await sb().from('portal_email_log').select('*').eq('brand_id', brandId).order('at', { ascending: false }).limit(limit));
+  return rows.map((r) => ({ at: r.at as string, kind: r.kind as string, subject: r.subject as string, recipients: (r.recipients ?? []) as string[], status: r.status as string, detail: (r.detail ?? '') as string }));
+}
+export async function logEmail(brandId: string, row: { kind: string; subject: string; recipients: string[]; status: string; detail?: string }) {
+  check(await sb().from('portal_email_log').insert({ brand_id: brandId, ...row, detail: row.detail ?? '' }));
+}
+
 /* ── Load everything for one brand ── */
 export async function loadDataset(brandId: string): Promise<Dataset | null> {
   const b = check<any[]>(await sb().from('portal_brands').select('*').eq('id', brandId));
