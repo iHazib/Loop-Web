@@ -11,6 +11,10 @@ import { BRAND_STATUSES, TEST_BUY_VERDICTS, PORTAL_TABS, brandSettings, type Bra
 import { newCases, autoResolve } from './protection.js';
 import * as email from './email.js';
 import * as st from './searchterms.js';
+import * as cs from './casestudies.js';
+import * as alerts from './alerts.js';
+import { mailConfigured, sendMail } from './mailer.js';
+import crypto from 'node:crypto';
 
 /* Router for /api/portal/*, shared by Express (server/app.ts) and Vercel (api/index.ts).
    Who can do what:
@@ -86,6 +90,19 @@ export async function handlePortal(req: PortalReq): Promise<PortalRes | null> {
     for (const b of await db.listBrands()) {
       try { results.push({ brand: b.id, ...(await syncBrand(b.id)) }); }
       catch (e) { results.push({ brand: b.id, error: e instanceof Error ? e.message : String(e) }); }
+      // Instant alerts go out straight after each brand's check.
+      try { const a = await alerts.run(b.id, 'instant'); results.push({ brand: b.id, alerts: a.status }); }
+      catch (e) { results.push({ brand: b.id, alertsError: (e as Error).message }); }
+    }
+    return ok({ results });
+  }
+  if (parts[0] === 'cron' && parts[1] === 'digest') {
+    const secret = (process.env.CRON_SECRET || '').trim();
+    if (!secret || req.authHeader !== `Bearer ${secret}`) return err(401, 'Unauthorised');
+    const results = [];
+    for (const b of await db.listBrands()) {
+      try { const a = await alerts.run(b.id, 'daily'); results.push({ brand: b.id, status: a.status, emails: a.emails.length }); }
+      catch (e) { results.push({ brand: b.id, error: (e as Error).message }); }
     }
     return ok({ results });
   }
@@ -143,6 +160,31 @@ export async function handlePortal(req: PortalReq): Promise<PortalRes | null> {
     return err(404, 'Unknown auth route.');
   }
 
+  /* ── Public case studies: teasers for everyone, the full study with a valid access code ── */
+  if (parts[0] === 'case-studies') {
+    if (!db.dbConfigured()) return ok([]);
+    try {
+      if (method === 'GET' && !parts[1]) return ok((await db.listStudies(true)).map(cs.teaser));
+      const study = parts[1] ? await db.getStudy(parts[1]) : null;
+      if (!study || !study.published) return err(404, 'This case study is not available.');
+      if (method === 'GET' && !parts[2]) return ok(cs.teaser(study));
+      if (method === 'POST' && parts[2] === 'unlock') {
+        const key = `case:${study.slug}`;
+        if (acc.throttled(key)) return err(429, 'Too many wrong codes. Try again in 15 minutes.');
+        const code = cs.normCode(String(body.code ?? ''));
+        const a = code.length === 8 ? await db.findAccess(acc.sha256(code)) : null;
+        const valid = a && !a.revoked && new Date(a.expiresAt).getTime() > Date.now() && (!a.studyId || a.studyId === study.id);
+        if (!valid) { acc.noteFailure(key); return err(401, a && new Date(a.expiresAt).getTime() <= Date.now() ? 'This code has expired. Ask us for a new one.' : 'That code does not open this case study.'); }
+        await db.useAccess(a!.id, a!.uses);
+        return ok({ ...cs.full(study), allStudies: !a!.studyId, expiresAt: a!.expiresAt });
+      }
+    } catch (e) {
+      if (/portal_case/i.test((e as Error).message)) return method === 'GET' && !parts[1] ? ok([]) : err(404, 'This case study is not available.');
+      throw e;
+    }
+    return err(404, 'Unknown case study route.');
+  }
+
   const who = await principal(req);
 
   if (parts[0] === 'status' && method === 'GET') {
@@ -185,6 +227,43 @@ export async function handlePortal(req: PortalReq): Promise<PortalRes | null> {
       }
       return ok({ ...brand, invitePath });
     }
+  }
+
+  /* ── Staff admin: case studies and access codes ── */
+  if (parts[0] === 'admin' && parts[1] === 'case-studies') {
+    if (!acc.isStaff(who)) return err(403, 'Staff only.');
+    if (!db.dbConfigured()) return err(503, 'The database is not configured yet.');
+    const guard = async <T,>(f: () => Promise<T>) => {
+      try { return await f(); }
+      catch (e) { if (/portal_case/i.test((e as Error).message)) return err(500, 'Case studies are missing in the database. Run supabase/portal.sql again.') as unknown as T; throw e; }
+    };
+    if (parts[2] === 'access') {
+      if (method === 'GET') return guard(async () => ok(await db.listAccess()));
+      if (method === 'POST') {
+        const label = String(body.label ?? '').trim().slice(0, 100);
+        if (!label) return err(400, 'Say who the code is for.');
+        const days = Math.min(Math.max(Math.round(Number(body.days) || 14), 1), 365);
+        const studyId = body.studyId ? String(body.studyId) : null;
+        const code = cs.newCode();
+        const expiresAt = new Date(Date.now() + days * 86_400_000).toISOString();
+        return guard(async () => { await db.createAccess({ id: crypto.randomUUID(), label, studyId, codeHash: acc.sha256(cs.normCode(code)), expiresAt }); return ok({ code, expiresAt }); });
+      }
+      if (method === 'DELETE') return guard(async () => { await db.revokeAccess(String(query.id ?? '')); return ok({ revoked: true }); });
+    }
+    if (method === 'GET' && !parts[2]) return guard(async () => ok(await db.listStudies(false)));
+    if (method === 'POST' && !parts[2]) {
+      const clean = cs.cleanStudy(body);
+      if (typeof clean === 'string') return err(400, clean);
+      return guard(async () => {
+        const all = await db.listStudies(false);
+        const id = body.id ? String(body.id) : crypto.randomUUID();
+        if (all.some((x) => x.slug === clean.slug && x.id !== id)) return err(400, `Another case study already uses the link /case-studies/${clean.slug}.`);
+        await db.saveStudy(id, clean);
+        return ok({ id, ...clean });
+      });
+    }
+    if (method === 'DELETE' && !parts[2]) return guard(async () => { await db.deleteStudy(String(query.id ?? '')); return ok({ deleted: true }); });
+    return err(404, 'Unknown case study route.');
   }
 
   /* ── Staff admin: bulk brand import from CSV. Existing names are skipped, not duplicated. ── */
@@ -318,6 +397,19 @@ export async function handlePortal(req: PortalReq): Promise<PortalRes | null> {
       /* Email permissions: which alerts and reports go to the brand */
       if (parts[3] === 'email') {
         const missing = (e: Error) => /email_settings|portal_email_log|column|relation/i.test(e.message);
+        if (parts[4] === 'run' && method === 'POST') {
+          const mode = body.mode === 'daily' ? 'daily' : 'instant';
+          try { return ok(await alerts.run(id, mode, { dryRun: body.dryRun === true })); }
+          catch (e) { if (missing(e as Error) || /alert_state|alert_prefs/i.test((e as Error).message)) return err(500, 'Alert columns are missing in the database. Run supabase/portal.sql again.'); throw e; }
+        }
+        if (parts[4] === 'test' && method === 'POST') {
+          const kind = String(body.kind ?? '') as email.AlertKind | email.ReportKind;
+          if (![...email.ALERT_KINDS, ...email.REPORT_KINDS].includes(kind)) return err(400, 'Unknown email type.');
+          if (!mailConfigured()) return err(503, 'No email provider is set up yet, so test emails cannot be sent.');
+          const p = email.preview((await db.loadDataset(id))!, kind);
+          const r = await sendMail(who!.email, `[Test] ${p.subject}`, p.html);
+          return r.ok ? ok({ sentTo: who!.email }) : err(502, r.detail);
+        }
         if (parts[4] === 'preview' && method === 'GET') {
           const kind = String(query.kind ?? '') as email.AlertKind | email.ReportKind;
           if (![...email.ALERT_KINDS, ...email.REPORT_KINDS].includes(kind)) return err(400, 'Unknown email type.');
@@ -431,6 +523,31 @@ export async function handlePortal(req: PortalReq): Promise<PortalRes | null> {
 
   /* Everything below changes data. */
   if (isDemo) return err(403, 'The demo brand is read only.');
+  /* ── Each brand user's own email alerts (viewers too) ── */
+  if (parts[2] === 'my-alerts') {
+    if (!db.dbConfigured() || brandId === 'demo') return err(400, 'Email alerts are set per brand login.');
+    if (who?.kind !== 'client') return err(400, 'Staff set alerts for the brand in admin → Emails. This page is for brand logins.');
+    const missingCol = (e: Error) => /alert_prefs|email_settings|column/i.test(e.message);
+    try {
+      const set = email.cleanSettings(await db.getEmailSettings(brandId));
+      const st = typeof set === 'string' ? email.defaultSettings() : set;
+      const mine = (await db.userAlertPrefs(brandId)).find((u) => u.email === who.email);
+      if (method === 'PATCH') {
+        const p = alerts.cleanPrefs(body);
+        await db.saveUserAlertPrefs(who.email, brandId, p);
+        return ok({ saved: true });
+      }
+      if (method === 'GET') {
+        const plan = alerts.audience(st, [{ email: who.email, prefs: mine?.prefs ?? {} }]).get(who.email)!;
+        return ok({
+          enabled: st.enabled, sending: mailConfigured(), email: who.email,
+          alerts: email.ALERT_KINDS.map((k) => ({ kind: k, ...email.EMAIL_LABELS[k], allowed: st.alerts[k] !== 'off', brandDefault: st.alerts[k], mine: plan.alerts[k] })),
+          reports: email.REPORT_KINDS.map((k) => ({ kind: k, ...email.EMAIL_LABELS[k], allowed: st.reports[k], mine: plan.reports[k] })),
+        });
+      }
+    } catch (e) { if (missingCol(e as Error)) return err(500, 'Email alerts need a database update. Ask Loopretail to run supabase/portal.sql.'); throw e; }
+  }
+
   if (!acc.canEdit(who, brandId)) return err(403, 'Your account can view this brand but not change it.');
 
   /* ── Team (staff only) ── */

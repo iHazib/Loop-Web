@@ -1,5 +1,5 @@
-import { createContext, useContext, useState, type ReactNode } from 'react';
-import { Link } from 'react-router-dom';
+import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { ArrowUpRight, Check, Minus, Plus } from 'lucide-react';
 import { NavBar } from '../NavBar';
 import { Footer } from '../Footer';
@@ -51,6 +51,12 @@ export const WRAP = 'max-w-[1248px] mx-auto px-4 md:px-6';
 export const H2 = 'font-semibold tracking-[-0.03em] text-balance text-[28px] leading-[32px] md:text-[38px] md:leading-[42px]';
 
 export function SitePage({ children }: { children: ReactNode }) {
+  const { hash } = useLocation();
+  useEffect(() => {
+    if (!hash) return;
+    const t = window.setTimeout(() => document.getElementById(hash.slice(1))?.scrollIntoView({ block: 'start' }), 80);
+    return () => window.clearTimeout(t);
+  }, [hash]);
   return (
     <div className="min-h-screen bg-canvas text-ink">
       <NavBar />

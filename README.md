@@ -215,6 +215,11 @@ A dashboard per brand with six tabs: **Overview, Channels, Protection, Brand Ana
 1. Run `supabase/portal.sql` once in the Supabase SQL editor.
 2. Add `KEEPA_API_KEY` and `CRON_SECRET` to the environment (see `.env.example`).
 3. Daily job: `npm run job:keepa` from cron on the server, or Vercel Cron calling `/api/portal/cron/keepa` (configured in `vercel.json`).
+4. Alert emails: set `RESEND_API_KEY` (resend.com) or `POSTMARK_TOKEN` (postmarkapp.com), plus `EMAIL_FROM` (for example `Loopretail <alerts@loopretail.io>`) and optionally `EMAIL_REPLY_TO`. Instant alerts go out after the Keepa job; the daily digest, weekly report (Mondays) and monthly review (1st) go out from `/api/portal/cron/digest` at 07:00 UTC. Without a provider nothing is sent and nothing is marked as sent.
+
+**Alert emails** (`server/portal/alerts.ts`): staff choose off, instant or daily digest per alert type for each brand (admin → brand → Emails). Each brand login can pick their own choice for every type staff left on (portal → Home → Your email alerts). Each item is emailed once per person; the first run for a brand only records what is already open.
+
+**Case studies** (`/case-studies`, admin → Case studies): the outline is public; the numbers and full text are only sent after a valid access code. Codes are made per prospect, open one study or all, expire, and can be revoked.
 
 **Code:** `server/portal/*` (types, metrics, rules, Keepa client, storage, router) and `src/portal/*` (UI). The same router serves Express (`server/app.ts`) and Vercel (`api/index.ts`).
 

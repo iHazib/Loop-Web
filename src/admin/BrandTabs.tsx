@@ -258,7 +258,10 @@ export function EmailsTab({ brandId }: { brandId: string }) {
           {s.updatedAt && <span className="text-xs text-brand-dark/45">Last changed {new Date(s.updatedAt).toLocaleString('en-GB')}{s.updatedBy ? ` by ${s.updatedBy}` : ''}</span>}
           {msg && <span className="text-sm text-brand-dark/75">{msg}</span>}
         </div>
+        <p className="mt-4 text-xs text-brand-dark/50">Instant alerts go out after each daily Keepa check. The daily digest goes at 7am UK time, with the weekly report on Mondays and the monthly review on the 1st. Off means nobody at the brand gets it. Otherwise each brand login can choose instant, daily or off for themselves on their Home page.</p>
       </Box>
+
+      <RunNow brandId={brandId} sending={data.sending} />
 
       <Box title="Sent log">
         {!data.log.length ? <p className="text-sm text-brand-dark/40">No emails sent to this brand yet.</p> : (
@@ -534,6 +537,46 @@ export function SheetsLoaded({ brandId }: { brandId: string }) {
             ))}
           </tbody>
         </table>
+      )}
+    </Box>
+  );
+}
+
+/* Lets staff see what is due right now and send it, without waiting for the schedule. */
+type RunRes = { status: string; fresh: Record<string, number>; emails: { to: string; subject: string; items: number; sent: boolean; detail: string }[] };
+function RunNow({ brandId, sending }: { brandId: string; sending: boolean }) {
+  const [res, setRes] = useState<(RunRes & { label: string }) | null>(null);
+  const [busy, setBusy] = useState('');
+  const go = async (mode: 'instant' | 'daily', dryRun: boolean, label: string) => {
+    setBusy(label); setRes(null);
+    try { setRes({ ...(await portalFetch<RunRes>(`/admin/brands/${brandId}/email/run`, { method: 'POST', body: JSON.stringify({ mode, dryRun }) })), label }); }
+    catch (e) { setRes({ status: (e as Error).message, fresh: {}, emails: [], label }); }
+    finally { setBusy(''); }
+  };
+  const btn = 'rounded-lg border border-black/10 px-3 py-2 text-sm disabled:opacity-40';
+  return (
+    <Box title="Send now">
+      <p className="text-sm text-brand-dark/55 mb-3">Check what is waiting to go out, or send it now instead of waiting for the schedule. Each item is emailed once per person.</p>
+      <div className="flex flex-wrap gap-2">
+        <button disabled={!!busy} onClick={() => go('instant', true, 'Checking instant alerts')} className={btn}>Check instant alerts</button>
+        <button disabled={!!busy} onClick={() => go('daily', true, 'Checking the daily digest')} className={btn}>Check daily digest</button>
+        <button disabled={!!busy || !sending} onClick={() => go('instant', false, 'Sending instant alerts')} className="rounded-lg bg-brand-dark text-white px-3 py-2 text-sm disabled:opacity-40">Send instant alerts now</button>
+        <button disabled={!!busy || !sending} onClick={() => go('daily', false, 'Sending the daily digest')} className="rounded-lg bg-brand-dark text-white px-3 py-2 text-sm disabled:opacity-40">Send daily digest now</button>
+      </div>
+      {busy && <p className="mt-3 text-sm text-brand-dark/50">{busy}…</p>}
+      {res && (
+        <div className="mt-4 text-sm">
+          <p className="text-brand-dark/80">{res.status}</p>
+          {Object.keys(res.fresh).length > 0 && <p className="mt-1 text-xs text-brand-dark/50">New items: {Object.entries(res.fresh).map(([k, n]) => `${k.replace(/_/g, ' ')} ${n}`).join(', ')}</p>}
+          {res.emails.length > 0 && (
+            <table className="w-full mt-3 text-sm">
+              <thead><tr className="text-left text-[11px] uppercase tracking-wider text-brand-dark/40">{['To', 'Subject', 'Items', 'Result'].map((h) => <th key={h} className="px-2 pb-2 font-medium">{h}</th>)}</tr></thead>
+              <tbody>{res.emails.map((e, i) => (
+                <tr key={i} className="border-t border-black/5"><td className="px-2 py-2">{e.to}</td><td className="px-2 py-2">{e.subject}</td><td className="px-2 py-2">{e.items}</td><td className={`px-2 py-2 ${e.sent ? 'text-emerald-600' : 'text-brand-dark/50'}`}>{e.sent ? 'Sent' : e.detail}</td></tr>
+              ))}</tbody>
+            </table>
+          )}
+        </div>
       )}
     </Box>
   );

@@ -1,4 +1,4 @@
-import { SitePage, PageHero, Section, CardGrid, Steps, FAQ, CTABand, Related, Note } from '../components/site/Page';
+import { SitePage, PageHero, Section, CardGrid, Steps, FAQ, CTABand, Related, Note, Compare } from '../components/site/Page';
 import { CTA, contactHref } from '../components/CTA';
 
 export default function UKMarketEntry() {
@@ -28,6 +28,30 @@ export default function UKMarketEntry() {
         <Note>This page is a general overview, not tax or legal advice. Rules change; we work alongside your accountant and legal advisers on the specifics for your products.</Note>
       </Section>
 
+      <Section id="full-handling" tone="off" eyebrow="Full brand handling" title="New to the UK? We can run all of it."
+        lead="For brands with no UK team, stock or accounts yet. You make the product; we take on everything between your factory and the UK customer, under one exclusive agreement.">
+        <CardGrid cols={4} items={[
+          { tag: 'Rights', title: 'Exclusive UK rights', body: 'One agreement makes us your only UK seller, so the channels open clean and stay that way.', image: 'team', imageAlt: 'A meeting around a table' },
+          { tag: 'Stock', title: 'Import and warehousing', body: 'Freight booked, goods received and checked, and stock held in our UK warehouse for every channel.', image: 'forklift', imageAlt: 'A forklift moving pallets in a warehouse' },
+          { tag: 'Direct', title: 'UK store and delivery', body: 'A Shopify store in pounds and British English, next day delivery and returns under UK rules.', image: 'parcel', imageAlt: 'A parcel ready for delivery' },
+          { tag: 'Marketplaces', title: 'Every channel at once', body: 'Amazon, TikTok Shop, eBay and Temu launched from the same stock, with protection live from day one.', image: 'phone', imageAlt: 'Shopping on a phone' },
+        ]} />
+        <div className="mt-10">
+          <Compare
+            columns={['Full brand handling', 'Launch support only']}
+            rows={[
+              { label: 'Readiness review and compliance checklist', cells: [true, true] },
+              { label: 'Who imports and owns UK stock', cells: ['Loopretail', 'You'] },
+              { label: 'UK warehouse and dispatch', cells: [true, 'Optional'] },
+              { label: 'UK store built and run', cells: [true, 'Optional'] },
+              { label: 'Marketplaces run day to day', cells: [true, 'Set up, then handed over'] },
+              { label: 'Exclusive UK rights', cells: [true, false] },
+              { label: 'Best for', cells: ['Brands that want the UK run for them', 'Brands building their own UK team'] },
+            ]}
+          />
+        </div>
+      </Section>
+
       <Section tone="dark" eyebrow="Launch path" title="From first call to first UK orders.">
         <Steps steps={[
           { title: 'Readiness review', body: 'Range, compliance, labelling, pricing and margin checked against UK channels. You get a clear list of what is ready and what is not.', time: 'Week 1' },
@@ -42,6 +66,7 @@ export default function UKMarketEntry() {
         <FAQ items={[
           { q: 'Do we need a UK company?', a: 'Not always. Many overseas brands sell in the UK through their home company. Some choose a UK entity or a partner who buys and resells the stock. We walk through the options with your advisers.' },
           { q: 'Which channel should we start with?', a: 'Usually the one where UK shoppers already search for your category. For most consumer brands that is Amazon UK, with a UK D2C store alongside to own the customer relationship.' },
+          { q: 'Can you run the whole UK for us?', a: 'Yes. With full brand handling we import, store and sell the stock under an exclusive UK agreement, across a UK store and every marketplace. You approve prices, content and the plan.' },
           { q: 'Can you hold our stock?', a: 'Yes. Stock is held in the UK and shipped to Amazon and to direct customers from the same place.' },
           { q: 'How do we stop grey stock from day one?', a: 'Load your authorised seller list and minimum prices into Loop Protect before launch, so any other seller on your listings is flagged from the first daily check.' },
         ]} />

@@ -4,7 +4,7 @@ import { Logo } from './Logo';
 const COLS: { heading: string; links: [string, string][] }[] = [
   { heading: 'Services', links: [['All services', '/services'], ['Marketplace Control', '/marketplace-control'], ['Brand Protection', '/brand-protection'], ['DTC Growth', '/dtc-growth'], ['Retail Expansion', '/retail-expansion'], ['UK Market Entry', '/uk-market-entry']] },
   { heading: 'Tools', links: [['All tools', '/tools'], ['Brand Dashboard', '/tools/brand-dashboard'], ['Loop Protect', '/tools/loop-protect'], ['Competitor Analysis', '/tools/competitor-analysis'], ['Client login', '/portal/login']] },
-  { heading: 'Company', links: [['About', '/about'], ['How it works', '/how-it-works'], ['Blog', '/blog'], ['Contact', '/contact']] },
+  { heading: 'Company', links: [['About', '/about'], ['How it works', '/how-it-works'], ['Case studies', '/case-studies'], ['Blog', '/blog'], ['Contact', '/contact']] },
 ];
 
 export function Footer() {

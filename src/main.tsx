@@ -10,6 +10,9 @@ const Blog = lazy(() => import('./pages/Blog.tsx'));
 const BlogPost = lazy(() => import('./pages/BlogPost.tsx'));
 const Contact = lazy(() => import('./pages/Contact.tsx'));
 const About = lazy(() => import('./pages/About.tsx'));
+const CaseStudiesIndex = lazy(() => import('./pages/CaseStudies.tsx').then((m) => ({ default: m.CaseStudiesIndex })));
+const CaseStudyPage = lazy(() => import('./pages/CaseStudies.tsx').then((m) => ({ default: m.CaseStudyPage })));
+const AdminCaseStudies = lazy(() => import('./admin/AdminCaseStudies.tsx'));
 const AdminLayout = lazy(() => import('./admin/AdminLayout.tsx'));
 const AdminDashboard = lazy(() => import('./admin/AdminDashboard.tsx'));
 const AdminPosts = lazy(() => import('./admin/AdminPosts.tsx'));
@@ -82,6 +85,8 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/blog/:slug" element={<BlogPost />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/about" element={<About />} />
+        <Route path="/case-studies" element={<CaseStudiesIndex />} />
+        <Route path="/case-studies/:slug" element={<CaseStudyPage />} />
         <Route path="/portal/login" element={<PortalLogin />} />
         <Route path="/portal/invite/:token" element={<PortalInvite />} />
         <Route path="/portal" element={<Portal />} />
@@ -96,6 +101,7 @@ createRoot(document.getElementById('root')!).render(
           <Route path="inbox" element={<AdminInbox />} />
           <Route path="brands" element={<AdminBrands />} />
           <Route path="brands/:id" element={<AdminBrandDetail />} />
+          <Route path="case-studies" element={<AdminCaseStudies />} />
         </Route>
       </Routes>
       </Suspense>

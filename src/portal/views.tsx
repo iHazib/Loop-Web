@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { MyAlerts } from './MyAlerts';
 import { Link } from 'react-router-dom';
 import { CheckCircle2, Circle, AlertTriangle, ArrowRight, FileText, Mail } from 'lucide-react';
 import type * as M from '../../server/portal/metrics';
@@ -122,6 +123,7 @@ export function Home({ brandId, brandName, welcome, manager }: { brandId: string
           </ul>
         </Card>
       </div>
+      <MyAlerts brandId={brandId} />
     </div>
   );
 }

@@ -202,3 +202,37 @@ alter table portal_search_terms enable row level security;
 
 -- Per brand dashboard settings (admin → brand → Settings): target ACoS, stock warning, grey threshold, hidden tabs, welcome note.
 alter table portal_brands add column if not exists settings jsonb not null default '{}'::jsonb;
+
+-- Case studies on the public site (admin → Case studies), and the access codes given to prospects.
+create table if not exists portal_case_studies (
+  id text primary key,
+  slug text not null unique,
+  title text not null,
+  brand_label text default '',
+  sector text default '',
+  summary text default '',
+  cover text default 'boxes',
+  metrics jsonb not null default '[]'::jsonb,
+  sections jsonb not null default '[]'::jsonb,
+  published boolean not null default false,
+  sort integer default 0,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+create table if not exists portal_case_access (
+  id text primary key,
+  label text not null,
+  study_id text references portal_case_studies(id) on delete cascade, -- null = every study
+  code_hash text not null unique,
+  expires_at timestamptz not null,
+  created_at timestamptz default now(),
+  last_used timestamptz,
+  uses integer default 0,
+  revoked boolean not null default false
+);
+alter table portal_case_studies enable row level security;
+alter table portal_case_access enable row level security;
+
+-- Alert emails: what has been sent per brand, and each brand user's own alert choices.
+alter table portal_brands add column if not exists alert_state jsonb not null default '{}'::jsonb;
+alter table portal_user_brands add column if not exists alert_prefs jsonb not null default '{}'::jsonb;

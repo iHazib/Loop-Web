@@ -77,12 +77,12 @@ export function cleanSettings(raw: unknown): EmailSettings | string {
 
 /* ── Previews ── */
 
-const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
+export const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
 const isOpen = (c: ProtectionCase) => c.status === 'flagged' || c.status === 'reviewing';
 
-type Item = { title: string; detail: string };
+export type Item = { title: string; detail: string };
 
-function shell(brand: string, heading: string, intro: string, items: Item[], cta: { label: string; path: string }) {
+export function shell(brand: string, heading: string, intro: string, items: Item[], cta: { label: string; path: string }) {
   const rows = items.map((i) => `<tr><td style="padding:12px 0;border-top:1px solid #dfe2de"><div style="font-weight:600;color:#121614">${esc(i.title)}</div><div style="color:#5c635f;font-size:14px;margin-top:2px">${esc(i.detail)}</div></td></tr>`).join('');
   return `<div style="font-family:Arial,Helvetica,sans-serif;background:#f3f4f2;padding:24px">
 <div style="max-width:560px;margin:0 auto;background:#ffffff;border-radius:16px;padding:28px">

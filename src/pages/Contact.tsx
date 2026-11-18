@@ -22,6 +22,7 @@ const TOPICS: Record<string, { category: QueryCategory; subject: string }> = {
   'marketplace-audit': { category: 'Marketplace Control', subject: 'Marketplace audit' },
   'protection-audit': { category: 'Brand Protection', subject: 'Free seller audit' },
   'uk-launch': { category: 'General Enquiry', subject: 'Plan a UK launch' },
+  'case-study': { category: 'General Enquiry', subject: 'Case study access' },
 };
 
 export default function Contact() {
@@ -32,7 +33,7 @@ export default function Contact() {
     email: '',
     company: '',
     category: (topic?.category ?? 'General Enquiry') as QueryCategory,
-    subject: topic?.subject ?? '',
+    subject: topic && params.get('study') ? `${topic.subject}: ${params.get('study')!.slice(0, 120)}` : topic?.subject ?? '',
     message: '',
   });
   const [sent, setSent] = useState(false);

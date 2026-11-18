@@ -298,3 +298,58 @@ export async function ensureUser(email: string) {
 export async function deleteUser(email: string) {
   check(await sb().from('portal_users').delete().eq('email', email.toLowerCase()));
 }
+
+/* ── Case studies and their access codes ── */
+type CS = import('./casestudies.js').CaseStudy;
+const toStudy = (r: any): CS => ({ id: r.id, slug: r.slug, title: r.title, brandLabel: r.brand_label ?? '', sector: r.sector ?? '', summary: r.summary ?? '', cover: r.cover ?? 'boxes', metrics: r.metrics ?? [], sections: r.sections ?? [], published: Boolean(r.published), sort: r.sort ?? 0, updatedAt: r.updated_at });
+export async function listStudies(publishedOnly: boolean): Promise<CS[]> {
+  let q = sb().from('portal_case_studies').select('*');
+  if (publishedOnly) q = q.eq('published', true);
+  const rows = check<any[]>(await q.order('sort', { ascending: true }));
+  return rows.map(toStudy).sort((a, b) => a.sort - b.sort || a.title.localeCompare(b.title));
+}
+export async function getStudy(slug: string): Promise<CS | null> {
+  const rows = check<any[]>(await sb().from('portal_case_studies').select('*').eq('slug', slug));
+  return rows[0] ? toStudy(rows[0]) : null;
+}
+export async function saveStudy(id: string, s: Omit<CS, 'id'>) {
+  await upsert('portal_case_studies', [{ id, slug: s.slug, title: s.title, brand_label: s.brandLabel, sector: s.sector, summary: s.summary, cover: s.cover, metrics: s.metrics, sections: s.sections, published: s.published, sort: s.sort, updated_at: new Date().toISOString() }], 'id');
+}
+export async function deleteStudy(id: string) {
+  check(await sb().from('portal_case_studies').delete().eq('id', id));
+}
+type CA = import('./casestudies.js').CaseAccess;
+const toAccess = (r: any): CA => ({ id: r.id, label: r.label, studyId: r.study_id ?? null, expiresAt: r.expires_at, createdAt: r.created_at, lastUsed: r.last_used ?? null, uses: r.uses ?? 0, revoked: Boolean(r.revoked) });
+export async function listAccess(): Promise<CA[]> {
+  const rows = check<any[]>(await sb().from('portal_case_access').select('*').order('created_at', { ascending: false }));
+  return rows.map(toAccess);
+}
+export async function createAccess(row: { id: string; label: string; studyId: string | null; codeHash: string; expiresAt: string }) {
+  check(await sb().from('portal_case_access').insert({ id: row.id, label: row.label, study_id: row.studyId, code_hash: row.codeHash, expires_at: row.expiresAt }));
+}
+export async function findAccess(codeHash: string): Promise<CA | null> {
+  const rows = check<any[]>(await sb().from('portal_case_access').select('*').eq('code_hash', codeHash));
+  return rows[0] ? toAccess(rows[0]) : null;
+}
+export async function useAccess(id: string, uses: number) {
+  check(await sb().from('portal_case_access').update({ last_used: new Date().toISOString(), uses: uses + 1 }).eq('id', id));
+}
+export async function revokeAccess(id: string) {
+  check(await sb().from('portal_case_access').update({ revoked: true }).eq('id', id));
+}
+
+/* ── Alert sending state and each brand user's own alert choices ── */
+export async function getAlertState(brandId: string): Promise<any> {
+  const rows = check<any[]>(await sb().from('portal_brands').select('alert_state').eq('id', brandId));
+  return rows[0]?.alert_state ?? {};
+}
+export async function saveAlertState(brandId: string, state: unknown) {
+  check(await sb().from('portal_brands').update({ alert_state: state }).eq('id', brandId));
+}
+export async function userAlertPrefs(brandId: string): Promise<{ email: string; role: string; prefs: any }[]> {
+  const rows = check<any[]>(await sb().from('portal_user_brands').select('*').eq('brand_id', brandId));
+  return rows.map((r) => ({ email: r.email, role: r.role, prefs: r.alert_prefs ?? {} }));
+}
+export async function saveUserAlertPrefs(email: string, brandId: string, prefs: unknown) {
+  check(await sb().from('portal_user_brands').update({ alert_prefs: prefs }).eq('email', email.toLowerCase()).eq('brand_id', brandId));
+}

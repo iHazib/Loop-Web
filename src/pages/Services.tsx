@@ -59,6 +59,22 @@ export default function Services() {
         <CardGrid items={services} />
       </Section>
 
+      <Section tone="off" eyebrow="Hand it all over" title="Want one partner to run the whole UK?"
+        lead="Any of the services above can be taken one at a time. Brands that want the whole UK handled pick one of these two routes.">
+        <CardGrid cols={2} items={[
+          {
+            tag: 'Exclusive UK partner', title: 'One seller, every channel', href: '/how-it-works#exclusive', image: 'loading', imageAlt: 'Parcels stacked in a delivery van',
+            body: 'You give us exclusive UK rights. We buy the stock and run Amazon, TikTok Shop, eBay, Temu and your UK store as the only authorised seller.',
+            points: ['We hold and fund the stock', 'No other UK resellers', 'Exclusivity backs every takedown'],
+          },
+          {
+            tag: 'New to the UK', title: 'Full brand handling', href: '/uk-market-entry#full-handling', image: 'port', imageAlt: 'Shipping containers stacked at a port',
+            body: 'For brands not yet selling here: import, warehousing, a UK store with delivery, every marketplace and exclusive rights, run end to end.',
+            points: ['Readiness and compliance checks', 'UK warehouse and same day dispatch', 'Store and marketplaces launched together'],
+          },
+        ]} />
+      </Section>
+
       <Section tone="dark" eyebrow="Fulfilment and operations" title="The physical side, handled in the UK."
         lead="Every service above sits on our own UK operation, so a sale on any channel ships from the same stock.">
         <CardGrid items={fulfilment} cols={4} />

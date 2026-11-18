@@ -38,6 +38,28 @@ export default function App() {
       </Reveal>
 
       <Reveal>
+        <Section tone="off">
+          <Split
+            reverse
+            image="loading"
+            imageAlt="Parcels stacked in a delivery van"
+            eyebrow="Exclusive UK partner"
+            title="Give one partner the UK. We run every channel."
+            body={<>
+              <p>With an exclusive agreement we become your only UK seller. We buy the stock, run Amazon, TikTok Shop, eBay, Temu and your UK store, and remove anyone else who lists it.</p>
+              <p>New to the UK? We take on import, warehousing and delivery too, so the brand launches here without a UK team.</p>
+            </>}
+            points={['One seller and one price across the UK', 'Stock bought and held by us', 'You keep the brand, the prices and the final say']}
+          >
+            <div className="pt-2 flex flex-wrap gap-3">
+              <CTA to="/how-it-works#exclusive" label="How exclusivity works" tone="dark" id="home-exclusive" />
+              <CTA to="/uk-market-entry#full-handling" label="New to the UK" tone="outline-dark" id="home-new-uk" />
+            </div>
+          </Split>
+        </Section>
+      </Reveal>
+
+      <Reveal>
         <Section tone="petrol" eyebrow="Tools" title="See your market the way we see it."
           lead="Every client gets a login. The numbers update daily from Keepa for Amazon UK, and from your weekly sheets for every other channel.">
           <CardGrid items={[
