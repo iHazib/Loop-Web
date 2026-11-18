@@ -109,6 +109,34 @@ export async function logEmail(brandId: string, row: { kind: string; subject: st
   check(await sb().from('portal_email_log').insert({ brand_id: brandId, ...row, detail: row.detail ?? '' }));
 }
 
+/* ── Search term reports ── */
+export async function saveSearchTerms(brandId: string, up: import('./searchterms.js').SearchTermUpload) {
+  check(await sb().from('portal_search_terms').delete().eq('brand_id', brandId).eq('period_start', up.periodStart).eq('period_end', up.periodEnd));
+  await upsert('portal_search_terms', up.rows.map((r) => ({
+    brand_id: brandId, period_start: up.periodStart, period_end: up.periodEnd,
+    campaign: r.campaign, ad_group: r.adGroup, targeting: r.targeting, match_type: r.matchType, search_term: r.searchTerm,
+    impressions: Math.round(r.impressions), clicks: Math.round(r.clicks), spend: r.spend, sales: r.sales, orders: Math.round(r.orders), units: Math.round(r.units),
+  })), 'brand_id,period_start,period_end,campaign,ad_group,targeting,match_type,search_term');
+}
+export async function searchTermPeriods(brandId: string) {
+  const rows = check<any[]>(await sb().from('portal_search_terms').select('period_start,period_end,uploaded_at').eq('brand_id', brandId));
+  const m = new Map<string, { periodStart: string; periodEnd: string; uploadedAt: string; terms: number }>();
+  for (const r of rows) {
+    const k = `${r.period_start}|${r.period_end}`;
+    const e = m.get(k) ?? { periodStart: String(r.period_start).slice(0, 10), periodEnd: String(r.period_end).slice(0, 10), uploadedAt: r.uploaded_at, terms: 0 };
+    e.terms++; if (r.uploaded_at > e.uploadedAt) e.uploadedAt = r.uploaded_at;
+    m.set(k, e);
+  }
+  return [...m.values()].sort((a, b) => b.periodEnd.localeCompare(a.periodEnd) || b.periodStart.localeCompare(a.periodStart));
+}
+export async function loadSearchTerms(brandId: string, periodStart: string, periodEnd: string) {
+  const rows = await selectAll('portal_search_terms', (q: any) => q.eq('brand_id', brandId).eq('period_start', periodStart).eq('period_end', periodEnd), 'search_term');
+  return rows.map((r: any) => ({ campaign: r.campaign, adGroup: r.ad_group, targeting: r.targeting, matchType: r.match_type, searchTerm: r.search_term, impressions: +r.impressions, clicks: +r.clicks, spend: +r.spend, sales: +r.sales, orders: +r.orders, units: +r.units }));
+}
+export async function deleteSearchTerms(brandId: string, periodStart: string, periodEnd: string) {
+  check(await sb().from('portal_search_terms').delete().eq('brand_id', brandId).eq('period_start', periodStart).eq('period_end', periodEnd));
+}
+
 /* ── Load everything for one brand ── */
 export async function loadDataset(brandId: string): Promise<Dataset | null> {
   const b = check<any[]>(await sb().from('portal_brands').select('*').eq('id', brandId));

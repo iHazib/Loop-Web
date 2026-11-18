@@ -113,7 +113,7 @@ export default function Portal() {
       case 'channels': return <Channels key={key} brandId={brandId} />;
       case 'protection': return <Protection key={key} brandId={brandId} canEdit={canEdit} />;
       case 'analysis': return <Analysis key={key} brandId={brandId} />;
-      case 'ads': return <Ads key={key} brandId={brandId} />;
+      case 'ads': return <Ads key={key} brandId={brandId} canEdit={canEdit} />;
       case 'logistics': return <Logistics key={key} brandId={brandId} />;
       case 'data': return <DataTab key={brandId} brandId={brandId} status={status} canEdit={canEdit} isStaff={isStaff} onChanged={() => setRev((r) => r + 1)} />;
     }

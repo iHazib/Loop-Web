@@ -178,3 +178,24 @@ create table if not exists portal_email_log (
 );
 create index if not exists portal_email_log_brand on portal_email_log (brand_id, at desc);
 alter table portal_email_log enable row level security;
+
+-- Sponsored Products search term reports, one set of rows per uploaded period.
+create table if not exists portal_search_terms (
+  brand_id text references portal_brands(id) on delete cascade,
+  period_start date not null,
+  period_end date not null,
+  campaign text not null default '',
+  ad_group text not null default '',
+  targeting text not null default '',
+  match_type text not null default '-',
+  search_term text not null,
+  impressions integer default 0,
+  clicks integer default 0,
+  spend numeric default 0,
+  sales numeric default 0,
+  orders integer default 0,
+  units integer default 0,
+  uploaded_at timestamptz default now(),
+  primary key (brand_id, period_start, period_end, campaign, ad_group, targeting, match_type, search_term)
+);
+alter table portal_search_terms enable row level security;

@@ -10,6 +10,7 @@ import { verifyGoogleToken } from '../auth.js';
 import { BRAND_STATUSES, TEST_BUY_VERDICTS, type Dataset, type ProtectionCase, type CaseStatus, type Brand, type BrandStatus, type TestBuy, type TestBuyVerdict } from './types.js';
 import { newCases, autoResolve } from './protection.js';
 import * as email from './email.js';
+import * as st from './searchterms.js';
 
 /* Router for /api/portal/*, shared by Express (server/app.ts) and Vercel (api/index.ts).
    Who can do what:
@@ -306,6 +307,26 @@ export async function handlePortal(req: PortalReq): Promise<PortalRes | null> {
     catch (e) { return err(502, `AI could not answer: ${(e as Error).message}`); }
   }
 
+  /* ── Ads: search term report (read) ── */
+  if (method === 'GET' && parts[2] === 'searchterms') {
+    const missing = (e: Error) => /portal_search_terms|relation|column/i.test(e.message);
+    if (isDemo) {
+      const up = st.demoReport(new Date().toISOString().slice(0, 10));
+      return ok({ periods: [{ periodStart: up.periodStart, periodEnd: up.periodEnd, uploadedAt: new Date().toISOString(), terms: up.rows.length }], period: { periodStart: up.periodStart, periodEnd: up.periodEnd }, ready: true, ...st.analyse(up.rows) });
+    }
+    try {
+      const periods = await db.searchTermPeriods(brandId);
+      const [ps, pe] = String(query.period ?? '').split('_');
+      const period = periods.find((x) => x.periodStart === ps && x.periodEnd === pe) ?? periods[0];
+      if (!period) return ok({ periods, period: null, ready: true, summary: null, terms: [] });
+      const rows = await db.loadSearchTerms(brandId, period.periodStart, period.periodEnd);
+      return ok({ periods, period, ready: true, ...st.analyse(rows) });
+    } catch (e) {
+      if (missing(e as Error)) return ok({ periods: [], period: null, ready: false, summary: null, terms: [] });
+      throw e;
+    }
+  }
+
   /* Everything below changes data. */
   if (isDemo) return err(403, 'The demo brand is read only.');
   if (!acc.canEdit(who, brandId)) return err(403, 'Your account can view this brand but not change it.');
@@ -353,6 +374,22 @@ export async function handlePortal(req: PortalReq): Promise<PortalRes | null> {
       await db.addEvents(brandId, [{ at: new Date().toISOString(), source: 'Manual sheet', message: `${kind[0].toUpperCase() + kind.slice(1)} uploaded by ${who?.email} (${accepted.length} rows${rejected.length ? `, ${rejected.length} rejected` : ''})`, level: rejected.length ? 'warn' : 'ok' }]);
     }
     return ok({ accepted: accepted.length, rejected });
+  }
+
+  /* ── Ads: search term report (upload, delete) ── */
+  if (parts[2] === 'searchterms' && method === 'POST') {
+    const up = st.cleanUpload(body.report);
+    if (typeof up === 'string') return err(400, up);
+    try { await db.saveSearchTerms(brandId, up); }
+    catch (e) { if (/portal_search_terms|relation/i.test((e as Error).message)) return err(500, 'Search term reports are missing in the database. Run supabase/portal.sql again.'); throw e; }
+    await db.addEvents(brandId, [{ at: new Date().toISOString(), source: 'Amazon Ads', message: `Search term report uploaded by ${who?.email} (${up.rows.length} terms, ${up.periodStart} to ${up.periodEnd})`, level: 'ok' }]);
+    return ok({ terms: up.rows.length, periodStart: up.periodStart, periodEnd: up.periodEnd, currency: up.currency });
+  }
+  if (parts[2] === 'searchterms' && method === 'DELETE') {
+    const [ps, pe] = String(query.period ?? '').split('_');
+    if (!ps || !pe) return err(400, 'Say which period to delete.');
+    await db.deleteSearchTerms(brandId, ps, pe);
+    return ok({ deleted: true });
   }
 
   /* ── Products: import from ASINs (Keepa), edit, delete ── */

@@ -5,6 +5,7 @@ import type * as M from '../../server/portal/metrics';
 import type { Brand, ProtectionCase } from '../../server/portal/types';
 import { CASE_LABELS, VERDICT_LABELS } from '../../server/portal/types';
 import { useView, portalFetch } from './api';
+import { SearchTerms } from './SearchTerms';
 import { Card, Kpi, Badge, Empty, Table, LineChart, StackedBars, Legend, PALETTE, gbp, gbpShort, int, pct, fmt, shortDate, ago } from './ui';
 
 type Base = { brand: Brand; demo: boolean };
@@ -576,12 +577,17 @@ export function Analysis({ brandId }: { brandId: string }) {
 }
 
 /* ═════════════ Ads ═════════════ */
-export function Ads({ brandId }: { brandId: string }) {
+export function Ads({ brandId, canEdit = false }: { brandId: string; canEdit?: boolean }) {
   const { data, error, loading } = useView<Ad>(`/brands/${brandId}/ads?weeks=4`);
   if (loading && !data) return <Loading />;
   if (error) return <Failed error={error} />;
   if (!data) return null;
-  if (!data.campaigns.length) return <Empty title="No ads data yet">Upload the Ads tab of the manual sheet under Data (one row per campaign per week).</Empty>;
+  if (!data.campaigns.length) return (
+    <div className="grid gap-5">
+      <Empty title="No weekly ads data yet">Upload the Ads tab of the manual sheet under Data (one row per campaign per week).</Empty>
+      <SearchTerms brandId={brandId} canEdit={canEdit} />
+    </div>
+  );
   const k = data.kpis;
   const labels = data.weeks.map(shortDate);
   return (
@@ -614,6 +620,7 @@ export function Ads({ brandId }: { brandId: string }) {
           rows={data.campaigns.map((c) => [c.campaign, c.channel, c.campaignType, gbp(c.spend), gbp(c.adSales), int(c.orders), c.roas != null ? `${c.roas}x` : '–',
             <span className={c.acosPct != null && c.acosPct > data.targetAcosPct ? 'text-rose-700' : ''}>{pct(c.acosPct)}</span>])} />
       </Card>
+      <SearchTerms brandId={brandId} canEdit={canEdit} />
     </div>
   );
 }
