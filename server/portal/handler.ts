@@ -7,7 +7,7 @@ import { validate, TEMPLATES, type UploadKind } from './validate.js';
 import * as ai from './ai.js';
 import * as acc from './access.js';
 import { verifyGoogleToken } from '../auth.js';
-import { BRAND_STATUSES, TEST_BUY_VERDICTS, type Dataset, type ProtectionCase, type CaseStatus, type Brand, type BrandStatus, type TestBuy, type TestBuyVerdict } from './types.js';
+import { BRAND_STATUSES, TEST_BUY_VERDICTS, PORTAL_TABS, brandSettings, type BrandSettings, type Dataset, type ProtectionCase, type CaseStatus, type Brand, type BrandStatus, type TestBuy, type TestBuyVerdict } from './types.js';
 import { newCases, autoResolve } from './protection.js';
 import * as email from './email.js';
 import * as st from './searchterms.js';
@@ -55,7 +55,7 @@ const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const num = (v: unknown) => { const n = Number(String(v ?? '').replace(/[£,\s]/g, '')); return Number.isFinite(n) && n >= 0 ? n : null; };
 
 /** What clients may see about their brand (no staff notes). */
-const publicBrand = (b: Brand): Brand => ({ id: b.id, name: b.name, plan: b.plan, status: b.status, accountManager: b.accountManager, accountManagerEmail: b.accountManagerEmail });
+const publicBrand = (b: Brand): Brand => ({ id: b.id, name: b.name, plan: b.plan, status: b.status, accountManager: b.accountManager, accountManagerEmail: b.accountManagerEmail, settings: brandSettings(b) });
 
 /** Validates the editable brand fields; returns an error message string when invalid. */
 function brandFields(body: Record<string, unknown>): Partial<Brand> | string {
@@ -208,6 +208,80 @@ export async function handlePortal(req: PortalReq): Promise<PortalRes | null> {
       const id = parts[2];
       const brand = await db.getBrand(id);
       if (!brand) return err(404, 'Brand not found.');
+      /* Dashboard settings for this brand */
+      if (parts[3] === 'settings' && method === 'PATCH') {
+        const cur = brandSettings(brand);
+        const next: BrandSettings = brandSettings({ settings: { ...cur, ...(body as Partial<BrandSettings>) } });
+        if (body.hiddenTabs !== undefined && !Array.isArray(body.hiddenTabs)) return err(400, 'hiddenTabs must be a list.');
+        try { await db.updateBrand(id, { settings: next }); }
+        catch (e) { return err(500, /settings|column/i.test((e as Error).message) ? 'Brand settings are missing in the database. Run supabase/portal.sql again.' : (e as Error).message); }
+        await db.addEvents(id, [{ at: new Date().toISOString(), source: 'Loopretail', message: `Dashboard settings updated by ${who!.email}`, level: 'info' }]);
+        return ok(next);
+      }
+      /* Every list behind the brand's dashboard, for staff to manage */
+      if (parts[3] === 'data' && method === 'GET') {
+        const ds = (await db.loadDataset(id))!;
+        const snap = new Map<string, { title: string; price: number | null; day: string }>();
+        for (const x of ds.snapshots) { const e = snap.get(x.asin); if (!e || x.day > e.day) snap.set(x.asin, { title: x.title, price: x.price, day: x.day }); }
+        const weeks = <T extends { weekStart: string }>(rows: T[], val: (r: T) => number) => {
+          const m = new Map<string, { week: string; rows: number; total: number }>();
+          for (const r of rows) { const e = m.get(r.weekStart) ?? { week: r.weekStart, rows: 0, total: 0 }; e.rows++; e.total += val(r); m.set(r.weekStart, e); }
+          return [...m.values()].map((w) => ({ ...w, total: Math.round(w.total * 100) / 100 })).sort((a, b) => b.week.localeCompare(a.week));
+        };
+        return ok({
+          settings: brandSettings(brand),
+          tabs: PORTAL_TABS,
+          sellers: ds.sellers,
+          competitors: ds.competitors.map((c) => ({ ...c, title: snap.get(c.asin)?.title ?? '', price: snap.get(c.asin)?.price ?? null, product: ds.products.find((p) => p.sku === c.sku)?.name ?? c.sku })),
+          products: ds.products.map((p) => ({ sku: p.sku, name: p.name })),
+          sheets: {
+            sales: weeks(ds.sales, (r) => r.revenue),
+            ads: weeks(ds.ads, (r) => r.spend),
+            d2c: weeks(ds.d2c, (r) => r.revenue),
+          },
+        });
+      }
+      if (parts[3] === 'sellers' && method === 'POST') {
+        const name = String(body.sellerName ?? '').trim().slice(0, 120);
+        if (!name) return err(400, 'Seller name is required.');
+        const sid = String(body.amazonSellerId ?? '').trim().toUpperCase();
+        if (sid && !/^[A-Z0-9]{8,20}$/.test(sid)) return err(400, 'Amazon seller ID looks wrong: it is 8 to 20 letters and numbers, e.g. A1B2C3D4E5F6G7.');
+        const until = String(body.validUntil ?? '').trim();
+        if (until && !/^\d{4}-\d{2}-\d{2}$/.test(until)) return err(400, 'Valid until must be a date (YYYY-MM-DD) or empty.');
+        if (body.originalName && body.originalName !== name) await db.deleteSeller(id, String(body.originalName));
+        await db.saveSellers(id, [{ sellerName: name, amazonSellerId: sid, ebayUsername: String(body.ebayUsername ?? '').trim().slice(0, 80), skus: String(body.skus ?? 'All').trim().slice(0, 2000) || 'All', validUntil: until }]);
+        return ok({ saved: true });
+      }
+      if (parts[3] === 'sellers' && method === 'DELETE') {
+        await db.deleteSeller(id, String(query.name ?? ''));
+        return ok({ deleted: true });
+      }
+      if (parts[3] === 'products' && method === 'POST') {
+        const sku = String(body.sku ?? '').trim().slice(0, 60);
+        const name = String(body.name ?? '').trim().slice(0, 120);
+        if (!sku || !name) return err(400, 'SKU and product name are required.');
+        const asin = String(body.asin ?? '').trim().toUpperCase();
+        if (asin && !/^[A-Z0-9]{10}$/.test(asin)) return err(400, 'ASIN must be 10 letters and numbers.');
+        const n = (v: unknown) => { const x = Number(v); return Number.isFinite(x) && x >= 0 ? x : 0; };
+        await db.saveProducts(id, [{ sku, name, asin, ean: String(body.ean ?? '').trim().slice(0, 20), cost: n(body.cost), rrp: n(body.rrp), mapPrice: n(body.mapPrice) }]);
+        return ok({ saved: true });
+      }
+      if (parts[3] === 'competitors' && method === 'POST') {
+        const sku = String(body.sku ?? '').trim();
+        const asin = String(body.asin ?? '').trim().toUpperCase();
+        if (!sku || !/^[A-Z0-9]{10}$/.test(asin)) return err(400, 'Pick a product and enter a 10 character ASIN.');
+        const kind = body.kind === 'compatible' ? 'compatible' : 'competitor';
+        await db.saveCompetitors(id, [{ sku, asin, kind, source: 'manual', createdAt: new Date().toISOString().slice(0, 10) }]);
+        return ok({ saved: true });
+      }
+      if (parts[3] === 'rows' && method === 'DELETE') {
+        const kind = String(query.kind ?? '');
+        const week = String(query.week ?? '');
+        if (!['sales', 'ads', 'd2c'].includes(kind) || !/^\d{4}-\d{2}-\d{2}$/.test(week)) return err(400, 'Say which sheet and week to delete.');
+        await db.deleteWeek(id, kind as 'sales' | 'ads' | 'd2c', week);
+        await db.addEvents(id, [{ at: new Date().toISOString(), source: 'Loopretail', message: `${kind} rows for week ${week} deleted by ${who!.email}`, level: 'warn' }]);
+        return ok({ deleted: true });
+      }
       /* Products on every marketplace */
       if (parts[3] === 'listings' && method === 'GET') {
         const ds = await db.loadDataset(id);
@@ -320,7 +394,7 @@ export async function handlePortal(req: PortalReq): Promise<PortalRes | null> {
       const period = periods.find((x) => x.periodStart === ps && x.periodEnd === pe) ?? periods[0];
       if (!period) return ok({ periods, period: null, ready: true, summary: null, terms: [] });
       const rows = await db.loadSearchTerms(brandId, period.periodStart, period.periodEnd);
-      return ok({ periods, period, ready: true, ...st.analyse(rows) });
+      return ok({ periods, period, ready: true, ...st.analyse(rows, brandSettings((await db.getBrand(brandId))).targetAcosPct) });
     } catch (e) {
       if (missing(e as Error)) return ok({ periods: [], period: null, ready: false, summary: null, terms: [] });
       throw e;

@@ -4,9 +4,9 @@ import type * as M from '../../server/portal/metrics';
 import { useView, portalFetch } from '../portal/api';
 import { input } from './AdminBrands';
 
-/* Two staff tabs on the admin brand page:
-   - Products and listings: add ASINs, set cost and minimum price, see each ASIN on every marketplace.
-   - Emails: which alerts and reports go to the brand, who gets them, previews and the sent log. */
+/* Staff tabs on the admin brand page. Everything a brand sees on its dashboard is set from here:
+   settings and visible tabs, products and listings, authorised sellers, competitors, uploaded weeks,
+   protection cases, ads and search terms, and which emails go out. */
 
 const money = (n: number | null | undefined, c = '£') => (n == null ? '–' : `${c}${n.toFixed(2)}`);
 const Box = ({ title, right, children }: { title: string; right?: React.ReactNode; children: React.ReactNode }) => (
@@ -27,7 +27,20 @@ export function ProductsTab({ brandId }: { brandId: string }) {
   const [msg, setMsg] = useState('');
   const [busy, setBusy] = useState(false);
   const [openSku, setOpenSku] = useState<string | null>(null);
-  const [edit, setEdit] = useState<Record<string, { cost: string; mapPrice: string }>>({});
+  const [edit, setEdit] = useState<Record<string, { name: string; rrp: string; cost: string; mapPrice: string }>>({});
+  const [add, setAdd] = useState({ sku: '', name: '', asin: '', ean: '', rrp: '', cost: '', mapPrice: '' });
+  const addProduct = async () => {
+    setMsg('');
+    try {
+      await portalFetch(`/admin/brands/${brandId}/products`, { method: 'POST', body: JSON.stringify(add) });
+      setMsg(`Added ${add.name}.`); setAdd({ sku: '', name: '', asin: '', ean: '', rrp: '', cost: '', mapPrice: '' }); setRev((x) => x + 1);
+    } catch (e) { setMsg((e as Error).message); }
+  };
+  const removeProduct = async (sku: string, name: string) => {
+    if (!window.confirm(`Remove ${name}? Its sales rows stay, but it leaves the product list and the daily Keepa check.`)) return;
+    try { await portalFetch(`/brands/${brandId}/products/${encodeURIComponent(sku)}`, { method: 'DELETE' }); setMsg(`Removed ${name}.`); setRev((x) => x + 1); }
+    catch (e) { setMsg((e as Error).message); }
+  };
 
   const parsed = [...new Set(asins.toUpperCase().split(/[\s,;]+/).filter((a) => /^[A-Z0-9]{10}$/.test(a)))];
   const runImport = async () => {
@@ -42,7 +55,7 @@ export function ProductsTab({ brandId }: { brandId: string }) {
   const saveRow = async (sku: string) => {
     const e = edit[sku]; if (!e) return;
     try {
-      await portalFetch(`/brands/${brandId}/products/${encodeURIComponent(sku)}`, { method: 'PATCH', body: JSON.stringify({ cost: Number(e.cost) || 0, mapPrice: Number(e.mapPrice) || 0 }) });
+      await portalFetch(`/brands/${brandId}/products/${encodeURIComponent(sku)}`, { method: 'PATCH', body: JSON.stringify({ name: e.name.trim() || undefined, rrp: Number(e.rrp) || 0, cost: Number(e.cost) || 0, mapPrice: Number(e.mapPrice) || 0 }) });
       setMsg(`Saved ${sku}.`); setRev((x) => x + 1);
     } catch (err) { setMsg((err as Error).message); }
   };
@@ -59,39 +72,51 @@ export function ProductsTab({ brandId }: { brandId: string }) {
         {msg && <p className="mt-3 text-sm text-brand-dark/75">{msg}</p>}
       </Box>
 
+      <Box title="Add a product by hand" right={<span className="text-xs text-brand-dark/40">For products not on Amazon, or before the listing is live</span>}>
+        <div className="grid sm:grid-cols-3 lg:grid-cols-8 gap-3">
+          {([['sku', 'SKU'], ['name', 'Product name'], ['asin', 'ASIN (optional)'], ['ean', 'EAN'], ['rrp', 'RRP £'], ['cost', 'Cost £'], ['mapPrice', 'Min price £']] as const).map(([k, l]) => (
+            <label key={k} className={`grid gap-1 text-xs text-brand-dark/60 ${k === 'name' ? 'lg:col-span-2' : ''}`}>{l}
+              <input className={input} value={add[k]} inputMode={['rrp', 'cost', 'mapPrice'].includes(k) ? 'decimal' : undefined} onChange={(e) => setAdd({ ...add, [k]: k === 'asin' ? e.target.value.toUpperCase() : e.target.value })} />
+            </label>
+          ))}
+        </div>
+        <button onClick={addProduct} disabled={!add.sku || !add.name} className="mt-3 rounded-lg bg-brand-red text-white px-4 py-2 text-sm font-semibold disabled:opacity-40">Add product</button>
+      </Box>
+
       <Box title="Products on every marketplace" right={<span className="text-xs text-brand-dark/40">Amazon UK and EU from Keepa ({data?.euMarkets || 'DE,FR,IT,ES'}), other channels from the sales sheet</span>}>
         {error ? <p className="text-sm text-brand-red">{error}</p> : loading && !data ? <p className="text-sm text-brand-dark/40">Loading…</p> : !data?.listings.length ? <p className="text-sm text-brand-dark/40">No products yet. Add ASINs above.</p> : (
           <div className="overflow-x-auto -mx-2">
-            <table className="w-full text-sm min-w-[980px]">
+            <table className="w-full text-sm min-w-[1200px]">
               <thead>
                 <tr className="text-left text-[11px] uppercase tracking-wider text-brand-dark/40">
-                  {['', 'Product', 'ASIN', 'UK price', 'BSR', 'Sellers', 'Buy Box', 'EU cheapest', 'Cost £', 'Min price £', ''].map((h, i) => <th key={i} className="px-2 pb-2 font-medium whitespace-nowrap">{h}</th>)}
+                  {['', 'Product', 'ASIN', 'UK price', 'BSR', 'Sellers', 'Buy Box', 'EU cheapest', 'RRP £', 'Cost £', 'Min price £', ''].map((h, i) => <th key={i} className="px-2 pb-2 font-medium whitespace-nowrap">{h}</th>)}
                 </tr>
               </thead>
               <tbody>
                 {data.listings.map((l) => {
                   const open = openSku === l.sku;
-                  const e = edit[l.sku] ?? { cost: String(l.cost || ''), mapPrice: String(l.mapPrice || '') };
-                  const dirty = edit[l.sku] && (Number(e.cost) !== l.cost || Number(e.mapPrice) !== l.mapPrice);
+                  const e = edit[l.sku] ?? { name: l.name, rrp: String(l.rrp || ''), cost: String(l.cost || ''), mapPrice: String(l.mapPrice || '') };
+                  const dirty = edit[l.sku] && (e.name !== l.name || Number(e.rrp) !== l.rrp || Number(e.cost) !== l.cost || Number(e.mapPrice) !== l.mapPrice);
                   const cheapest = l.eu.filter((x) => x.gbp != null).sort((a, b) => a.gbp! - b.gbp!)[0];
                   return (
                     <Fragment key={l.sku}>
                       <tr className="border-t border-black/5 align-middle">
                         <td className="px-2 py-2.5"><button onClick={() => setOpenSku(open ? null : l.sku)} aria-label={open ? 'Hide marketplaces' : 'Show marketplaces'} className="text-brand-dark/50 hover:text-brand-dark">{open ? <ChevronDown size={16} /> : <ChevronRight size={16} />}</button></td>
-                        <td className="px-2 py-2.5"><div className="text-brand-dark font-medium">{l.name}</div><div className="text-[11px] text-brand-dark/40">{l.sku}</div></td>
+                        <td className="px-2 py-2.5"><input className={`${input} w-56 font-medium`} value={e.name} onChange={(ev) => setEdit({ ...edit, [l.sku]: { ...e, name: ev.target.value } })} aria-label={`Name for ${l.sku}`} /><div className="text-[11px] text-brand-dark/40 mt-0.5">{l.sku}</div></td>
                         <td className="px-2 py-2.5 font-mono text-xs">{l.asin || '–'}</td>
                         <td className="px-2 py-2.5">{money(l.uk?.price)}</td>
                         <td className="px-2 py-2.5">{l.uk?.bsr?.toLocaleString('en-GB') ?? '–'}</td>
                         <td className="px-2 py-2.5">{l.uk ? <>{l.uk.sellers}{l.uk.unauthorised ? <span className="ml-1 text-brand-red">({l.uk.unauthorised} not authorised)</span> : null}</> : '–'}</td>
                         <td className="px-2 py-2.5">{l.uk?.buyBoxOk == null ? '–' : l.uk.buyBoxOk ? <span className="text-emerald-600">Ours</span> : <span className="text-brand-red">Lost</span>}</td>
                         <td className="px-2 py-2.5">{cheapest ? <span className={cheapest.gapPct != null && cheapest.gapPct >= 20 ? 'text-violet-700' : ''}>{money(cheapest.gbp)} {cheapest.market}{cheapest.gapPct != null ? ` (${cheapest.gapPct > 0 ? '-' : '+'}${Math.abs(cheapest.gapPct)}%)` : ''}</span> : '–'}</td>
+                        <td className="px-2 py-2.5"><input className={`${input} w-20`} inputMode="decimal" value={e.rrp} onChange={(ev) => setEdit({ ...edit, [l.sku]: { ...e, rrp: ev.target.value } })} aria-label={`RRP for ${l.sku}`} /></td>
                         <td className="px-2 py-2.5"><input className={`${input} w-20`} inputMode="decimal" value={e.cost} onChange={(ev) => setEdit({ ...edit, [l.sku]: { ...e, cost: ev.target.value } })} aria-label={`Cost for ${l.sku}`} /></td>
                         <td className="px-2 py-2.5"><input className={`${input} w-20`} inputMode="decimal" value={e.mapPrice} onChange={(ev) => setEdit({ ...edit, [l.sku]: { ...e, mapPrice: ev.target.value } })} aria-label={`Minimum price for ${l.sku}`} /></td>
-                        <td className="px-2 py-2.5">{dirty && <button onClick={() => saveRow(l.sku)} className="rounded-lg bg-brand-dark text-white px-3 py-1.5 text-xs">Save</button>}</td>
+                        <td className="px-2 py-2.5 whitespace-nowrap">{dirty ? <button onClick={() => saveRow(l.sku)} className="rounded-lg bg-brand-dark text-white px-3 py-1.5 text-xs">Save</button> : <button onClick={() => removeProduct(l.sku, l.name)} className="text-xs text-brand-dark/40 hover:text-brand-red">Remove</button>}</td>
                       </tr>
                       {open && (
                         <tr className="bg-surface-offwhite/60">
-                          <td colSpan={11} className="px-4 py-4">
+                          <td colSpan={12} className="px-4 py-4">
                             <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
                               <MarketCard title="Amazon UK" href={l.uk?.url} rows={l.uk ? [['Price', money(l.uk.price)], ['BSR', l.uk.bsr?.toLocaleString('en-GB') ?? '–'], ['Rating', l.uk.rating != null ? `${l.uk.rating} (${l.uk.reviews ?? 0})` : '–'], ['Checked', l.uk.day]] : [['Status', 'Not checked yet']]} />
                               {l.eu.map((x) => (
@@ -260,5 +285,251 @@ export function EmailsTab({ brandId }: { brandId: string }) {
         </div>
       )}
     </div>
+  );
+}
+
+/* ═════════ Settings: what the brand's dashboard shows and how it judges things ═════════ */
+
+type Settings2 = { targetAcosPct: number; stockWarnWeeks: number; greyThreshold: number; hiddenTabs: string[]; welcome: string };
+type DataView = {
+  settings: Settings2; tabs: string[];
+  sellers: { sellerName: string; amazonSellerId: string; ebayUsername: string; skus: string; validUntil: string }[];
+  competitors: { sku: string; asin: string; kind: 'competitor' | 'compatible'; source: string; createdAt: string; title: string; price: number | null; product: string }[];
+  products: { sku: string; name: string }[];
+  sheets: Record<'sales' | 'ads' | 'd2c', { week: string; rows: number; total: number }[]>;
+};
+const TAB_LABEL: Record<string, string> = { overview: 'Overview', channels: 'Channels', protection: 'Protection', analysis: 'Brand Analysis', ads: 'Ads', logistics: 'Logistics & Distribution', data: 'Data' };
+
+function useBrandData(brandId: string) {
+  const [rev, setRev] = useState(0);
+  const v = useView<DataView>(`/admin/brands/${encodeURIComponent(brandId)}/data?r=${rev}`);
+  return { ...v, reload: () => setRev((x) => x + 1) };
+}
+
+export function SettingsTab({ brandId }: { brandId: string }) {
+  const { data, error, loading } = useBrandData(brandId);
+  const [s, setS] = useState<Settings2 | null>(null);
+  const [msg, setMsg] = useState('');
+  useEffect(() => { if (data) setS(data.settings); }, [data]);
+  if (error) return <p className="text-sm text-brand-red">{error}</p>;
+  if (loading || !data || !s) return <p className="text-sm text-brand-dark/40">Loading…</p>;
+  const save = async () => {
+    setMsg('');
+    try { setS(await portalFetch<Settings2>(`/admin/brands/${brandId}/settings`, { method: 'PATCH', body: JSON.stringify(s) })); setMsg('Saved. The brand sees the change on their next page load.'); }
+    catch (e) { setMsg((e as Error).message); }
+  };
+  const numField = (k: 'targetAcosPct' | 'stockWarnWeeks' | 'greyThreshold', label: string, help: string, suffix: string) => (
+    <label className="grid gap-1 text-xs text-brand-dark/60">
+      {label}
+      <span className="flex items-center gap-2"><input type="number" className={`${input} w-28`} value={s[k]} onChange={(e) => setS({ ...s, [k]: Number(e.target.value) })} /><span className="text-brand-dark/50">{suffix}</span></span>
+      <span className="text-[11px] text-brand-dark/40">{help}</span>
+    </label>
+  );
+  return (
+    <div className="grid gap-6">
+      <Box title="Dashboard rules">
+        <div className="grid sm:grid-cols-3 gap-5">
+          {numField('targetAcosPct', 'Target ACoS', 'Campaigns and search terms above this are flagged.', '%')}
+          {numField('stockWarnWeeks', 'Stock warning', 'Products with less cover than this show as low stock.', 'weeks')}
+          {numField('greyThreshold', 'Grey market score', 'Signal score that makes an unauthorised seller a grey market case. Default 3.', 'points')}
+        </div>
+      </Box>
+      <Box title="Tabs the brand sees">
+        <p className="text-sm text-brand-dark/55 mb-3">Untick a tab to hide it from this brand's logins. Home is always shown. Staff always see every tab.</p>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-2">
+          {data.tabs.map((t) => (
+            <label key={t} className="flex items-center gap-2.5 rounded-lg border border-black/8 px-3 py-2 text-sm text-brand-dark cursor-pointer">
+              <input type="checkbox" className="w-4 h-4 accent-[#e6192b]" checked={!s.hiddenTabs.includes(t)} onChange={(e) => setS({ ...s, hiddenTabs: e.target.checked ? s.hiddenTabs.filter((x) => x !== t) : [...s.hiddenTabs, t] })} />
+              {TAB_LABEL[t] ?? t}
+            </label>
+          ))}
+        </div>
+      </Box>
+      <Box title="Note on the brand's Home">
+        <textarea className={input} rows={3} maxLength={600} value={s.welcome} onChange={(e) => setS({ ...s, welcome: e.target.value })} placeholder="e.g. This week we are filing two Brand Registry reports and launching the TikTok Shop listings." />
+        <p className="mt-1 text-[11px] text-brand-dark/40">Shown at the top of their Home page, signed by the account manager. Leave empty to hide it.</p>
+      </Box>
+      <div className="flex items-center gap-3">
+        <button onClick={save} className="rounded-lg bg-brand-red text-white px-4 py-2 text-sm font-semibold">Save settings</button>
+        {msg && <span className="text-sm text-brand-dark/75">{msg}</span>}
+      </div>
+    </div>
+  );
+}
+
+/* ═════════ Authorised sellers ═════════ */
+
+const EMPTY_SELLER = { sellerName: '', amazonSellerId: '', ebayUsername: '', skus: 'All', validUntil: '', originalName: '' };
+
+export function SellersTab({ brandId }: { brandId: string }) {
+  const { data, error, loading, reload } = useBrandData(brandId);
+  const [f, setF] = useState(EMPTY_SELLER);
+  const [msg, setMsg] = useState('');
+  if (error) return <p className="text-sm text-brand-red">{error}</p>;
+  if (loading && !data) return <p className="text-sm text-brand-dark/40">Loading…</p>;
+  if (!data) return null;
+  const save = async () => {
+    setMsg('');
+    try { await portalFetch(`/admin/brands/${brandId}/sellers`, { method: 'POST', body: JSON.stringify(f) }); setMsg(`Saved ${f.sellerName}. Run a Keepa check to re-sort open cases.`); setF(EMPTY_SELLER); reload(); }
+    catch (e) { setMsg((e as Error).message); }
+  };
+  const del = async (name: string) => {
+    if (!window.confirm(`Remove ${name} from the authorised list? Their listings will open cases at the next check.`)) return;
+    await portalFetch(`/admin/brands/${brandId}/sellers?name=${encodeURIComponent(name)}`, { method: 'DELETE' }).catch((e: Error) => setMsg(e.message));
+    reload();
+  };
+  const set = (k: keyof typeof f, v: string) => setF({ ...f, [k]: v });
+  return (
+    <div className="grid gap-6">
+      <Box title={f.originalName ? `Edit ${f.originalName}` : 'Add an authorised seller'}>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-3">
+          <label className="grid gap-1 text-xs text-brand-dark/60">Seller name<input className={input} value={f.sellerName} onChange={(e) => set('sellerName', e.target.value)} /></label>
+          <label className="grid gap-1 text-xs text-brand-dark/60">Amazon seller ID<input className={input} value={f.amazonSellerId} onChange={(e) => set('amazonSellerId', e.target.value)} placeholder="A1B2C3D4E5F6G7" /></label>
+          <label className="grid gap-1 text-xs text-brand-dark/60">eBay username<input className={input} value={f.ebayUsername} onChange={(e) => set('ebayUsername', e.target.value)} /></label>
+          <label className="grid gap-1 text-xs text-brand-dark/60">SKUs<input className={input} value={f.skus} onChange={(e) => set('skus', e.target.value)} placeholder="All, or SKU1;SKU2" /></label>
+          <label className="grid gap-1 text-xs text-brand-dark/60">Valid until<input type="date" className={input} value={f.validUntil} onChange={(e) => set('validUntil', e.target.value)} /></label>
+        </div>
+        <div className="mt-3 flex flex-wrap items-center gap-3">
+          <button onClick={save} disabled={!f.sellerName} className="rounded-lg bg-brand-red text-white px-4 py-2 text-sm font-semibold disabled:opacity-40">{f.originalName ? 'Save changes' : 'Add seller'}</button>
+          {f.originalName && <button onClick={() => setF(EMPTY_SELLER)} className="text-sm text-brand-dark/60">Cancel</button>}
+          {msg && <span className="text-sm text-brand-dark/75">{msg}</span>}
+        </div>
+      </Box>
+      <Box title="Authorised sellers" right={<span className="text-xs text-brand-dark/40">{data.sellers.length} {data.sellers.length === 1 ? "seller" : "sellers"}, anyone else on the listings opens a case</span>}>
+        {!data.sellers.length ? <p className="text-sm text-brand-dark/40">No authorised sellers yet, so seller alerts are off for this brand.</p> : (
+          <table className="w-full text-sm">
+            <thead><tr className="text-left text-[11px] uppercase tracking-wider text-brand-dark/40">{['Seller', 'Amazon ID', 'eBay', 'SKUs', 'Valid until', ''].map((h) => <th key={h} className="px-2 pb-2 font-medium">{h}</th>)}</tr></thead>
+            <tbody>
+              {data.sellers.map((x) => {
+                const expired = x.validUntil && x.validUntil < new Date().toISOString().slice(0, 10);
+                return (
+                  <tr key={x.sellerName} className="border-t border-black/5">
+                    <td className="px-2 py-2.5 text-brand-dark font-medium">{x.sellerName}</td>
+                    <td className="px-2 py-2.5 font-mono text-xs">{x.amazonSellerId || <span className="text-amber-600">missing</span>}</td>
+                    <td className="px-2 py-2.5">{x.ebayUsername || '–'}</td>
+                    <td className="px-2 py-2.5 max-w-[220px] truncate" title={x.skus}>{x.skus}</td>
+                    <td className={`px-2 py-2.5 ${expired ? 'text-brand-red' : ''}`}>{x.validUntil || 'No end date'}{expired ? ' (expired)' : ''}</td>
+                    <td className="px-2 py-2.5 text-right whitespace-nowrap">
+                      <button onClick={() => setF({ ...EMPTY_SELLER, ...x, originalName: x.sellerName })} className="text-xs text-brand-dark/60 hover:text-brand-dark mr-3">Edit</button>
+                      <button onClick={() => del(x.sellerName)} className="text-xs text-brand-dark/40 hover:text-brand-red">Remove</button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
+      </Box>
+    </div>
+  );
+}
+
+/* ═════════ Competitors ═════════ */
+
+export function CompetitorsTab({ brandId }: { brandId: string }) {
+  const { data, error, loading, reload } = useBrandData(brandId);
+  const [f, setF] = useState({ sku: '', asin: '', kind: 'competitor' });
+  const [msg, setMsg] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [filter, setFilter] = useState('');
+  if (error) return <p className="text-sm text-brand-red">{error}</p>;
+  if (loading && !data) return <p className="text-sm text-brand-dark/40">Loading…</p>;
+  if (!data) return null;
+  const add = async () => {
+    setMsg('');
+    try { await portalFetch(`/admin/brands/${brandId}/competitors`, { method: 'POST', body: JSON.stringify(f) }); setF({ ...f, asin: '' }); setMsg('Added. Its price and rank fill in at the next Keepa check.'); reload(); }
+    catch (e) { setMsg((e as Error).message); }
+  };
+  const discover = async () => {
+    if (!f.sku) { setMsg('Pick a product first.'); return; }
+    setBusy(true); setMsg('');
+    try {
+      const r = await portalFetch<{ added: number; method: string }>(`/brands/${brandId}/keepa/discover`, { method: 'POST', body: JSON.stringify({ sku: f.sku, keywords: '' }) });
+      setMsg(`Found ${r.added} competitors (${r.method}).`); reload();
+    } catch (e) { setMsg((e as Error).message); }
+    finally { setBusy(false); }
+  };
+  const del = async (sku: string, asin: string) => {
+    await portalFetch(`/brands/${brandId}/competitors?sku=${encodeURIComponent(sku)}&asin=${asin}`, { method: 'DELETE' }).catch((e: Error) => setMsg(e.message));
+    reload();
+  };
+  const rows = data.competitors.filter((c) => !filter || c.sku === filter);
+  return (
+    <div className="grid gap-6">
+      <Box title="Add competitors">
+        <div className="flex flex-wrap items-end gap-3">
+          <label className="grid gap-1 text-xs text-brand-dark/60">Product<select className={`${input} w-64`} value={f.sku} onChange={(e) => setF({ ...f, sku: e.target.value })}><option value="">Pick a product</option>{data.products.map((p) => <option key={p.sku} value={p.sku}>{p.name}</option>)}</select></label>
+          <label className="grid gap-1 text-xs text-brand-dark/60">Their ASIN<input className={`${input} w-40 font-mono`} value={f.asin} onChange={(e) => setF({ ...f, asin: e.target.value.toUpperCase() })} placeholder="B0XXXXXXXX" /></label>
+          <label className="grid gap-1 text-xs text-brand-dark/60">Type<select className={`${input} w-40`} value={f.kind} onChange={(e) => setF({ ...f, kind: e.target.value })}><option value="competitor">Competitor</option><option value="compatible">Compatible</option></select></label>
+          <button onClick={add} disabled={!f.sku || f.asin.length !== 10} className="rounded-lg bg-brand-red text-white px-4 py-2 text-sm font-semibold disabled:opacity-40">Add</button>
+          <button onClick={discover} disabled={busy || !f.sku} className="rounded-lg border border-black/10 px-4 py-2 text-sm disabled:opacity-40">{busy ? 'Searching…' : 'Find them for me'}</button>
+        </div>
+        {msg && <p className="mt-3 text-sm text-brand-dark/75">{msg}</p>}
+      </Box>
+      <Box title="Competitor list" right={
+        <select className={`${input} w-56`} value={filter} onChange={(e) => setFilter(e.target.value)} aria-label="Filter by product"><option value="">All products ({data.competitors.length})</option>{data.products.map((p) => <option key={p.sku} value={p.sku}>{p.name}</option>)}</select>
+      }>
+        {!rows.length ? <p className="text-sm text-brand-dark/40">No competitors yet.</p> : (
+          <table className="w-full text-sm">
+            <thead><tr className="text-left text-[11px] uppercase tracking-wider text-brand-dark/40">{['Their listing', 'For', 'Type', 'Price', 'Added', ''].map((h) => <th key={h} className="px-2 pb-2 font-medium">{h}</th>)}</tr></thead>
+            <tbody>
+              {rows.map((c) => (
+                <tr key={c.sku + c.asin} className="border-t border-black/5">
+                  <td className="px-2 py-2.5"><div className="text-brand-dark truncate max-w-[360px]" title={c.title}>{c.title || 'Not checked yet'}</div><a href={`https://www.amazon.co.uk/dp/${c.asin}`} target="_blank" rel="noreferrer" className="text-[11px] font-mono text-brand-dark/45 hover:text-brand-red">{c.asin}</a></td>
+                  <td className="px-2 py-2.5">{c.product}</td>
+                  <td className="px-2 py-2.5 capitalize">{c.kind}<span className="block text-[11px] text-brand-dark/40">{c.source}</span></td>
+                  <td className="px-2 py-2.5">{money(c.price)}</td>
+                  <td className="px-2 py-2.5 text-brand-dark/60">{c.createdAt.slice(0, 10)}</td>
+                  <td className="px-2 py-2.5 text-right"><button onClick={() => del(c.sku, c.asin)} className="text-xs text-brand-dark/40 hover:text-brand-red">Remove</button></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </Box>
+    </div>
+  );
+}
+
+/* ═════════ Sheets loaded: see and delete weeks ═════════ */
+
+export function SheetsLoaded({ brandId }: { brandId: string }) {
+  const { data, error, loading, reload } = useBrandData(brandId);
+  const [kind, setKind] = useState<'sales' | 'ads' | 'd2c'>('sales');
+  const [msg, setMsg] = useState('');
+  if (error) return <p className="text-sm text-brand-red">{error}</p>;
+  if (loading && !data) return null;
+  if (!data) return null;
+  const weeks = data.sheets[kind];
+  const del = async (week: string) => {
+    if (!window.confirm(`Delete every ${kind} row for the week starting ${week}? Upload the sheet again to replace it.`)) return;
+    try { await portalFetch(`/admin/brands/${brandId}/rows?kind=${kind}&week=${week}`, { method: 'DELETE' }); setMsg(`Deleted ${kind} for ${week}.`); reload(); }
+    catch (e) { setMsg((e as Error).message); }
+  };
+  return (
+    <Box title="Weeks loaded" right={
+      <div className="inline-flex rounded-lg bg-surface-offwhite p-0.5 border border-black/8">
+        {([['sales', 'Sales'], ['ads', 'Ads'], ['d2c', 'D2C store']] as const).map(([k, l]) => (
+          <button key={k} onClick={() => setKind(k)} className={`px-3 py-1.5 rounded-md text-xs font-medium ${kind === k ? 'bg-brand-dark text-white' : 'text-brand-dark/55'}`}>{l}</button>
+        ))}
+      </div>
+    }>
+      {msg && <p className="mb-3 text-sm text-brand-dark/75">{msg}</p>}
+      {!weeks.length ? <p className="text-sm text-brand-dark/40">Nothing loaded for this sheet yet.</p> : (
+        <table className="w-full text-sm">
+          <thead><tr className="text-left text-[11px] uppercase tracking-wider text-brand-dark/40">{['Week starting', 'Rows', kind === 'ads' ? 'Spend' : 'Revenue', ''].map((h) => <th key={h} className="px-2 pb-2 font-medium">{h}</th>)}</tr></thead>
+          <tbody>
+            {weeks.map((w) => (
+              <tr key={w.week} className="border-t border-black/5">
+                <td className="px-2 py-2">{w.week}</td>
+                <td className="px-2 py-2">{w.rows}</td>
+                <td className="px-2 py-2">£{w.total.toLocaleString('en-GB')}</td>
+                <td className="px-2 py-2 text-right"><button onClick={() => del(w.week)} className="text-xs text-brand-dark/40 hover:text-brand-red">Delete week</button></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </Box>
   );
 }

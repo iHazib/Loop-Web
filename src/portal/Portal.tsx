@@ -75,7 +75,10 @@ export default function Portal() {
   const isStaff = p?.kind === 'staff';
   const brandId = paramBrand ?? (p?.kind === 'client' && brands?.length ? brands[0].id : 'demo');
   const brand = brands?.find((b) => b.id === brandId);
-  const current = TABS.find((t) => t.id === tab) ?? TABS[0];
+  // tabs the account manager hid for this brand (staff still see everything)
+  const hidden = new Set<string>(isStaff ? [] : (brand?.settings?.hiddenTabs ?? []));
+  const tabs = TABS.filter((t) => !hidden.has(t.id));
+  const current = tabs.find((t) => t.id === tab) ?? tabs[0];
   const canEdit = brandId !== 'demo' && (isStaff || p?.brands?.[brandId] === 'manager');
 
   // Clients go straight to their own brand; nobody signed in lands on the demo.
@@ -108,7 +111,7 @@ export default function Portal() {
     </div>
   ) : (() => {
     switch (current.id) {
-      case 'home': return <Home key={key} brandId={brandId} brandName={brand?.name ?? brandId} />;
+      case 'home': return <Home key={key} brandId={brandId} brandName={brand?.name ?? brandId} welcome={brand?.settings?.welcome} manager={brand?.accountManager} />;
       case 'overview': return <Overview key={key} brandId={brandId} />;
       case 'channels': return <Channels key={key} brandId={brandId} />;
       case 'protection': return <Protection key={key} brandId={brandId} canEdit={canEdit} />;
@@ -137,7 +140,7 @@ export default function Portal() {
           {brand?.plan && <div className="text-[10px] font-mono uppercase tracking-widest text-brand-red mt-2">{brand.plan}</div>}
         </div>
         <nav className="flex md:flex-col gap-1 overflow-x-auto -mx-1 px-1">
-          {TABS.map((t) => (
+          {tabs.map((t) => (
             <Link key={t.id} to={`/portal/${brandId}/${t.id}`}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm whitespace-nowrap transition-colors ${current.id === t.id ? 'bg-brand-red/15 text-ink border border-brand-red/25' : 'text-muted hover:text-ink hover:bg-canvas border border-transparent'}`}>
               <t.icon size={16} /> {t.label}

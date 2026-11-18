@@ -199,3 +199,6 @@ create table if not exists portal_search_terms (
   primary key (brand_id, period_start, period_end, campaign, ad_group, targeting, match_type, search_term)
 );
 alter table portal_search_terms enable row level security;
+
+-- Per brand dashboard settings (admin → brand → Settings): target ACoS, stock warning, grey threshold, hidden tabs, welcome note.
+alter table portal_brands add column if not exists settings jsonb not null default '{}'::jsonb;

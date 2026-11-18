@@ -47,6 +47,7 @@ const toBrand = (r: any): Brand => ({
   status: r.status ?? 'active',
   accountManager: r.account_manager ?? '', accountManagerEmail: r.account_manager_email ?? '',
   contactEmail: r.contact_email ?? '', notes: r.notes ?? '',
+  settings: r.settings ?? {},
   createdAt: r.created_at ?? '',
 });
 export async function listBrands(): Promise<Brand[]> {
@@ -66,6 +67,7 @@ const brandRow = (b: Partial<Brand>) => {
   if (b.accountManagerEmail !== undefined) row.account_manager_email = b.accountManagerEmail;
   if (b.contactEmail !== undefined) row.contact_email = b.contactEmail;
   if (b.notes !== undefined) row.notes = b.notes;
+  if (b.settings !== undefined) row.settings = b.settings;
   return row;
 };
 export async function createBrand(name: string, plan = '', extra: Partial<Brand> = {}): Promise<Brand> {
@@ -91,6 +93,15 @@ export async function userCounts(): Promise<Record<string, number>> {
 export async function deleteBrand(id: string) {
   // Child rows go with it (ON DELETE CASCADE).
   check(await sb().from('portal_brands').delete().eq('id', id));
+}
+
+/* ── Admin: delete single records and weeks ── */
+export async function deleteSeller(brandId: string, sellerName: string) {
+  check(await sb().from('portal_sellers').delete().eq('brand_id', brandId).eq('seller_name', sellerName));
+}
+const WEEK_TABLE = { sales: 'portal_sales', ads: 'portal_ads', d2c: 'portal_d2c' } as const;
+export async function deleteWeek(brandId: string, kind: keyof typeof WEEK_TABLE, week: string) {
+  check(await sb().from(WEEK_TABLE[kind]).delete().eq('brand_id', brandId).eq('week_start', week));
 }
 
 /* ── Email permissions and log ── */

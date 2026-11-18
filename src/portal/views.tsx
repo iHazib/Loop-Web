@@ -26,7 +26,7 @@ function Failed({ error }: { error: string }) {
 }
 
 /* ═════════════ Home (brand landing) ═════════════ */
-export function Home({ brandId, brandName }: { brandId: string; brandName: string }) {
+export function Home({ brandId, brandName, welcome, manager }: { brandId: string; brandName: string; welcome?: string; manager?: string }) {
   const { data, error, loading } = useView<Hm>(`/brands/${brandId}/home`);
   if (loading && !data) return <Loading />;
   if (error) return <Failed error={error} />;
@@ -37,6 +37,12 @@ export function Home({ brandId, brandName }: { brandId: string; brandName: strin
   const lvl: Record<string, string> = { high: 'border-rose-500/30 bg-rose-500/[0.06]', medium: 'border-amber-400/30 bg-amber-400/[0.05]', low: 'border-line bg-surface' };
   return (
     <div className="grid gap-5">
+      {welcome && (
+        <div className="rounded-2xl border border-line bg-surface p-5">
+          <p className="text-[11px] uppercase tracking-wider text-muted mb-1">From {manager || 'your account manager'}</p>
+          <p className="text-sm text-ink/85 whitespace-pre-line">{welcome}</p>
+        </div>
+      )}
       <section className="rounded-2xl border border-line bg-gradient-to-br from-brand-red/[0.12] to-transparent p-6 md:p-7 flex flex-col md:flex-row md:items-center justify-between gap-5">
         <div>
           <p className="text-sm text-muted">{greet}</p>

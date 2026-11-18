@@ -6,7 +6,10 @@ import type { Brand, ProtectionCase } from '../../server/portal/types';
 import { BRAND_STATUSES, CASE_LABELS } from '../../server/portal/types';
 import { useView, portalFetch } from '../portal/api';
 import { STATUS_STYLE, HEALTH, input, ago } from './AdminBrands';
-import { ProductsTab, EmailsTab } from './BrandTabs';
+import { ProductsTab, EmailsTab, SettingsTab, SellersTab, CompetitorsTab, SheetsLoaded } from './BrandTabs';
+import { Protection, Ads } from '../portal/views';
+import { DataTab } from '../portal/DataTab';
+import type { Status } from '../portal/Portal';
 
 type Detail = {
   brand: Brand;
@@ -25,6 +28,12 @@ function Box({ title, right, children }: { title: string; right?: React.ReactNod
   );
 }
 
+const TABS = [
+  ['overview', 'Overview'], ['settings', 'Settings'], ['products', 'Products and listings'], ['sellers', 'Authorised sellers'],
+  ['competitors', 'Competitors'], ['data', 'Data and uploads'], ['protection', 'Protection'], ['ads', 'Ads'], ['emails', 'Emails'],
+] as const;
+type TabKey = (typeof TABS)[number][0];
+
 export default function AdminBrandDetail() {
   const { id = '' } = useParams();
   const nav = useNavigate();
@@ -36,7 +45,9 @@ export default function AdminBrandDetail() {
   const [busy, setBusy] = useState('');
   const [invite, setInvite] = useState({ email: '', role: 'manager' });
   const [link, setLink] = useState('');
-  const [tab, setTab] = useState<'overview' | 'products' | 'emails'>('overview');
+  const [tab, setTab] = useState<TabKey>('overview');
+  const [dataRev, setDataRev] = useState(0);
+  const { data: status } = useView<Status>(`/status?r=${dataRev}`);
 
   useEffect(() => {
     if (!data) return;
@@ -92,14 +103,20 @@ export default function AdminBrandDetail() {
       </header>
       {msg && <div className="mb-6 rounded-xl border border-black/10 bg-surface-offwhite px-4 py-3 text-sm text-brand-dark/80">{msg}</div>}
 
-      <div role="tablist" aria-label="Brand sections" className="mb-6 flex gap-1 border-b border-black/8">
-        {([['overview', 'Overview'], ['products', 'Products and listings'], ['emails', 'Emails']] as const).map(([k, label]) => (
+      <div role="tablist" aria-label="Brand sections" className="mb-6 flex gap-1 border-b border-black/8 overflow-x-auto">
+        {TABS.map(([k, label]) => (
           <button key={k} role="tab" aria-selected={tab === k} onClick={() => setTab(k)}
-            className={`-mb-px px-4 py-2.5 text-sm font-medium border-b-2 ${tab === k ? 'border-brand-red text-brand-dark' : 'border-transparent text-brand-dark/50 hover:text-brand-dark'}`}>{label}</button>
+            className={`-mb-px px-4 py-2.5 text-sm font-medium whitespace-nowrap border-b-2 ${tab === k ? 'border-brand-red text-brand-dark' : 'border-transparent text-brand-dark/50 hover:text-brand-dark'}`}>{label}</button>
         ))}
       </div>
       {tab === 'products' && <ProductsTab brandId={id} />}
       {tab === 'emails' && <EmailsTab brandId={id} />}
+      {tab === 'settings' && <SettingsTab brandId={id} />}
+      {tab === 'sellers' && <SellersTab brandId={id} />}
+      {tab === 'competitors' && <CompetitorsTab brandId={id} />}
+      {tab === 'data' && <div className="grid gap-6"><DataTab brandId={id} status={status ?? null} canEdit isStaff onChanged={() => setDataRev((x) => x + 1)} /><SheetsLoaded key={dataRev} brandId={id} /></div>}
+      {tab === 'protection' && <Protection brandId={id} canEdit />}
+      {tab === 'ads' && <Ads brandId={id} canEdit />}
       {tab === 'overview' && <>
 
       <div className="grid grid-cols-2 lg:grid-cols-6 gap-3 mb-6">

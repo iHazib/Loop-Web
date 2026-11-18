@@ -6,6 +6,29 @@ export type Channel = (typeof CHANNELS)[number];
 export const BRAND_STATUSES = ['onboarding', 'active', 'paused', 'churned'] as const;
 export type BrandStatus = (typeof BRAND_STATUSES)[number];
 
+/** Per brand dashboard settings, set by Loopretail staff in admin. */
+export const PORTAL_TABS = ['overview', 'channels', 'protection', 'analysis', 'ads', 'logistics', 'data'] as const;
+export type PortalTab = (typeof PORTAL_TABS)[number];
+export interface BrandSettings {
+  targetAcosPct: number; // ads flagged above this
+  stockWarnWeeks: number; // stock cover warning below this many weeks
+  greyThreshold: number; // grey market signal score needed
+  hiddenTabs: PortalTab[]; // tabs the brand's own logins do not see
+  welcome: string; // note from the account manager on the brand's Home
+}
+export const DEFAULT_SETTINGS: BrandSettings = { targetAcosPct: 25, stockWarnWeeks: 4, greyThreshold: 3, hiddenTabs: [], welcome: '' };
+export function brandSettings(b?: Partial<Brand> | null): BrandSettings {
+  const s = (b?.settings ?? {}) as Partial<BrandSettings>;
+  const n = (v: unknown, d: number, lo: number, hi: number) => (typeof v === 'number' && v >= lo && v <= hi ? v : d);
+  return {
+    targetAcosPct: n(s.targetAcosPct, 25, 1, 200),
+    stockWarnWeeks: n(s.stockWarnWeeks, 4, 1, 52),
+    greyThreshold: n(s.greyThreshold, 3, 1, 8),
+    hiddenTabs: Array.isArray(s.hiddenTabs) ? s.hiddenTabs.filter((t): t is PortalTab => (PORTAL_TABS as readonly string[]).includes(t)) : [],
+    welcome: typeof s.welcome === 'string' ? s.welcome.slice(0, 600) : '',
+  };
+}
+
 export interface Brand {
   id: string;
   name: string;
@@ -15,6 +38,7 @@ export interface Brand {
   accountManagerEmail?: string;
   contactEmail?: string; // main contact at the brand
   notes?: string; // staff only
+  settings?: Partial<BrandSettings>;
   createdAt?: string;
 }
 

@@ -1,3 +1,4 @@
+import { brandSettings } from './types.js';
 import type { Dataset, KeepaSnapshot, Offer, Product, ProtectionCase, CaseType, Severity, TestBuyVerdict } from './types.js';
 
 /* Loop Protect rules engine.
@@ -90,7 +91,6 @@ function verdicts(ds: Dataset) {
   return m;
 }
 
-const GREY_THRESHOLD = 3;
 
 /** Weighted signs that an unauthorised offer is grey market stock. */
 export function greySignals(p: Product, snap: KeepaSnapshot, o: Offer, newThisWeek: boolean): { signals: GreySignal[]; score: number; cheapestEu: { market: string; gbp: number; gapPct: number } | null } {
@@ -119,6 +119,7 @@ export function evaluate(ds: Dataset): Draft[] {
   // Without an authorised seller list every seller would look unauthorised, so seller rules wait for it.
   const hasList = ds.sellers.some((s) => s.amazonSellerId);
   const tested = verdicts(ds);
+  const GREY_THRESHOLD = brandSettings(ds.brand).greyThreshold;
 
   for (const p of ds.products) {
     if (!p.asin) continue;

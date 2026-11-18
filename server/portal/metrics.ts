@@ -1,4 +1,4 @@
-import { CHANNELS, CASE_LABELS, CASE_HELP, type Dataset, type SalesRow, type AdsRow, type KeepaSnapshot, type ProtectionCase } from './types.js';
+import { CHANNELS, CASE_LABELS, CASE_HELP, brandSettings, type Dataset, type SalesRow, type AdsRow, type KeepaSnapshot, type ProtectionCase } from './types.js';
 import { snapshotIndex, SEVERITY_WEIGHT, addDays } from './protection.js';
 
 /* Turns a brand's raw rows into what each dashboard tab shows.
@@ -132,7 +132,7 @@ export function channels(ds: Dataset, period = 4) {
     rows,
     top: ranked.slice(0, 5),
     bottom: ranked.slice(-5).reverse(),
-    stockWarnings: stock.filter((s) => s.weeksCover != null && s.weeksCover < 4),
+    stockWarnings: stock.filter((s) => s.weeksCover != null && s.weeksCover < brandSettings(ds.brand).stockWarnWeeks),
   };
 }
 
@@ -341,7 +341,7 @@ export function ads(ds: Dataset, period = 4) {
     weeks: chartWeeks,
     byChannel,
     campaigns,
-    targetAcosPct: 25,
+    targetAcosPct: brandSettings(ds.brand).targetAcosPct,
   };
 }
 
@@ -360,7 +360,7 @@ export function logistics(ds: Dataset) {
     const total = sum(Object.values(byLoc));
     const weekly = sum(ds.sales.filter((s) => s.sku === p.sku && last4.has(s.weekStart)).map((s) => s.units)) / 4;
     const cover = weekly ? round(total / weekly, 1) : null;
-    return { sku: p.sku, name: p.name, byLocation: byLoc, total, weeklyUnits: round(weekly, 1), weeksCover: cover, reorder: cover != null && cover < 4 };
+    return { sku: p.sku, name: p.name, byLocation: byLoc, total, weeklyUnits: round(weekly, 1), weeksCover: cover, reorder: cover != null && cover < brandSettings(ds.brand).stockWarnWeeks };
   });
   const wholesale = allWeeks.slice(-12).map((w) => ({
     week: w,
