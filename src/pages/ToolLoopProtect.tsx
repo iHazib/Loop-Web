@@ -2,12 +2,12 @@ import { SitePage, PageHero, Section, CardGrid, Steps, FAQ, CTABand, Related, No
 import { CTA, contactHref } from '../components/CTA';
 
 const rules = [
-  { tag: 'Rule 1 · High', title: 'Unauthorised seller', body: 'A seller on your listing who is not on your authorised list. We record who they are, their price, whether they ship through Amazon and when they first appeared.' },
+  { tag: 'Rule 1 · High', title: 'Unauthorised seller', body: 'Someone who bought your stock, from you or one of your resellers, and sells it on Amazon without being on your authorised list. We record who they are, their price, whether they ship through Amazon and when they first appeared.' },
   { tag: 'Rule 2 · Medium to high', title: 'Price below minimum', body: 'An unauthorised seller under your minimum price. The case shows the gap in pounds and percent. Authorised resellers are never flagged on price.' },
   { tag: 'Rule 3 · High', title: 'Buy Box lost', body: 'The Buy Box is held by a seller who is not authorised, so your own offer is not the one shoppers see.' },
   { tag: 'Rule 4 · Medium', title: 'Seller count spike', body: 'Three or more new offers on a product within seven days, usually the first sign of a grey stock drop.' },
   { tag: 'Rule 5 · High', title: 'Listing changed', body: 'Your title, brand field or images changed since yesterday. Before and after are saved as evidence.' },
-  { tag: 'Rule 6 · Review', title: 'Grey market signal', body: 'A score built from several signals: unauthorised, deep discount, new to the listing with FBA stock, overseas seller, price near your cost. High scores go to review and a test buy.' },
+  { tag: 'Rule 6 · Medium to high', title: 'Grey market stock', body: 'Stock brought in from Europe or elsewhere and sold in the UK without your permission. Scored from the seller\'s country, the same ASIN on Amazon DE, FR, IT and ES, deep discounts, new FBA stock and price near your cost. A test buy confirms it, and the seller moves to the right case type straight away.' },
 ];
 
 export default function ToolLoopProtect() {

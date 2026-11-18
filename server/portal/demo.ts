@@ -122,6 +122,14 @@ export function demoDataset(now = new Date()): Dataset {
       // Two rogue sellers appear in the last 5 days on two products.
       if (pi === 0 && di >= 85) offers.push({ sellerId: 'A9QUICKDEALS', sellerName: 'QuickDeals Trading', price: +(p.mapPrice * 0.83).toFixed(2), isFBA: true, isAmazon: false, condition: 'New', country: 'DE' });
       if (pi === 2 && di >= 87) offers.push({ sellerId: 'A7GLOBALSUPPLY', sellerName: 'Global Supply Hub', price: +(p.mapPrice * 0.78).toFixed(2), isFBA: true, isAmazon: false, condition: 'New', country: 'CN' });
+      // A UK reseller selling genuine UK stock without being authorised: an unauthorised seller, not grey market.
+      if (pi === 1 && di >= 86) offers.push({ sellerId: 'A5BARGAINHUB', sellerName: 'Bargain Hub UK', price: +(p.mapPrice * 0.97).toFixed(2), isFBA: false, isAmazon: false, condition: 'New', country: 'GB' });
+      // Same ASIN on Amazon EU. Oat Bites and the third product are much cheaper in Germany and France.
+      const euGap = pi === 0 ? 0.62 : pi === 2 ? 0.7 : 0.96;
+      const eu = (['DE', 'FR', 'IT', 'ES'] as const).map((market, mi) => {
+        const gbpPrice = +(price * (euGap + mi * 0.03)).toFixed(2);
+        return { market, price: +(gbpPrice / 0.86).toFixed(2), gbp: gbpPrice };
+      });
       const buyBox = pi === 2 && di >= 88 ? 'A7GLOBALSUPPLY' : 'A1HALCYONDIRECT';
       snapshots.push({
         asin: p.asin, day: d, title: pi === 4 && di >= 89 ? 'Seed Mix 300g Bulk Value Pack Assorted' : `Halcyon ${p.name}`, brand: 'Halcyon Foods', images: pi === 4 && di >= 89 ? 'img-new-1.jpg,img-new-2.jpg' : `${p.sku}-1.jpg,${p.sku}-2.jpg`,
@@ -129,6 +137,7 @@ export function demoDataset(now = new Date()): Dataset {
         price, priceAvg30: +(p.rrp * 0.94).toFixed(2), priceAvg90: +(p.rrp * 0.95).toFixed(2),
         buyBoxSellerId: buyBox, offerCount: offers.length, offers,
         monthlySold: [400, 200, 100, 100, 300, 50][pi], rating: 4.5 + (pi % 3) * 0.1, reviews,
+        eu: di >= 80 ? eu : undefined,
       });
     });
   });
@@ -167,6 +176,21 @@ export function demoDataset(now = new Date()): Dataset {
     products: PRODUCTS, sales, ads, sellers: SELLERS, competitors, d2c, snapshots, cases: [], events,
   };
   ds.cases = newCases(ds, now);
+  // A test buy already logged on the QuickDeals case, so the demo shows a confirmed grey market case.
+  const qd = ds.cases.find((c) => c.type === 'grey_market' && c.sellerId === 'A9QUICKDEALS');
+  if (qd) {
+    const at = new Date(now.getTime() - 6 * 3600_000).toISOString();
+    qd.testBuys = [{
+      id: 'tb-demo-1', at, by: 'Loopretail protection team',
+      orderedOn: addDays(today, -4), receivedOn: addDays(today, -1),
+      packaging: 'German and Austrian labels, no UK importer address, EU only safety leaflet',
+      batchCode: 'L2409-DE', notes: 'Same product, packed for the German market. Shipped from a Leipzig address.',
+      verdict: 'grey_stock',
+    }];
+    qd.actions = [{ at, by: 'Loopretail protection team', note: 'Test buy logged: grey stock, batch L2409-DE' }];
+    qd.severity = 'high';
+    qd.status = 'reviewing';
+  }
   for (const c of ds.cases) ds.events.push({ at: c.openedAt, source: 'Loop Protect', message: c.title, level: 'warn' });
   return ds;
 }

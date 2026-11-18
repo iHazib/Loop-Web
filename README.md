@@ -206,6 +206,8 @@ A dashboard per brand with six tabs: **Overview, Channels, Protection, Brand Ana
 **Data sources (phase 1)**
 - **Manual sheet** (CSV upload under Data): Products, Sales, Ads, Authorised sellers, Competitors. Templates download from the Data tab. Bad rows are rejected with a reason.
 - **Keepa** (Amazon UK): BSR, average prices, Buy Box, sellers, reviews and competitor search. Set `KEEPA_API_KEY`.
+- **Grey market checks**: the daily check also reads each own ASIN on Amazon DE, FR, IT and ES (1 Keepa token per ASIN per marketplace). `KEEPA_EU_MARKETS` picks the marketplaces (default `DE,FR,IT,ES`, `none` turns it off) and `EUR_GBP` sets the conversion rate (default `0.86`).
+- **Loop Protect case types**: an unauthorised seller (UK stock bought from the brand or its resellers, not on the authorised list) and grey market stock (brought in from Europe or elsewhere) are separate case types. Grey market is decided by weighted signals (seller country, EU price gap, deep undercut, new FBA stock, price near cost; 3 or more) or by a logged test buy, which always wins and moves the seller to the right case type straight away.
 
 **Loop Protect rules** (`server/portal/protection.ts`): unauthorised seller, price below minimum (unauthorised sellers only), Buy Box lost, seller count spike, listing changed, grey market signal score. Cases resolve automatically when the seller leaves the listing.
 

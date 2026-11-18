@@ -68,6 +68,7 @@ const BADGE: Record<string, string> = {
   ok: 'bg-emerald-500/15 text-emerald-700 border-emerald-500/30',
   warn: 'bg-amber-500/15 text-amber-700 border-amber-500/30',
   info: 'bg-sky-500/15 text-sky-700 border-sky-500/30',
+  grey: 'bg-violet-500/15 text-violet-700 border-violet-500/30',
 };
 export function Badge({ tone, children }: { tone: string; children: ReactNode }) {
   return <span className={`inline-flex items-center px-2 py-0.5 rounded-md border text-[10px] font-mono uppercase tracking-wider ${BADGE[tone] ?? BADGE.info}`}>{children}</span>;

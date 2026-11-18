@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { CheckCircle2, Circle, AlertTriangle, ArrowRight, FileText, Mail } from 'lucide-react';
 import type * as M from '../../server/portal/metrics';
 import type { Brand, ProtectionCase } from '../../server/portal/types';
-import { CASE_LABELS } from '../../server/portal/types';
+import { CASE_LABELS, VERDICT_LABELS } from '../../server/portal/types';
 import { useView, portalFetch } from './api';
 import { Card, Kpi, Badge, Empty, Table, LineChart, StackedBars, Legend, PALETTE, gbp, gbpShort, int, pct, fmt, shortDate, ago } from './ui';
 
@@ -278,25 +278,43 @@ export function Protection({ brandId, canEdit }: { brandId: string; canEdit: boo
   const { data, error, loading, reload } = useView<Pr>(`/brands/${brandId}/protection`);
   const [filter, setFilter] = useState<'open' | 'all'>('open');
   const [type, setType] = useState('all');
-  const [open, setOpen] = useState<ProtectionCase | null>(null);
+  const [openId, setOpenId] = useState<string | null>(null);
   if (loading && !data) return <Loading />;
   if (error) return <Failed error={error} />;
   if (!data) return null;
-  const banner = data.summary.authorisedListMissing && (
-    <div className="rounded-2xl border border-amber-400/30 bg-amber-400/10 p-4 text-sm text-amber-100">
-      Seller alerts are off until you add your authorised sellers. Upload the Authorised sellers sheet under Data; until then, sellers on your listings are shown but not flagged.
-    </div>
-  );
+  const s = data.summary;
+  const open = data.cases.find((c) => c.id === openId) ?? null;
   const cases = data.cases.filter((c) => (filter === 'all' || c.status === 'flagged' || c.status === 'reviewing') && (type === 'all' || c.type === type));
+  const threat = (t: 'unauthorised_seller' | 'grey_market', label: string, sellers: number, openCases: number, tone: string) => (
+    <button type="button" onClick={() => setType(type === t ? 'all' : t)} aria-pressed={type === t}
+      className={`text-left rounded-2xl border p-5 transition-colors ${type === t ? 'border-ink bg-surface' : 'border-line bg-surface hover:border-ink/30'}`}>
+      <div className="flex items-center justify-between gap-3">
+        <span className="flex items-center gap-2 text-sm font-semibold text-ink"><span className={`w-2.5 h-2.5 rounded-full ${tone}`} />{label}</span>
+        <span className="text-[11px] text-muted">{type === t ? 'Showing only these' : 'Show only these'}</span>
+      </div>
+      <p className="mt-2 text-[13px] leading-5 text-muted">{data.help[t]}</p>
+      <div className="mt-4 flex gap-6">
+        <div><div className="text-2xl font-semibold text-ink tnum">{int(sellers)}</div><div className="text-[11px] text-muted">sellers on your listings</div></div>
+        <div><div className="text-2xl font-semibold text-ink tnum">{int(openCases)}</div><div className="text-[11px] text-muted">open cases</div></div>
+      </div>
+    </button>
+  );
   return (
     <div className="grid gap-5">
-      {banner}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-        <Kpi label="Open cases" value={int(data.summary.open)} sub={`${data.summary.flagged} flagged · ${data.summary.reviewing} reviewing`} />
-        <Kpi label="Unauthorised sellers" value={int(data.summary.unauthorisedSellers)} sub="on your Amazon listings now" />
-        <Kpi label="Resolved" value={int(data.summary.resolved)} sub="all time" />
-        <Kpi label="Last Keepa check" value={data.summary.lastCheck ? shortDate(data.summary.lastCheck) : 'Never'} sub="daily, Amazon UK" />
-        <Kpi label="Rules" value="6" sub="seller, price, Buy Box, spike, listing, grey" />
+      {s.authorisedListMissing && (
+        <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-800">
+          Seller alerts are off until you add your authorised sellers. Upload the Authorised sellers sheet under Data; until then, sellers on your listings are shown but not flagged.
+        </div>
+      )}
+      <div className="grid md:grid-cols-2 gap-4">
+        {threat('unauthorised_seller', 'Unauthorised sellers', s.unauthorisedSellers, s.unauthorisedOpen, 'bg-brand-red')}
+        {threat('grey_market', 'Grey market stock', s.greySellers, s.greyOpen, 'bg-violet-600')}
+      </div>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <Kpi label="Open cases" value={int(s.open)} sub={`${s.flagged} flagged · ${s.reviewing} reviewing`} />
+        <Kpi label="Test buys logged" value={int(s.testBuys)} sub="confirm UK or grey stock" />
+        <Kpi label="Resolved" value={int(s.resolved)} sub="all time" />
+        <Kpi label="Last Keepa check" value={s.lastCheck ? shortDate(s.lastCheck) : 'Never'} sub={s.euChecked ? 'Amazon UK, plus DE FR IT ES prices' : 'daily, Amazon UK'} />
       </div>
       <div className="grid lg:grid-cols-3 gap-5">
         <Card title="Cases" className="lg:col-span-2"
@@ -312,15 +330,15 @@ export function Protection({ brandId, canEdit }: { brandId: string; canEdit: boo
               </select>
             </div>
           }>
-          {!cases.length ? <p className="text-sm text-muted">No cases match. {data.summary.lastCheck ? '' : 'Run a Keepa check under Data to start monitoring.'}</p> : (
+          {!cases.length ? <p className="text-sm text-muted">No cases match. {s.lastCheck ? '' : 'Run a Keepa check under Data to start monitoring.'}</p> : (
             <ul className="divide-y divide-line">
               {cases.map((c) => (
                 <li key={c.id}>
-                  <button onClick={() => setOpen(c)} className="w-full text-left py-3 flex items-start gap-3 hover:bg-canvas px-1 rounded-lg">
+                  <button onClick={() => setOpenId(c.id)} className="w-full text-left py-3 flex items-start gap-3 hover:bg-canvas px-1 rounded-lg">
                     <Badge tone={c.severity}>{c.severity}</Badge>
                     <div className="flex-1 min-w-0">
-                      <div className="text-sm text-ink">{c.title}</div>
-                      <div className="text-xs text-muted truncate">{CASE_LABELS[c.type]} · {c.asin} · {c.detail}</div>
+                      <div className="text-sm text-ink flex items-center gap-2 flex-wrap">{c.title}{c.testBuys?.length ? <Badge tone="clear">test buy</Badge> : null}</div>
+                      <div className="text-xs text-muted truncate"><span className={c.type === 'grey_market' ? 'text-violet-700' : c.type === 'unauthorised_seller' ? 'text-red-text' : ''}>{CASE_LABELS[c.type]}</span> · {c.asin} · {c.detail}</div>
                     </div>
                     <Badge tone={c.status}>{c.status}</Badge>
                     <span className="text-[10px] font-mono text-muted w-14 text-right">{ago(c.openedAt)}</span>
@@ -332,60 +350,145 @@ export function Protection({ brandId, canEdit }: { brandId: string; canEdit: boo
         </Card>
         <Card title="Sellers on your listings" right="latest Keepa check">
           <Table head={['Seller', 'Listings', 'Status']} empty="No Keepa data yet."
-            rows={data.sellers.map((s) => [
-              <span title={s.sellerId}>{s.sellerName}</span>,
-              s.listings.length,
-              s.authorised ? <Badge tone="clear">authorised</Badge> : data.summary.authorisedListMissing ? <Badge tone="info">not checked</Badge> : <Badge tone="high">unauthorised</Badge>,
+            rows={data.sellers.map((x) => [
+              <span title={x.sellerId}>{x.sellerName}{x.country && x.country !== 'GB' ? <span className="ml-1.5 text-[10px] font-mono text-muted">{x.country}</span> : null}</span>,
+              x.listings.length,
+              x.kind === 'authorised' ? <Badge tone="clear">authorised</Badge> : x.kind === 'grey' ? <Badge tone="grey">grey market</Badge> : x.kind === 'unchecked' ? <Badge tone="info">not checked</Badge> : <Badge tone="high">unauthorised</Badge>,
             ])} />
         </Card>
       </div>
-      {open && <CaseDrawer c={open} brandId={brandId} canEdit={canEdit} onClose={() => setOpen(null)} onSaved={() => { setOpen(null); reload(); }} />}
+      {open && <CaseDrawer c={open} brandId={brandId} canEdit={canEdit} help={data.help[open.type]} onClose={() => setOpenId(null)} onSaved={(nextId) => { setOpenId(nextId ?? null); reload(); }} />}
     </div>
   );
 }
 
-function CaseDrawer({ c, brandId, canEdit, onClose, onSaved }: { c: ProtectionCase; brandId: string; canEdit: boolean; onClose: () => void; onSaved: () => void }) {
+type Signal = { key: string; label: string; weight: number };
+const gbp2 = (n: number) => `£${n.toFixed(2)}`;
+type EuRow = { market: string; price: number | null; gbp: number | null };
+
+function CaseDrawer({ c, brandId, canEdit, help, onClose, onSaved }: { c: ProtectionCase; brandId: string; canEdit: boolean; help?: string; onClose: () => void; onSaved: (nextId?: string) => void }) {
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
+  const [tb, setTb] = useState({ orderedOn: new Date().toISOString().slice(0, 10), receivedOn: '', packaging: '', batchCode: '', notes: '', verdict: '' });
+  const ev = c.evidence as Record<string, unknown> & { signals?: Signal[]; greyScore?: number; greyThreshold?: number; eu?: EuRow[]; price?: number | null; country?: string; classifiedBy?: string };
+  const seller = c.type === 'unauthorised_seller' || c.type === 'grey_market';
   const save = async (status?: string) => {
     setBusy(true); setErr('');
-    try { await portalFetch(`/brands/${brandId}/cases/${c.id}`, { method: 'PATCH', body: JSON.stringify({ status, note }) }); onSaved(); }
+    try { await portalFetch(`/brands/${brandId}/cases/${c.id}`, { method: 'PATCH', body: JSON.stringify({ status, note }) }); onSaved(c.id); }
     catch (e) { setErr((e as Error).message); }
     finally { setBusy(false); }
   };
+  const logTestBuy = async () => {
+    if (!tb.verdict) { setErr('Pick a verdict for the test buy.'); return; }
+    setBusy(true); setErr('');
+    try {
+      const r = await portalFetch<{ movedTo: ProtectionCase | null }>(`/brands/${brandId}/cases/${c.id}/testbuy`, { method: 'POST', body: JSON.stringify(tb) });
+      onSaved(r.movedTo?.id ?? c.id);
+    } catch (e) { setErr((e as Error).message); }
+    finally { setBusy(false); }
+  };
+  const field = 'w-full rounded-lg bg-surface border border-line px-3 py-2 text-sm text-ink placeholder:text-muted';
   return (
     <div className="fixed inset-0 z-50 flex justify-end bg-ink/40" onClick={onClose}>
       <aside className="w-full max-w-lg h-full overflow-y-auto bg-surface border-l border-line p-6" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center gap-2 mb-3"><Badge tone={c.severity}>{c.severity}</Badge><Badge tone={c.status}>{c.status}</Badge></div>
+        <div className="flex items-center gap-2 mb-3"><Badge tone={c.type === 'grey_market' ? 'grey' : c.severity}>{CASE_LABELS[c.type]}</Badge><Badge tone={c.severity}>{c.severity}</Badge><Badge tone={c.status}>{c.status}</Badge></div>
         <h2 className="text-lg font-semibold text-ink">{c.title}</h2>
-        <p className="text-sm text-muted mt-2">{c.detail}</p>
+        {help && <p className="text-xs text-muted mt-1">{help}</p>}
+        <p className="text-sm text-ink/80 mt-3">{c.detail}</p>
         <dl className="grid grid-cols-2 gap-3 mt-5 text-sm">
-          {[['Type', CASE_LABELS[c.type]], ['Channel', c.channel], ['ASIN', c.asin], ['SKU', c.sku], ['Seller', c.sellerId || '–'], ['Opened', new Date(c.openedAt).toLocaleString('en-GB')]].map(([k, v]) => (
+          {[['Channel', c.channel], ['ASIN', c.asin], ['SKU', c.sku], ['Seller', String(ev.sellerName || c.sellerId || '–')], ...(ev.country ? [['Seller country', String(ev.country)]] : []), ['Opened', new Date(c.openedAt).toLocaleString('en-GB')]].map(([k, v]) => (
             <div key={k}><dt className="text-[11px] uppercase tracking-wider text-muted">{k}</dt><dd className="text-ink/80 break-all">{v}</dd></div>
           ))}
         </dl>
         <a href={`https://www.amazon.co.uk/dp/${c.asin}`} target="_blank" rel="noreferrer" className="inline-block mt-4 text-xs text-brand-red hover:underline">Open listing on Amazon UK ↗</a>
-        <h3 className="text-sm font-semibold text-ink mt-6 mb-2">Evidence</h3>
-        <pre className="text-[11px] text-muted bg-surface border border-line rounded-lg p-3 overflow-x-auto">{JSON.stringify(c.evidence, null, 2)}</pre>
+
+        {seller && ev.signals && (
+          <>
+            <h3 className="text-sm font-semibold text-ink mt-6 mb-1">Grey market signals</h3>
+            <p className="text-xs text-muted mb-2">
+              Score {ev.greyScore ?? 0}. A score of {ev.greyThreshold ?? 3} or more is treated as grey market stock.
+              {ev.classifiedBy === 'test_buy' ? ' Decided by the test buy.' : ''}
+            </p>
+            {ev.signals.length ? (
+              <ul className="grid gap-1.5">
+                {ev.signals.map((g) => (
+                  <li key={g.key} className="flex items-start justify-between gap-3 rounded-lg bg-canvas px-3 py-2 text-[13px]">
+                    <span className="text-ink/80">{g.label}</span><span className="text-[11px] font-mono text-muted shrink-0">+{g.weight}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : <p className="text-[13px] text-muted">No signs of stock from outside the UK.</p>}
+          </>
+        )}
+        {seller && ev.eu && ev.eu.length > 0 && (
+          <>
+            <h3 className="text-sm font-semibold text-ink mt-6 mb-2">Same ASIN on Amazon EU</h3>
+            <Table head={['Marketplace', 'Price', 'In £', 'vs UK seller']}
+              rows={ev.eu.map((e) => [`Amazon ${e.market}`, e.price != null ? `€${e.price.toFixed(2)}` : '–', e.gbp != null ? gbp2(e.gbp) : '–',
+                e.gbp != null && ev.price != null ? <span className={e.gbp < ev.price ? 'text-violet-700' : 'text-muted'}>{e.gbp < ev.price ? `${gbp2(ev.price - e.gbp)} cheaper` : 'not cheaper'}</span> : '–'])} />
+          </>
+        )}
+
+        {seller && (
+          <>
+            <h3 className="text-sm font-semibold text-ink mt-6 mb-2">Test buys</h3>
+            {!c.testBuys?.length ? <p className="text-[13px] text-muted">None yet. A test buy shows whether the stock is UK stock, grey market stock or fake.</p> : (
+              <ul className="grid gap-2">
+                {c.testBuys.map((t) => (
+                  <li key={t.id} className="rounded-lg border border-line p-3 text-[13px]">
+                    <div className="flex items-center justify-between gap-2"><Badge tone={t.verdict === 'grey_stock' ? 'grey' : t.verdict === 'uk_stock' ? 'clear' : t.verdict === 'counterfeit' ? 'high' : 'info'}>{VERDICT_LABELS[t.verdict]}</Badge><span className="text-[11px] text-muted">{t.orderedOn}{t.receivedOn ? ` to ${t.receivedOn}` : ''}</span></div>
+                    {t.packaging && <p className="mt-2 text-ink/80"><span className="text-muted">Packaging: </span>{t.packaging}</p>}
+                    {t.batchCode && <p className="text-ink/80"><span className="text-muted">Batch code: </span>{t.batchCode}</p>}
+                    {t.notes && <p className="text-ink/80">{t.notes}</p>}
+                    <p className="mt-1 text-[11px] text-muted">Logged by {t.by}</p>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {canEdit && (
+              <div className="mt-3 grid gap-2 rounded-xl bg-canvas p-3">
+                <p className="text-xs font-medium text-ink">Log a test buy</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <label className="text-[11px] text-muted">Ordered<input type="date" value={tb.orderedOn} onChange={(e) => setTb({ ...tb, orderedOn: e.target.value })} className={field} /></label>
+                  <label className="text-[11px] text-muted">Received<input type="date" value={tb.receivedOn} onChange={(e) => setTb({ ...tb, receivedOn: e.target.value })} className={field} /></label>
+                </div>
+                <input value={tb.packaging} onChange={(e) => setTb({ ...tb, packaging: e.target.value })} placeholder="Packaging: label language, importer address, leaflets" className={field} />
+                <input value={tb.batchCode} onChange={(e) => setTb({ ...tb, batchCode: e.target.value })} placeholder="Batch or lot code" className={field} />
+                <textarea value={tb.notes} onChange={(e) => setTb({ ...tb, notes: e.target.value })} rows={2} placeholder="Anything else: where it shipped from, condition" className={field} />
+                <select value={tb.verdict} onChange={(e) => setTb({ ...tb, verdict: e.target.value })} className={field} aria-label="Verdict">
+                  <option value="">Verdict</option>
+                  {Object.entries(VERDICT_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                </select>
+                <button disabled={busy} onClick={logTestBuy} className="justify-self-start px-3 py-2 rounded-lg text-xs bg-ink text-white hover:bg-ink/85">Save test buy</button>
+                <p className="text-[11px] text-muted">UK stock or grey market stock moves the seller to the right case type straight away.</p>
+              </div>
+            )}
+          </>
+        )}
+
         <h3 className="text-sm font-semibold text-ink mt-6 mb-2">Timeline</h3>
         <ul className="space-y-2 text-sm">
           <li className="text-muted">{new Date(c.openedAt).toLocaleString('en-GB')} · Opened by Loop Protect</li>
           {c.actions.map((a, i) => <li key={i} className="text-ink/80">{new Date(a.at).toLocaleString('en-GB')} · {a.by}: {a.note}</li>)}
         </ul>
+        <details className="mt-4">
+          <summary className="text-xs text-muted cursor-pointer">Raw evidence</summary>
+          <pre className="mt-2 text-[11px] text-muted bg-canvas border border-line rounded-lg p-3 overflow-x-auto">{JSON.stringify(c.evidence, null, 2)}</pre>
+        </details>
         {canEdit ? (
           <div className="mt-6 grid gap-3">
-            <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={3} placeholder="Action taken: test buy ordered, Report a Violation filed, seller contacted…"
+            <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={3} placeholder="Action taken: Report a Violation filed, seller contacted…"
               className="w-full rounded-lg bg-surface border border-line p-3 text-sm text-ink placeholder:text-muted" />
             <div className="flex flex-wrap gap-2">
               <button disabled={busy} onClick={() => save()} className="px-3 py-2 rounded-lg text-xs border border-line text-ink hover:bg-canvas">Add note</button>
-              {(['reviewing', 'clear', 'resolved'] as const).filter((s) => s !== c.status).map((s) => (
-                <button key={s} disabled={busy} onClick={() => save(s)} className="px-3 py-2 rounded-lg text-xs bg-brand-red/90 hover:bg-brand-red text-white capitalize">Mark {s}</button>
+              {(['reviewing', 'clear', 'resolved'] as const).filter((st) => st !== c.status).map((st) => (
+                <button key={st} disabled={busy} onClick={() => save(st)} className="px-3 py-2 rounded-lg text-xs bg-brand-red/90 hover:bg-brand-red text-white capitalize">Mark {st}</button>
               ))}
             </div>
-            {err && <p className="text-xs text-rose-700">{err}</p>}
           </div>
         ) : <p className="mt-6 text-xs text-muted">The demo is read only.</p>}
+        {err && <p className="mt-2 text-xs text-rose-700">{err}</p>}
       </aside>
     </div>
   );

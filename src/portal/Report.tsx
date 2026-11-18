@@ -101,7 +101,7 @@ export default function Report() {
 
         <H>Brand protection (Amazon UK)</H>
         <p className="text-[12px] text-neutral-600 mb-2">
-          {open.length} open cases, {p.summary.unauthorisedSellers} unauthorised sellers on your listings, {p.summary.resolved} resolved to date.
+          {open.length} open cases: {p.summary.unauthorisedSellers} unauthorised sellers and {p.summary.greySellers} sellers of grey market stock on your listings, {p.summary.resolved} resolved to date.
           {p.summary.lastCheck ? ` Last Keepa check ${shortDate(p.summary.lastCheck)}.` : ' No Keepa check yet.'}
           {p.summary.authorisedListMissing ? ' Seller alerts are off until your authorised seller list is uploaded.' : ''}
         </p>

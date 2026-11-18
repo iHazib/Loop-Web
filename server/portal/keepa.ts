@@ -1,4 +1,5 @@
-import type { KeepaSnapshot, Offer } from './types.js';
+import type { EuMarket, EuPrice, KeepaSnapshot, Offer } from './types.js';
+import { EU_MARKETS } from './types.js';
 
 /* Keepa API client (Amazon UK = domain 2).
    Docs: https://keepa.com/#!discuss/t/product-object/116
@@ -20,10 +21,10 @@ export function keepaConfigured(): boolean {
 }
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
-async function call(path: string, params: Record<string, string | number>): Promise<any> {
+async function call(path: string, params: Record<string, string | number>, domain = DOMAIN_UK): Promise<any> {
   const key = keepaKey();
   if (!key) throw new Error('Keepa is not configured. Set KEEPA_API_KEY.');
-  const qs = new URLSearchParams({ key, domain: String(DOMAIN_UK), ...Object.fromEntries(Object.entries(params).map(([k, v]) => [k, String(v)])) });
+  const qs = new URLSearchParams({ key, domain: String(domain), ...Object.fromEntries(Object.entries(params).map(([k, v]) => [k, String(v)])) });
   const res = await fetch(`${BASE}/${path}?${qs}`);
   const data = await res.json().catch(() => ({}));
   if (!res.ok || data.error) {
@@ -161,4 +162,41 @@ export async function fetchProductInfo(asins: string[]) {
     }
   }
   return { products: out, tokensLeft };
+}
+
+/* ── Amazon EU prices for grey market checks ──
+   Same ASIN on Amazon DE / FR / IT / ES. 1 token per ASIN per marketplace.
+   KEEPA_EU_MARKETS picks the marketplaces (default all four, "none" turns it off).
+   EUR_GBP sets the conversion rate (default 0.86). */
+const EU_DOMAIN: Record<EuMarket, number> = { DE: 3, FR: 4, IT: 8, ES: 9 };
+
+export function euMarkets(): EuMarket[] {
+  const raw = (process.env.KEEPA_EU_MARKETS ?? 'DE,FR,IT,ES').trim().toUpperCase();
+  if (!raw || raw === 'NONE' || raw === 'OFF') return [];
+  return raw.split(/[\s,;]+/).filter((m): m is EuMarket => (EU_MARKETS as readonly string[]).includes(m));
+}
+export function eurToGbp(): number {
+  const r = Number(process.env.EUR_GBP);
+  return r > 0 && r < 5 ? r : 0.86;
+}
+
+export async function fetchEuPrices(asins: string[], markets = euMarkets()) {
+  const out = new Map<string, EuPrice[]>();
+  let tokensLeft: number | null = null;
+  const clean = [...new Set(asins.map((a) => a.trim().toUpperCase()).filter((a) => /^[A-Z0-9]{10}$/.test(a)))];
+  const rate = eurToGbp();
+  for (const market of markets) {
+    for (let i = 0; i < clean.length; i += 100) {
+      const data = await call('product', { asin: clean.slice(i, i + 100).join(','), stats: 1, history: 0 }, EU_DOMAIN[market]);
+      tokensLeft = data.tokensLeft ?? tokensLeft;
+      for (const p of data.products ?? []) {
+        const cur = p.stats?.current ?? [];
+        const price = pence(at(cur, BUY_BOX)) ?? pence(at(cur, NEW)) ?? pence(at(cur, AMAZON));
+        const arr = out.get(String(p.asin)) ?? [];
+        arr.push({ market, price, gbp: price != null ? +(price * rate).toFixed(2) : null });
+        out.set(String(p.asin), arr);
+      }
+    }
+  }
+  return { prices: out, tokensLeft };
 }

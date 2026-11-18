@@ -46,6 +46,17 @@ export async function syncBrand(brandId: string) {
 
   const a = await keepa.fetchProducts(own, { withOffers: true, day });
   const looked = await enrichSellers(a.snapshots);
+  // Same ASINs on Amazon EU, for the grey market price gap check. A failure here never stops the daily check.
+  let euChecked = 0;
+  if (keepa.euMarkets().length) {
+    try {
+      const eu = await keepa.fetchEuPrices(own);
+      for (const s of a.snapshots) { const e = eu.prices.get(s.asin); if (e) { s.eu = e; euChecked++; } }
+      if (eu.tokensLeft != null) a.tokensLeft = eu.tokensLeft;
+    } catch (e) {
+      console.warn('[keepa] EU price check failed:', (e as Error).message);
+    }
+  }
   const b = comps.length ? await keepa.fetchProducts(comps, { withOffers: false, day }) : { snapshots: [], tokensLeft: a.tokensLeft };
   const snaps = [...a.snapshots, ...b.snapshots];
   await db.saveSnapshots(snaps);
@@ -57,7 +68,7 @@ export async function syncBrand(brandId: string) {
 
   const now = new Date().toISOString();
   const events: PortalEvent[] = [
-    { at: now, source: 'Keepa', message: `Daily check complete for ${snaps.length} ASINs${looked ? `, ${looked} new sellers looked up` : ''}`, level: 'ok' },
+    { at: now, source: 'Keepa', message: `Daily check complete for ${snaps.length} ASINs${looked ? `, ${looked} new sellers looked up` : ''}${euChecked ? `, EU prices checked for ${euChecked}` : ''}`, level: 'ok' },
     ...opened.map((c): PortalEvent => ({ at: now, source: 'Loop Protect', message: c.title, level: 'warn' })),
     ...resolved.map((c): PortalEvent => ({ at: now, source: 'Loop Protect', message: `Resolved: ${c.title}`, level: 'ok' })),
   ];

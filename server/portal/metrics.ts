@@ -1,4 +1,4 @@
-import { CHANNELS, CASE_LABELS, type Dataset, type SalesRow, type AdsRow, type KeepaSnapshot } from './types.js';
+import { CHANNELS, CASE_LABELS, CASE_HELP, type Dataset, type SalesRow, type AdsRow, type KeepaSnapshot, type ProtectionCase } from './types.js';
 import { snapshotIndex, SEVERITY_WEIGHT, addDays } from './protection.js';
 
 /* Turns a brand's raw rows into what each dashboard tab shows.
@@ -140,30 +140,52 @@ export function channels(ds: Dataset, period = 4) {
 export function protection(ds: Dataset) {
   const idx = snapshotIndex(ds.snapshots);
   const authIds = new Set(ds.sellers.map((s) => s.amazonSellerId).filter(Boolean));
-  const sellerMap = new Map<string, { sellerId: string; sellerName: string; authorised: boolean; listings: { asin: string; sku: string; price: number | null; isFBA: boolean }[] }>();
+  const isOpen = (c: ProtectionCase) => c.status === 'flagged' || c.status === 'reviewing';
+  // what each seller is right now, from its open seller case
+  const kindOf = new Map<string, 'grey' | 'unauthorised'>();
+  for (const c of ds.cases) if (isOpen(c) && c.sellerId) {
+    if (c.type === 'grey_market') kindOf.set(c.sellerId, 'grey');
+    else if (c.type === 'unauthorised_seller' && !kindOf.has(c.sellerId)) kindOf.set(c.sellerId, 'unauthorised');
+  }
+  type SellerRow = { sellerId: string; sellerName: string; country: string; authorised: boolean; kind: 'authorised' | 'unauthorised' | 'grey' | 'unchecked'; listings: { asin: string; sku: string; price: number | null; isFBA: boolean }[] };
+  const sellerMap = new Map<string, SellerRow>();
+  const listKnown = ds.sellers.some((s) => s.amazonSellerId);
   for (const p of ds.products) {
     const snap = idx.latest(p.asin);
     for (const o of snap?.offers ?? []) {
-      const r = sellerMap.get(o.sellerId) ?? { sellerId: o.sellerId, sellerName: o.sellerName || (o.isAmazon ? 'Amazon' : o.sellerId), authorised: o.isAmazon || authIds.has(o.sellerId), listings: [] };
+      const authorised = o.isAmazon || authIds.has(o.sellerId);
+      const r = sellerMap.get(o.sellerId) ?? {
+        sellerId: o.sellerId, sellerName: o.sellerName || (o.isAmazon ? 'Amazon' : o.sellerId), country: o.country ?? '', authorised,
+        kind: authorised ? 'authorised' : !listKnown ? 'unchecked' : kindOf.get(o.sellerId) ?? 'unauthorised',
+        listings: [],
+      };
       r.listings.push({ asin: p.asin, sku: p.sku, price: o.price, isFBA: o.isFBA });
       sellerMap.set(o.sellerId, r);
     }
   }
   const cases = [...ds.cases].sort((a, b) => b.openedAt.localeCompare(a.openedAt));
   const count = (f: (c: (typeof cases)[number]) => boolean) => cases.filter(f).length;
+  const sellers = [...sellerMap.values()];
+  const rank = { grey: 0, unauthorised: 1, unchecked: 2, authorised: 3 } as const;
   return {
     summary: {
-      open: count((c) => c.status === 'flagged' || c.status === 'reviewing'),
+      open: count(isOpen),
       flagged: count((c) => c.status === 'flagged'),
       reviewing: count((c) => c.status === 'reviewing'),
       resolved: count((c) => c.status === 'resolved'),
-      unauthorisedSellers: ds.sellers.some((s) => s.amazonSellerId) ? [...sellerMap.values()].filter((s) => !s.authorised).length : 0,
-      authorisedListMissing: !ds.sellers.some((s) => s.amazonSellerId),
+      unauthorisedSellers: sellers.filter((s) => s.kind === 'unauthorised').length,
+      greySellers: sellers.filter((s) => s.kind === 'grey').length,
+      unauthorisedOpen: count((c) => c.type === 'unauthorised_seller' && isOpen(c)),
+      greyOpen: count((c) => c.type === 'grey_market' && isOpen(c)),
+      testBuys: cases.reduce((a, c) => a + (c.testBuys?.length ?? 0), 0),
+      authorisedListMissing: !listKnown,
+      euChecked: ds.snapshots.some((s) => s.eu?.length),
       lastCheck: ds.snapshots.reduce<string | null>((m, s) => (!m || s.day > m ? s.day : m), null),
     },
-    byType: Object.entries(CASE_LABELS).map(([type, label]) => ({ type, label, open: count((c) => c.type === type && (c.status === 'flagged' || c.status === 'reviewing')) })),
+    help: CASE_HELP,
+    byType: Object.entries(CASE_LABELS).map(([type, label]) => ({ type, label, open: count((c) => c.type === type && isOpen(c)) })),
     cases,
-    sellers: [...sellerMap.values()].sort((a, b) => Number(a.authorised) - Number(b.authorised)),
+    sellers: sellers.sort((a, b) => rank[a.kind] - rank[b.kind]),
   };
 }
 

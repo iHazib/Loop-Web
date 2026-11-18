@@ -7,7 +7,8 @@ import { validate, TEMPLATES, type UploadKind } from './validate.js';
 import * as ai from './ai.js';
 import * as acc from './access.js';
 import { verifyGoogleToken } from '../auth.js';
-import { BRAND_STATUSES, type Dataset, type ProtectionCase, type CaseStatus, type Brand, type BrandStatus } from './types.js';
+import { BRAND_STATUSES, TEST_BUY_VERDICTS, type Dataset, type ProtectionCase, type CaseStatus, type Brand, type BrandStatus, type TestBuy, type TestBuyVerdict } from './types.js';
+import { newCases, autoResolve } from './protection.js';
 
 /* Router for /api/portal/*, shared by Express (server/app.ts) and Vercel (api/index.ts).
    Who can do what:
@@ -355,6 +356,42 @@ export async function handlePortal(req: PortalReq): Promise<PortalRes | null> {
   if (parts[2] === 'competitors' && method === 'DELETE') {
     await db.deleteCompetitor(brandId, String(query.sku ?? ''), String(query.asin ?? ''));
     return ok({ deleted: true });
+  }
+
+  /* ── Test buys: log what arrived; a grey or UK verdict reclassifies the seller case straight away ── */
+  if (method === 'POST' && parts[2] === 'cases' && parts[3] && parts[4] === 'testbuy') {
+    const ds = await db.loadDataset(brandId);
+    const c = ds?.cases.find((x) => x.id === parts[3]);
+    if (!ds || !c) return err(404, 'Case not found.');
+    if (c.type !== 'unauthorised_seller' && c.type !== 'grey_market') return err(400, 'Test buys are logged on unauthorised seller and grey market cases.');
+    const verdict = String(body.verdict ?? '') as TestBuyVerdict;
+    if (!TEST_BUY_VERDICTS.includes(verdict)) return err(400, 'Pick a verdict: UK stock, grey market stock, counterfeit or unclear.');
+    const day = (v: unknown) => (/^\d{4}-\d{2}-\d{2}$/.test(String(v ?? '')) ? String(v) : '');
+    const at = new Date().toISOString();
+    const tb: TestBuy = {
+      id: `tb-${Date.now().toString(36)}`,
+      at, by: who?.email ?? 'unknown',
+      orderedOn: day(body.orderedOn) || at.slice(0, 10),
+      receivedOn: day(body.receivedOn),
+      packaging: String(body.packaging ?? '').trim().slice(0, 500),
+      batchCode: String(body.batchCode ?? '').trim().slice(0, 120),
+      notes: String(body.notes ?? '').trim().slice(0, 2000),
+      verdict,
+    };
+    const updated: ProtectionCase = {
+      ...c, updatedAt: at,
+      severity: verdict === 'counterfeit' ? 'high' : c.severity,
+      testBuys: [...(c.testBuys ?? []), tb],
+      actions: [...c.actions, { at, by: tb.by, note: `Test buy logged: ${verdict.replace('_', ' ')}${tb.batchCode ? `, batch ${tb.batchCode}` : ''}` }],
+    };
+    await db.saveCases(brandId, [updated]);
+    // re-run the rules so the seller lands in the right case type now, not at the next daily check
+    const next = { ...ds, cases: ds.cases.map((x) => (x.id === updated.id ? updated : x)) };
+    const opened = newCases(next);
+    const resolved = autoResolve(next);
+    if (opened.length || resolved.length) await db.saveCases(brandId, [...opened, ...resolved]);
+    const movedTo = opened.find((o) => o.asin === c.asin && o.sellerId === c.sellerId);
+    return ok({ case: resolved.find((r) => r.id === c.id) ?? updated, movedTo: movedTo ?? null });
   }
 
   /* ── Case workflow ── */
